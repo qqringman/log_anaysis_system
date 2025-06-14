@@ -1,86 +1,57 @@
 #!/bin/bash
 
-show_help() {
-    echo "🚀 Log 分析平台啟動腳本"
-    echo ""
-    echo "使用方法:"
-    echo "  ./run.sh [選項]"
-    echo ""
-    echo "選項:"
-    echo "  --help, -h     顯示此說明"
-    echo "  --port PORT    指定端口 (預設: 5000)"
-    echo "  --host HOST    指定主機 (預設: 0.0.0.0)"
-    echo "  --debug        啟用除錯模式"
-    echo ""
-    echo "範例:"
-    echo "  ./run.sh                    # 預設啟動"
-    echo "  ./run.sh --port 8080        # 指定端口"
-    echo "  ./run.sh --host 127.0.0.1   # 只允許本機訪問"
-}
+# Enhanced Log 分析平台 v6 啟動腳本
 
-# 預設設定
-PORT=5000
-HOST="0.0.0.0"
-DEBUG=""
+echo "🚀 Enhanced Log 分析平台 v6 啟動中..."
+echo "=================================="
 
-# 解析參數
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --help|-h)
-            show_help
-            exit 0
-            ;;
-        --port)
-            PORT="$2"
-            shift 2
-            ;;
-        --host)
-            HOST="$2"
-            shift 2
-            ;;
-        --debug)
-            DEBUG="--debug"
-            shift
-            ;;
-        *)
-            echo "未知選項: $1"
-            echo "使用 --help 查看說明"
-            exit 1
-            ;;
-    esac
-done
-
-echo "🚀 啟動 Log 分析平台..."
+# 檢查 Python 版本
+python_version=$(python3 --version 2>&1 | awk '{print $2}')
+echo "✓ Python 版本: $python_version"
 
 # 檢查虛擬環境
 if [ ! -d "venv" ]; then
-    echo "❌ 虛擬環境不存在，請先執行 ./install.sh"
-    exit 1
+    echo "⚠️  虛擬環境不存在，正在創建..."
+    python3 -m venv venv
+    echo "✓ 虛擬環境創建完成"
 fi
 
 # 啟動虛擬環境
+echo "🔄 啟動虛擬環境..."
 source venv/bin/activate
 
-# 檢查依賴
-if ! pip show Flask > /dev/null 2>&1; then
-    echo "📚 安裝依賴..."
-    pip install -r requirements.txt
+# 檢查並安裝依賴
+echo "📦 檢查依賴..."
+pip install -r requirements.txt --quiet
+
+# 創建必要目錄
+echo "📁 創建必要目錄..."
+mkdir -p uploads/chat
+mkdir -p uploads/archives
+mkdir -p static/js
+mkdir -p static/css
+mkdir -p templates
+echo "✓ 目錄創建完成"
+
+# 檢查 grep 命令
+if command -v grep &> /dev/null; then
+    echo "✓ grep 命令可用"
+else
+    echo "⚠️  警告: grep 命令不可用，分析功能可能受限"
 fi
 
-# 設定環境變數
+# 設置環境變數
 export FLASK_APP=app.py
-export FLASK_HOST=$HOST
-export FLASK_PORT=$PORT
+export FLASK_ENV=development
 
 # 啟動應用
-echo "🌐 啟動 Flask 應用..."
-echo "📍 服務地址: http://$HOST:$PORT"
-echo "📋 按 Ctrl+C 停止服務"
+echo ""
+echo "🎉 啟動應用..."
+echo "=================================="
+echo "📍 訪問地址: http://localhost:5000"
+echo "📍 按 Ctrl+C 停止應用"
+echo "=================================="
 echo ""
 
-if [ -n "$DEBUG" ]; then
-    echo "🐛 除錯模式已啟用"
-    python3 app.py --host $HOST --port $PORT --debug
-else
-    python3 app.py
-fi
+# 啟動 Flask 應用
+python app.py

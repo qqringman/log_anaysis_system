@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分享的分析報告</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .share-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .report-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            padding: 30px;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+        
+        .report-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box h3 {
+            color: #667eea;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .module-section {
+            margin-bottom: 30px;
+        }
+        
+        .module-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        
+        .file-section {
+            margin-bottom: 30px;
+        }
+        
+        .file-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .file-item:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .private-badge {
+            background: #dc3545;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .public-badge {
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .download-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="share-notice">
+            <i class="fas fa-share-alt me-2"></i>
+            這是一份分享的分析報告
+            {% if is_public %}
+                <span class="public-badge ms-2">公開分享</span>
+            {% else %}
+                <span class="private-badge ms-2">私密分享</span>
+            {% endif %}
+        </div>
+        
+        <div class="report-container">
+            <div class="report-header">
+                <h1 class="mb-3">
+                    <i class="fas fa-chart-line me-3"></i>日誌分析報告
+                </h1>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-fingerprint me-2"></i>分析 ID: {{ report.analysis_id }}
+                </p>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar me-2"></i>生成時間: {{ report.timestamp }}
+                </p>
+            </div>
+            
+            <!-- 統計概覽 -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <i class="fas fa-file-alt fa-2x mb-2 text-primary"></i>
+                        <h3>{{ report.summary.total_files }}</h3>
+                        <p class="mb-0 text-muted">分析檔案</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <i class="fas fa-search fa-2x mb-2 text-success"></i>
+                        <h3>{{ report.summary.total_matches }}</h3>
+                        <p class="mb-0 text-muted">總匹配數</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <i class="fas fa-cube fa-2x mb-2 text-info"></i>
+                        <h3>{{ report.summary.total_modules }}</h3>
+                        <p class="mb-0 text-muted">檢測模組</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-box">
+                        <i class="fas fa-clock fa-2x mb-2 text-warning"></i>
+                        <h3>{{ "%.1f"|format(report.summary.analysis_time) }}s</h3>
+                        <p class="mb-0 text-muted">分析耗時</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 模組分析結果 -->
+            <div class="module-section">
+                <h3 class="mb-3">
+                    <i class="fas fa-cube me-2"></i>模組分析結果
+                </h3>
+                {% for module in report.module_view %}
+                <div class="module-item">
+                    <h5 class="mb-2">
+                        {{ module.name }}
+                        <span class="badge bg-primary float-end">{{ module.matches }} 匹配</span>
+                    </h5>
+                    <p class="mb-1 text-muted">
+                        <i class="fas fa-file me-1"></i>影響檔案: {{ module.files_count }} 個
+                    </p>
+                    <p class="mb-0">
+                        <i class="fas fa-key me-1"></i>找到關鍵字: 
+                        {% for keyword in module.keywords_found %}
+                            <span class="badge bg-secondary">{{ keyword }}</span>
+                        {% endfor %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- 檔案分析結果 -->
+            <div class="file-section">
+                <h3 class="mb-3">
+                    <i class="fas fa-file-alt me-2"></i>檔案分析詳情
+                </h3>
+                {% for file_path, file_data in report.file_view.items() %}
+                <div class="file-item">
+                    <h6 class="mb-2">
+                        <i class="fas fa-file me-2"></i>{{ file_path.split('/')[-1] }}
+                    </h6>
+                    <small class="text-muted d-block mb-2">{{ file_path }}</small>
+                    <div>
+                        <strong>總匹配數: {{ file_data.total_matches }}</strong>
+                        <div class="mt-2">
+                            {% for module_info in file_data.modules %}
+                            <span class="badge bg-info me-1">
+                                {{ module_info.module }}: {{ module_info.matches }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <button class="download-btn" onclick="downloadReport()">
+        <i class="fas fa-download me-2"></i>下載報告
+    </button>
+    
+    <script>
+        function downloadReport() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

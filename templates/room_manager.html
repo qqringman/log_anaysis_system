@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天室管理中心</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .manager-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            border-radius: 20px 20px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .manager-container {
+            background: white;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .room-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .room-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .room-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .room-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #6c757d;
+        }
+        
+        .room-resources {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .room-resources.show {
+            display: block;
+        }
+        
+        .resource-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .resource-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .resource-item:hover {
+            background: #e9ecef;
+        }
+        
+        .resource-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: #6c757d;
+        }
+        
+        .resource-info {
+            flex: 1;
+        }
+        
+        .resource-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .resource-meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .create-room-btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(56, 239, 125, 0.3);
+        }
+        
+        .create-room-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(56, 239, 125, 0.4);
+            color: white;
+        }
+        
+        .filter-controls {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            padding-left: 40px;
+            border-radius: 25px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        
+        .room-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: white;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            background: #f8f9fa;
+            color: #333;
+            border-color: #667eea;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        @media (max-width: 768px) {
+            .room-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-controls {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="manager-header text-center">
+            <h1><i class="fas fa-cog me-3"></i>聊天室管理中心</h1>
+            <p class="mb-0">管理和監控所有聊天室的資源和活動</p>
+        </div>
+        
+        <div class="manager-container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>所有聊天室</h3>
+                <button class="create-room-btn" onclick="createNewRoom()">
+                    <i class="fas fa-plus me-2"></i>創建新聊天室
+                </button>
+            </div>
+            
+            <div class="filter-controls">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" class="form-control" id="search-rooms" placeholder="搜尋聊天室...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="sort-rooms">
+                            <option value="newest">最新創建</option>
+                            <option value="oldest">最早創建</option>
+                            <option value="most-active">最活躍</option>
+                            <option value="name">名稱排序</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filter-type">
+                            <option value="all">所有聊天室</option>
+                            <option value="public">公開聊天室</option>
+                            <option value="private">私密聊天室</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="rooms-container">
+                <div class="room-grid" id="room-grid">
+                    <!-- 聊天室卡片將動態載入 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 創建聊天室模態框 -->
+    <div class="modal fade" id="createRoomModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">創建新聊天室</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-room-form">
+                        <div class="mb-3">
+                            <label class="form-label">聊天室名稱</label>
+                            <input type="text" class="form-control" id="room-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">描述</label>
+                            <textarea class="form-control" id="room-description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="room-public" checked>
+                                <label class="form-check-label" for="room-public">
+                                    設為公開聊天室
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitCreateRoom()">創建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            loadRooms();
+            
+            // 搜尋功能
+            $('#search-rooms').on('input', function() {
+                filterRooms();
+            });
+            
+            // 排序功能
+            $('#sort-rooms, #filter-type').on('change', function() {
+                filterRooms();
+            });
+        });
+        
+        function loadRooms() {
+            $.get('/api/rooms', function(rooms) {
+                displayRooms(rooms);
+            });
+        }
+        
+        function displayRooms(rooms) {
+            const container = $('#room-grid');
+            container.empty();
+            
+            if (rooms.length === 0) {
+                container.html(`
+                    <div class="empty-state">
+                        <i class="fas fa-comments"></i>
+                        <h5>尚無聊天室</h5>
+                        <p>點擊上方按鈕創建第一個聊天室</p>
+                    </div>
+                `);
+                return;
+            }
+            
+            rooms.forEach(room => {
+                const roomCard = createRoomCard(room);
+                container.append(roomCard);
+            });
+        }
+        
+        function createRoomCard(room) {
+            return $(`
+                <div class="room-card" data-room-id="${room.id}" data-room-name="${room.name.toLowerCase()}">
+                    <div class="room-header">
+                        <div>
+                            <div class="room-name">${room.name}</div>
+                            <div class="room-description">${room.description || '暫無描述'}</div>
+                        </div>
+                        <div>
+                            ${room.is_public ? 
+                                '<span class="badge bg-success">公開</span>' : 
+                                '<span class="badge bg-secondary">私密</span>'
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="room-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-user"></i>
+                            <span>創建者: ${room.created_by}</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>${new Date(room.created_at).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="room-actions">
+                        <button class="action-btn" onclick="window.open('/room/${room.id}', '_blank')">
+                            <i class="fas fa-external-link-alt me-1"></i>進入
+                        </button>
+                        <button class="action-btn" onclick="toggleResources('${room.id}')">
+                            <i class="fas fa-folder me-1"></i>資源
+                        </button>
+                        <button class="action-btn" onclick="deleteRoom('${room.id}')">
+                            <i class="fas fa-trash me-1"></i>刪除
+                        </button>
+                    </div>
+                    
+                    <div class="room-resources" id="resources-${room.id}">
+                        <h6>聊天室資源</h6>
+                        <div class="resource-list" id="resource-list-${room.id}">
+                            <div class="text-center text-muted">載入中...</div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function toggleResources(roomId) {
+            const resourcesDiv = $(`#resources-${roomId}`);
+            
+            if (resourcesDiv.hasClass('show')) {
+                resourcesDiv.removeClass('show');
+            } else {
+                resourcesDiv.addClass('show');
+                loadRoomResources(roomId);
+            }
+        }
+        
+        function loadRoomResources(roomId) {
+            $.get(`/api/room/${roomId}/resources`, function(resources) {
+                const container = $(`#resource-list-${roomId}`);
+                container.empty();
+                
+                if (resources.length === 0) {
+                    container.html('<div class="text-center text-muted">暫無資源</div>');
+                    return;
+                }
+                
+                resources.forEach(resource => {
+                    const resourceItem = $(`
+                        <div class="resource-item">
+                            <i class="fas ${getResourceIcon(resource.type)} resource-icon"></i>
+                            <div class="resource-info">
+                                <div class="resource-name">${resource.name}</div>
+                                <div class="resource-meta">
+                                    上傳者: ${resource.uploaded_by} | ${new Date(resource.uploaded_at).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    container.append(resourceItem);
+                });
+            });
+        }
+        
+        function getResourceIcon(type) {
+            const icons = {
+                'image': 'fa-image text-success',
+                'document': 'fa-file-alt text-primary',
+                'file': 'fa-file text-secondary',
+                'link': 'fa-link text-info'
+            };
+            return icons[type] || 'fa-file text-secondary';
+        }
+        
+        function filterRooms() {
+            const searchTerm = $('#search-rooms').val().toLowerCase();
+            const sortBy = $('#sort-rooms').val();
+            const filterType = $('#filter-type').val();
+            
+            $('.room-card').each(function() {
+                const card = $(this);
+                const roomName = card.data('room-name');
+                const isPublic = card.find('.badge').hasClass('bg-success');
+                
+                // 搜尋過濾
+                let showCard = roomName.includes(searchTerm);
+                
+                // 類型過濾
+                if (filterType === 'public' && !isPublic) showCard = false;
+                if (filterType === 'private' && isPublic) showCard = false;
+                
+                card.toggle(showCard);
+            });
+        }
+        
+        function createNewRoom() {
+            $('#createRoomModal').modal('show');
+        }
+        
+        function submitCreateRoom() {
+            const name = $('#room-name').val().trim();
+            const description = $('#room-description').val().trim();
+            const isPublic = $('#room-public').is(':checked');
+            
+            if (!name) {
+                alert('請輸入聊天室名稱');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/create_room',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    name: name,
+                    description: description,
+                    is_public: isPublic
+                }),
+                success: function(response) {
+                    $('#createRoomModal').modal('hide');
+                    $('#create-room-form')[0].reset();
+                    alert('聊天室創建成功！');
+                    loadRooms();
+                },
+                error: function() {
+                    alert('創建失敗，請稍後再試');
+                }
+            });
+        }
+        
+        function deleteRoom(roomId) {
+            if (!confirm('確定要刪除此聊天室嗎？此操作無法復原。')) {
+                return;
+            }
+            
+            $.ajax({
+                url: `/api/room/${roomId}`,
+                method: 'DELETE',
+                success: function() {
+                    alert('聊天室已刪除');
+                    loadRooms();
+                },
+                error: function() {
+                    alert('刪除失敗，請稍後再試');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

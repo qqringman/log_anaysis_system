@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ room.name }} - 聊天室</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .chat-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+        
+        .chat-body {
+            display: flex;
+            height: 600px;
+        }
+        
+        .users-sidebar {
+            width: 250px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .chat-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .messages-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fff;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .message.own {
+            background: #e3f2fd;
+            margin-left: 20%;
+        }
+        
+        .message .user-name {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .message .timestamp {
+            font-size: 0.8rem;
+            color: #6c757d;
+            float: right;
+        }
+        
+        .input-area {
+            padding: 20px;
+            border-top: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+        
+        .user-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-item:hover {
+            background: #e9ecef;
+        }
+        
+        .user-item.online::before {
+            content: '●';
+            color: #28a745;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h3><i class="fas fa-comments me-2"></i>{{ room.name }}</h3>
+            <p class="mb-0">{{ room.description }}</p>
+        </div>
+        
+        <div class="chat-body">
+            <div class="users-sidebar">
+                <h5>線上用戶</h5>
+                <div id="users-list"></div>
+            </div>
+            
+            <div class="chat-main">
+                <div class="messages-area" id="messages-area">
+                    <!-- 訊息將動態載入 -->
+                </div>
+                
+                <div class="input-area">
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="message-input" placeholder="輸入訊息...">
+                        <button class="btn btn-primary" onclick="sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="uploadFile()">
+                            <i class="fas fa-paperclip me-1"></i>檔案
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="createPoll()">
+                            <i class="fas fa-poll me-1"></i>投票
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="createWheel()">
+                            <i class="fas fa-dice me-1"></i>轉盤
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const roomId = '{{ room.id }}';
+        const roomName = '{{ room.name }}';
+        let socket = null;
+        let userName = '';
+        
+        $(document).ready(function() {
+            userName = prompt('請輸入您的名稱：') || `Guest_${Math.floor(Math.random() * 1000)}`;
+            initSocket();
+            
+            $('#message-input').on('keypress', function(e) {
+                if (e.which === 13) {
+                    sendMessage();
+                }
+            });
+        });
+        
+        function initSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                socket.emit('set_username', { username: userName });
+                socket.emit('join_room', { room_id: roomId });
+            });
+            
+            socket.on('joined_room', function(data) {
+                loadMessages(data.history);
+                updateUsersList(data.room_users);
+            });
+            
+            socket.on('new_message', function(data) {
+                displayMessage(data);
+            });
+            
+            socket.on('user_joined_room', function(data) {
+                updateUsersList(data.room_users);
+                displaySystemMessage(`${data.user_name} 加入了聊天室`);
+            });
+            
+            socket.on('user_left_room', function(data) {
+                updateUsersList(data.room_users);
+                displaySystemMessage(`${data.user_name} 離開了聊天室`);
+            });
+        }
+        
+        function sendMessage() {
+            const message = $('#message-input').val().trim();
+            if (!message) return;
+            
+            socket.emit('send_message', {
+                room_id: roomId,
+                message: message,
+                message_type: 'text'
+            });
+            
+            $('#message-input').val('');
+        }
+        
+        function displayMessage(data) {
+            const isOwn = data.user_name === userName;
+            const messageHtml = `
+                <div class="message ${isOwn ? 'own' : ''}">
+                    <div class="user-name">${data.user_name}</div>
+                    <div class="timestamp">${data.timestamp}</div>
+                    <div>${data.message}</div>
+                </div>
+            `;
+            
+            $('#messages-area').append(messageHtml);
+            $('#messages-area').scrollTop($('#messages-area')[0].scrollHeight);
+        }
+        
+        function displaySystemMessage(message) {
+            const messageHtml = `
+                <div class="text-center text-muted small my-2">
+                    <i class="fas fa-info-circle me-1"></i>${message}
+                </div>
+            `;
+            $('#messages-area').append(messageHtml);
+        }
+        
+        function loadMessages(history) {
+            $('#messages-area').empty();
+            history.forEach(msg => displayMessage(msg));
+        }
+        
+        function updateUsersList(users) {
+            const usersList = $('#users-list');
+            usersList.empty();
+            
+            users.forEach(user => {
+                usersList.append(`
+                    <div class="user-item online">
+                        ${user.name}
+                    </div>
+                `);
+            });
+        }
+        
+        function uploadFile() {
+            // 實現檔案上傳功能
+            alert('檔案上傳功能開發中...');
+        }
+        
+        function createPoll() {
+            // 實現投票功能
+            alert('投票功能開發中...');
+        }
+        
+        function createWheel() {
+            // 實現轉盤功能
+            alert('轉盤功能開發中...');
+        }
+    </script>
+</body>
+</html>

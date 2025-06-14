@@ -1,0 +1,151 @@
+# Enhanced Log 分析平台 v6 - 完整專案結構
+
+## 📦 專案檔案清單
+
+請按照以下結構創建專案目錄和檔案：
+
+```
+enhanced-log-analysis-v6/
+│
+├── 📄 app.py                          # 主應用程式 (已提供)
+├── 📄 requirements.txt                # Python 依賴清單 (已提供)
+├── 📄 README.md                       # 專案說明文件 (已提供)
+├── 📄 run.sh                          # Linux/macOS 啟動腳本 (已提供)
+├── 📄 run.bat                         # Windows 啟動腳本 (已提供)
+│
+├── 📁 templates/                      # HTML 模板目錄
+│   ├── 📄 enhanced_index_v2.html      # 主頁面模板 (已提供)
+│   ├── 📄 room.html                   # 獨立聊天室頁面 (已提供)
+│   ├── 📄 room_manager.html           # 聊天室管理中心 (已提供)
+│   ├── 📄 analysis_report.html        # 分析報告頁面 (已提供)
+│   ├── 📄 shared_report.html          # 分享報告頁面 (已提供)
+│   └── 📄 enhanced_file_viewer.html   # 檔案檢視器 (已提供)
+│
+├── 📁 static/                         # 靜態資源目錄
+│   ├── 📁 js/
+│   │   └── 📄 enhanced-app-v6.js      # 主要 JavaScript 檔案 (已提供)
+│   └── 📁 css/
+│       └── 📄 custom-styles.css       # 自定義樣式檔案 (已提供)
+│
+├── 📁 uploads/                        # 上傳檔案目錄 (需手動創建)
+│   ├── 📁 chat/                       # 聊天室檔案存放目錄
+│   ├── 📁 archives/                   # 壓縮檔案存放目錄
+│   └── 📄 keywords_sample.csv         # 關鍵字範例檔案 (已提供)
+│
+└── 📄 chat_data.db                    # SQLite 資料庫 (自動生成)
+```
+
+## 🛠️ 設置步驟
+
+### 1. 創建專案目錄
+```bash
+mkdir enhanced-log-analysis-v6
+cd enhanced-log-analysis-v6
+```
+
+### 2. 創建目錄結構
+```bash
+# 創建模板目錄
+mkdir templates
+
+# 創建靜態資源目錄
+mkdir -p static/js
+mkdir -p static/css
+
+# 創建上傳目錄
+mkdir -p uploads/chat
+mkdir -p uploads/archives
+```
+
+### 3. 放置檔案
+
+將提供的檔案放置到對應的目錄中：
+
+1. **根目錄檔案**：
+   - `app.py` → 專案根目錄
+   - `requirements.txt` → 專案根目錄
+   - `README.md` → 專案根目錄
+   - `run.sh` → 專案根目錄 (Linux/macOS)
+   - `run.bat` → 專案根目錄 (Windows)
+
+2. **模板檔案** (放到 `templates/` 目錄)：
+   - `enhanced_index_v2.html`
+   - `room.html`
+   - `room_manager.html`
+   - `analysis_report.html`
+   - `shared_report.html`
+   - `enhanced_file_viewer.html`
+
+3. **JavaScript 檔案** (放到 `static/js/` 目錄)：
+   - `enhanced-app-v6.js`
+
+4. **CSS 檔案** (放到 `static/css/` 目錄)：
+   - `custom-styles.css`
+
+5. **範例檔案** (放到 `uploads/` 目錄)：
+   - `keywords_sample.csv`
+
+### 4. 設置執行權限 (Linux/macOS)
+```bash
+chmod +x run.sh
+```
+
+### 5. 啟動應用
+
+**Linux/macOS:**
+```bash
+./run.sh
+```
+
+**Windows:**
+```cmd
+run.bat
+```
+
+**或手動啟動:**
+```bash
+# 安裝依賴
+pip install -r requirements.txt
+
+# 啟動應用
+python app.py
+```
+
+## ✅ 檢查清單
+
+確保以下檔案都已正確放置：
+
+- [ ] app.py
+- [ ] requirements.txt
+- [ ] templates/enhanced_index_v2.html
+- [ ] templates/room.html
+- [ ] templates/room_manager.html
+- [ ] templates/analysis_report.html
+- [ ] templates/shared_report.html
+- [ ] templates/enhanced_file_viewer.html
+- [ ] static/js/enhanced-app-v6.js
+- [ ] static/css/custom-styles.css
+- [ ] uploads/keywords_sample.csv
+- [ ] 所有目錄都已創建
+
+## 🎯 快速開始
+
+1. 確保所有檔案都已正確放置
+2. 執行啟動腳本 (`run.sh` 或 `run.bat`)
+3. 開啟瀏覽器訪問 `http://localhost:5000`
+4. 上傳關鍵字檔案開始分析
+
+## ⚠️ 注意事項
+
+- 確保 Python 3.8+ 已安裝
+- Windows 用戶可能需要安裝 Visual C++ Build Tools
+- 第一次執行時會自動創建 `chat_data.db` 資料庫
+- 確保 `uploads` 目錄有寫入權限
+
+## 🆘 需要幫助？
+
+如果遇到問題，請檢查：
+1. 所有檔案是否都在正確的位置
+2. Python 版本是否符合要求
+3. 所有依賴是否已正確安裝
+4. 目錄權限是否正確設置

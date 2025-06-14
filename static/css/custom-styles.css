@@ -1,0 +1,408 @@
+/* Enhanced Log 分析平台 v6 - 自定義樣式 */
+
+/* 動畫效果 */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* 進度條動畫 */
+.progress-bar-animated {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255,255,255,.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255,255,255,.15) 50%,
+        rgba(255,255,255,.15) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    0% {
+        background-position: 1rem 0;
+    }
+    100% {
+        background-position: 0 0;
+    }
+}
+
+/* 載入動畫 */
+.loading-dots {
+    display: inline-block;
+    width: 80px;
+    height: 20px;
+}
+
+.loading-dots:after {
+    content: ' .';
+    animation: dots 1s steps(5, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% {
+        content: ' .';
+    }
+    40% {
+        content: ' ..';
+    }
+    60% {
+        content: ' ...';
+    }
+    80%, 100% {
+        content: ' ....';
+    }
+}
+
+/* 檔案圖標樣式 */
+.file-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 1.2rem;
+}
+
+.file-icon.directory {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    color: #e17055;
+}
+
+.file-icon.log-file {
+    background: linear-gradient(135deg, #74b9ff 0%, #a29bfe 100%);
+    color: #0984e3;
+}
+
+.file-icon.parent {
+    background: linear-gradient(135deg, #dfe6e9 0%, #b2bec3 100%);
+    color: #636e72;
+}
+
+/* 拖曳效果 */
+.dragover {
+    background-color: rgba(102, 126, 234, 0.1) !important;
+    border: 2px dashed #667eea !important;
+}
+
+.dragover::after {
+    content: '放開以上傳檔案';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    color: #667eea;
+    font-weight: bold;
+}
+
+/* 關鍵字模組樣式 */
+.keyword-module {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #667eea;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.keyword-module:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.keyword-module .delete-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #dc3545;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0;
+}
+
+.keyword-module:hover .delete-btn {
+    opacity: 1;
+}
+
+.keyword-module .delete-btn:hover {
+    background: #c82333;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* 統計卡片樣式 */
+.stats-card {
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stats-card:hover::before {
+    opacity: 1;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* 計數器動畫 */
+.counter-number {
+    display: inline-block;
+    animation: fadeInUp 0.5s ease;
+}
+
+/* 模組結果卡片 */
+.module-result-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.module-result-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+}
+
+.module-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.module-body {
+    padding: 20px;
+}
+
+/* 匹配項目樣式 */
+.match-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.match-item:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+}
+
+.line-number {
+    color: #6c757d;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.match-content {
+    flex: 1;
+    word-break: break-word;
+}
+
+.keyword-tag {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #667eea;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+/* 通知樣式 */
+.notification-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    padding: 15px;
+    animation: slideInRight 0.3s ease;
+    z-index: 9999;
+}
+
+.notification-toast.success {
+    border-left: 4px solid #28a745;
+}
+
+.notification-toast.error {
+    border-left: 4px solid #dc3545;
+}
+
+.notification-toast.warning {
+    border-left: 4px solid #ffc107;
+}
+
+.notification-toast.info {
+    border-left: 4px solid #17a2b8;
+}
+
+/* 手機版樣式調整 */
+@media (max-width: 768px) {
+    .mobile-view .dashboard-block {
+        margin-bottom: 15px;
+        border-radius: 15px;
+    }
+    
+    .mobile-view .card-modern {
+        border-radius: 15px;
+    }
+    
+    .mobile-view .hero-section {
+        padding: 2rem 1rem;
+    }
+    
+    .mobile-view .floating-actions {
+        bottom: 70px;
+        right: 10px;
+    }
+    
+    .mobile-view .floating-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 0.9rem;
+    }
+    
+    .mobile-view .minimized-blocks {
+        bottom: 70px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .mobile-view .layout-controls,
+    .mobile-view .device-toggle {
+        position: fixed;
+        top: auto;
+        bottom: 10px;
+        right: 10px;
+        z-index: 100;
+    }
+    
+    .mobile-view .device-toggle {
+        right: auto;
+        left: 10px;
+    }
+}
+
+/* 深色模式支援 */
+@media (prefers-color-scheme: dark) {
+    body.dark-mode {
+        background: #1a1a1a;
+        color: #f8f9fa;
+    }
+    
+    .dark-mode .card-modern {
+        background: rgba(30, 30, 30, 0.95);
+        color: #f8f9fa;
+    }
+    
+    .dark-mode .file-item {
+        background: #2d2d2d;
+        color: #f8f9fa;
+    }
+    
+    .dark-mode .file-item:hover {
+        background: #3d3d3d;
+    }
+    
+    .dark-mode .btn-light {
+        background: #3d3d3d;
+        color: #f8f9fa;
+        border-color: #4d4d4d;
+    }
+}
+
+/* 列印樣式 */
+@media print {
+    .floating-actions,
+    .floating-btn,
+    .minimized-blocks,
+    .layout-controls,
+    .device-toggle,
+    .drag-handle,
+    .collapse-btn {
+        display: none !important;
+    }
+    
+    .card-modern {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+        page-break-inside: avoid;
+    }
+    
+    body {
+        background: white;
+    }
+}

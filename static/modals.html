@@ -1,0 +1,400 @@
+<!-- Enhanced Log 分析平台 v6 - 模態框模板 -->
+<!-- static/modals.html -->
+
+<!-- 聊天室模態框 -->
+<div class="modal fade" id="chatModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-comments me-2"></i>聊天室
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row chat-interface">
+                    <div class="col-md-3 online-users">
+                        <h6>線上用戶</h6>
+                        <div id="online-users-list">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-spinner fa-spin"></i> 載入中...
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>聊天室列表</h6>
+                        <div id="room-list">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-spinner fa-spin"></i> 載入中...
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm w-100 mt-2" onclick="chatManager.createNewRoom()">
+                            <i class="fas fa-plus me-1"></i>創建新聊天室
+                        </button>
+                    </div>
+                    <div class="col-md-9">
+                        <div id="chat-area" style="display: none;">
+                            <div class="chat-header mb-3">
+                                <h6 id="current-room-name">請選擇聊天室</h6>
+                            </div>
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="text-center text-muted p-5">
+                                    <i class="fas fa-comments fa-3x mb-3"></i>
+                                    <p>請選擇一個聊天室開始聊天</p>
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="chat-input" 
+                                           placeholder="輸入訊息... (使用 @ 提及用戶)">
+                                    <button class="btn btn-primary" id="send-message-btn" onclick="chatManager.sendMessage()">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="chatManager.uploadChatFile()">
+                                        <i class="fas fa-paperclip me-1"></i>檔案
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="chatManager.createPoll()">
+                                        <i class="fas fa-poll me-1"></i>投票
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="chatManager.useLuckyWheel()">
+                                        <i class="fas fa-dice me-1"></i>轉盤
+                                    </button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="broadcastManager.showBroadcastHistory()">
+                                        <i class="fas fa-history me-1"></i>廣播歷史
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="chat-placeholder" class="text-center py-5">
+                            <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">歡迎使用聊天室</h5>
+                            <p class="text-muted">請從左側選擇或創建一個聊天室開始</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 幸運轉盤模態框 -->
+<div class="modal fade" id="lotteryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-dice me-2"></i>幸運轉盤
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="lottery-wheel" class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">載入中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 廣播模態框 -->
+<div class="modal fade" id="broadcastModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-broadcast-tower me-2"></i>廣播系統
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="broadcast-form">
+                    <div class="mb-3">
+                        <label class="form-label">廣播訊息</label>
+                        <div class="input-group">
+                            <textarea class="form-control" id="broadcast-message" rows="4" 
+                                      placeholder="輸入要廣播的訊息..."></textarea>
+                            <button class="btn btn-outline-secondary" type="button" 
+                                    onclick="broadcastManager.showBroadcastTemplates()" 
+                                    title="選擇模板">
+                                <i class="fas fa-file-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">優先級</label>
+                        <select class="form-select" id="broadcast-priority">
+                            <option value="info">
+                                <i class="fas fa-info-circle"></i> 一般
+                            </option>
+                            <option value="warning">
+                                <i class="fas fa-exclamation-triangle"></i> 警告
+                            </option>
+                            <option value="danger">
+                                <i class="fas fa-exclamation-circle"></i> 緊急
+                            </option>
+                        </select>
+                    </div>
+                    <div class="broadcast-preview">
+                        <h6>預覽</h6>
+                        <div id="broadcast-preview-content">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-broadcast-tower fa-2x mb-2"></i>
+                                <p>輸入訊息後預覽將顯示在這裡</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="broadcastManager.sendBroadcast()">
+                    <i class="fas fa-paper-plane me-1"></i>發送廣播
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 聊天室管理模態框 -->
+<div class="modal fade" id="roomManagerModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog me-2"></i>聊天室管理中心
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="room-manager-content">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">載入中...</span>
+                        </div>
+                        <p class="mt-3 text-muted">載入聊天室資訊中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 分享管理模態框 -->
+<div class="modal fade" id="shareManagerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-share-alt me-2"></i>分享管理中心
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="share-manager-content">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">載入中...</span>
+                        </div>
+                        <p class="mt-3 text-muted">載入分享記錄中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 樣式補充 -->
+<style>
+/* 聊天室樣式 */
+.online-users {
+    border-right: 1px solid #dee2e6;
+    padding: 15px;
+    background: #f8f9fa;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.user-item {
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.user-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.user-item.online::before {
+    content: '●';
+    color: #28a745;
+    margin-right: 5px;
+}
+
+.user-item.active {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+/* 轉盤樣式 */
+.wheel-container {
+    position: relative;
+    display: inline-block;
+    margin: 20px auto;
+}
+
+.wheel {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    position: relative;
+    overflow: hidden;
+    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+
+.wheel-segment {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    transform-origin: right bottom;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* 廣播預覽樣式 */
+.broadcast-preview {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+/* 投票樣式 */
+.poll-container {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 15px 0;
+}
+
+.poll-option {
+    position: relative;
+    padding: 12px;
+    margin: 8px 0;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.poll-option:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.poll-option .vote-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: var(--primary-gradient);
+    opacity: 0.2;
+    transition: width 0.5s ease;
+}
+
+.poll-option .vote-count {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* 分享項目樣式 */
+.share-item {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.share-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.share-link {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+.share-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+/* 聊天室卡片樣式 */
+.room-card {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.room-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.resource-item:hover {
+    background: #e9ecef;
+}
+
+.resource-icon {
+    font-size: 1.5rem;
+    margin-right: 10px;
+    color: #6c757d;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+</style>

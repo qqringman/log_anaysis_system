@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>檔案檢視器 - Enhanced Log 分析平台</title>
+    <title>增強檔案檢視器 - {{ file_name }}</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
@@ -15,1284 +15,1462 @@
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --editor-bg: #1e1e1e;
-            --editor-fg: #d4d4d4;
-            --line-number-bg: #2d2d30;
-            --line-number-fg: #858585;
-            --highlight-bg: #ffeaa7;
-            --highlight-fg: #2d3436;
-            --search-highlight: #ff6b6b;
-            --current-line-bg: rgba(255, 255, 255, 0.1);
-            --header-height: 60px;
-            --status-height: 30px;
-        }
-
-        * {
-            box-sizing: border-box;
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            --warning-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            --line-highlight: rgba(255, 193, 7, 0.3);
+            --line-target: rgba(220, 53, 69, 0.2);
+            --search-highlight: rgba(255, 235, 59, 0.8);
+            --bookmark-color: #28a745;
+            --shadow-light: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-medium: 0 8px 25px rgba(0,0,0,0.12);
+            --shadow-heavy: 0 15px 35px rgba(0,0,0,0.1);
         }
 
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-size: 14px;
             margin: 0;
-            padding: 0;
-            background: var(--editor-bg);
-            color: var(--editor-fg);
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            overflow: hidden;
-            height: 100vh;
+            padding-bottom: 60px;
+            position: relative;
         }
 
-        /* Modern Header Bar */
-        .file-viewer-header {
-            background: linear-gradient(135deg, #2d2d30 0%, #1e1e1e 100%);
-            border-bottom: 1px solid #3e3e42;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: var(--header-height);
-            position: fixed;
+        .file-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-header::before {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            z-index: 100;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
         }
 
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+        .file-header .container-fluid {
+            position: relative;
+            z-index: 1;
         }
 
-        .file-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .file-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #fff;
-            letter-spacing: 0.5px;
-        }
-
-        .file-path {
-            font-size: 0.85rem;
-            color: #858585;
-            max-width: 500px;
+        .file-viewer {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow-medium);
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            margin-top: 1.5rem;
+            position: relative;
         }
 
-        .header-actions {
+        .toolbar {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1rem;
+            border-bottom: 2px solid #dee2e6;
             display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: #d4d4d4;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            display: inline-flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            flex-wrap: wrap;
+            gap: 0.75rem;
         }
 
-        .action-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-            transform: translateY(-1px);
-        }
-
-        .action-btn.active {
-            background: var(--primary-gradient);
-            color: #fff;
-        }
-
-        /* Modern Search Bar */
-        .search-bar {
-            position: fixed;
-            top: 70px;
-            right: 20px;
-            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
-            border-radius: 12px;
-            padding: 12px 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            z-index: 100;
-            display: none;
-            animation: slideIn 0.3s ease;
-            border: 1px solid #3e3e42;
-        }
-
-        .search-bar.show {
+        .toolbar-group {
             display: flex;
-            gap: 10px;
+            gap: 0.75rem;
             align-items: center;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 350px;
+            min-width: 250px;
         }
 
         .search-input {
-            background: #1e1e1e;
-            border: 1px solid #3e3e42;
-            color: #d4d4d4;
-            padding: 8px 14px;
-            border-radius: 6px;
-            width: 300px;
-            font-size: 0.9rem;
+            padding-right: 3rem;
+            border-radius: 25px;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
         }
 
         .search-input:focus {
-            outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
         }
 
-        .search-stats {
-            font-size: 0.85rem;
-            color: #858585;
-            min-width: 60px;
-            text-align: center;
-        }
-
-        /* Editor Container */
-        .editor-container {
-            display: flex;
-            height: calc(100vh - var(--header-height) - var(--status-height));
-            position: relative;
-            margin-top: var(--header-height);
-        }
-
-        /* Line Numbers */
-        .line-numbers {
-            background: var(--line-number-bg);
-            color: var(--line-number-fg);
-            padding: 20px 0;
-            min-width: 80px;
-            text-align: right;
-            user-select: none;
-            overflow: hidden;
-            border-right: 1px solid #3e3e42;
-            font-size: 0.9rem;
-        }
-
-        .line-number {
-            padding: 2px 20px 2px 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            height: 20px;
-            line-height: 20px;
-            position: relative;
-        }
-
-        .line-number:hover {
-            background: rgba(102, 126, 234, 0.2);
-            color: #667eea;
-        }
-
-        .line-number.current {
-            background: rgba(102, 126, 234, 0.3);
-            color: #fff;
-            font-weight: bold;
-        }
-
-        .line-number:hover::after {
-            content: '→';
+        .search-info {
             position: absolute;
-            right: 5px;
-            opacity: 0.7;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: #6c757d;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
         }
 
-        /* Code Content */
-        .code-content {
-            flex: 1;
-            overflow: auto;
-            padding: 20px;
+        .btn-modern {
+            border-radius: 25px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn-gradient-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .btn-gradient-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+        }
+
+        .btn-gradient-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-gradient-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .line-container {
+            max-height: 75vh;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            background: #fafafa;
             position: relative;
-            background: var(--editor-bg);
+            scroll-behavior: smooth;
         }
 
         .code-line {
-            white-space: pre;
-            padding: 2px 0;
-            height: 20px;
-            line-height: 20px;
+            display: flex;
+            border-bottom: 1px solid #eee;
+            transition: all 0.2s ease;
             position: relative;
-            transition: background 0.1s ease;
+            min-height: 22px;
         }
 
         .code-line:hover {
-            background: var(--current-line-bg);
+            background: rgba(102, 126, 234, 0.05);
         }
 
-        .code-line.highlighted {
-            background: rgba(102, 126, 234, 0.1);
-            box-shadow: inset 3px 0 0 #667eea;
-        }
-
-        /* Text Highlights */
-        .highlight {
-            background: var(--highlight-bg);
-            color: var(--highlight-fg);
-            padding: 1px 3px;
-            border-radius: 3px;
+        .line-number {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-right: 3px solid #dee2e6;
+            padding: 6px 12px;
+            text-align: right;
+            min-width: 90px;
+            color: #6c757d;
             font-weight: 600;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            user-select: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .line-number:hover {
+            background: var(--primary-gradient);
+            color: white;
+            text-decoration: none;
+            transform: scale(1.02);
+        }
+
+        .line-number.bookmark {
+            background: var(--bookmark-color) !important;
+            color: white !important;
+            font-weight: bold;
+            box-shadow: var(--shadow-light);
+        }
+
+        .line-number.bookmark::before {
+            content: '📌';
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+        }
+
+        .line-number.jump-point {
+            background: var(--warning-gradient) !important;
+            color: white !important;
+            font-weight: bold;
+        }
+
+        .line-number.jump-point::after {
+            content: '🎯';
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+        }
+
+        .line-content {
+            flex: 1;
+            padding: 6px 15px;
+            background: white;
+            white-space: pre-wrap;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            position: relative;
+        }
+
+        .line-target {
+            background: var(--line-target) !important;
+            border-left: 4px solid #dc3545;
+            animation: targetPulse 2s ease-in-out;
+        }
+
+        .line-target .line-number {
+            background: var(--danger-gradient);
+            color: white;
+            font-weight: bold;
+        }
+
+        .line-target .line-content {
+            background: var(--line-target);
+            font-weight: 500;
+        }
+
+        @keyframes targetPulse {
+            0%, 100% { background: var(--line-target); }
+            50% { background: rgba(220, 53, 69, 0.4); }
         }
 
         .search-highlight {
-            background: var(--search-highlight);
-            color: #fff;
-            padding: 1px 3px;
+            background: var(--search-highlight) !important;
+            color: #000 !important;
             border-radius: 3px;
-            animation: pulse 1s ease-in-out infinite;
+            padding: 1px 3px;
+            font-weight: bold;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            animation: highlightGlow 1s ease-in-out;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
+        .search-highlight.current {
+            background: #ff5722 !important;
+            color: white !important;
+            animation: currentHighlight 1s ease-in-out infinite alternate;
         }
 
-        /* Color Markers */
-        .color-marker-red { 
-            background: rgba(255, 107, 107, 0.3);
-            padding: 1px 3px;
-            border-radius: 3px;
-        }
-        .color-marker-green { 
-            background: rgba(46, 213, 115, 0.3);
-            padding: 1px 3px;
-            border-radius: 3px;
-        }
-        .color-marker-blue { 
-            background: rgba(78, 205, 196, 0.3);
-            padding: 1px 3px;
-            border-radius: 3px;
-        }
-        .color-marker-yellow { 
-            background: rgba(255, 234, 167, 0.3);
-            padding: 1px 3px;
-            border-radius: 3px;
-        }
-        .color-marker-purple { 
-            background: rgba(165, 94, 234, 0.3);
-            padding: 1px 3px;
-            border-radius: 3px;
+        @keyframes highlightGlow {
+            0% { box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+            50% { box-shadow: 0 0 10px rgba(255, 235, 59, 0.8); }
+            100% { box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
         }
 
-        /* Loading Indicators */
-        .loading-indicator {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
-            padding: 12px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            display: none;
-            z-index: 10;
-            border: 1px solid #3e3e42;
+        @keyframes currentHighlight {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
         }
 
-        .loading-indicator.top {
-            top: 10px;
+        /* 右鍵選單highlight顏色 */
+        .highlight-color-1 { background: rgba(255, 235, 238, 0.9) !important; border-left: 3px solid #e91e63; }
+        .highlight-color-2 { background: rgba(232, 245, 233, 0.9) !important; border-left: 3px solid #4caf50; }
+        .highlight-color-3 { background: rgba(227, 242, 253, 0.9) !important; border-left: 3px solid #2196f3; }
+        .highlight-color-4 { background: rgba(255, 243, 224, 0.9) !important; border-left: 3px solid #ff9800; }
+        .highlight-color-5 { background: rgba(243, 229, 245, 0.9) !important; border-left: 3px solid #9c27b0; }
+        .highlight-color-6 { background: rgba(255, 249, 196, 0.9) !important; border-left: 3px solid #ffeb3b; }
+        .highlight-color-7 { background: rgba(224, 247, 250, 0.9) !important; border-left: 3px solid #00bcd4; }
+        .highlight-color-8 { background: rgba(248, 231, 28, 0.9) !important; border-left: 3px solid #cddc39; }
+        .highlight-color-9 { background: rgba(230, 238, 156, 0.9) !important; border-left: 3px solid #8bc34a; }
+        .highlight-color-10 { background: rgba(255, 204, 188, 0.9) !important; border-left: 3px solid #ff5722; }
+
+        .status-bar {
+            background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+            color: white;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
         }
 
-        .loading-indicator.bottom {
-            bottom: 10px;
-        }
-
-        .loading-indicator.show {
+        .status-item {
+            margin-right: 1.5rem;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 0.5rem;
         }
 
-        .loading-indicator i {
+        .status-item i {
+            color: #ffc107;
+        }
+
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--shadow-heavy);
+            padding: 0.5rem 0;
+            z-index: 10000;
+            min-width: 220px;
+            backdrop-filter: blur(10px);
+            animation: contextMenuSlide 0.2s ease-out;
+        }
+
+        @keyframes contextMenuSlide {
+            0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .context-menu-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .context-menu-item:hover {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #667eea;
+        }
+
+        .context-menu-item.disabled {
+            color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #dee2e6, transparent);
+            margin: 0.5rem 0;
+        }
+
+        .color-preview {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid #dee2e6;
+        }
+
+        .range-selector {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem;
+            box-shadow: var(--shadow-light);
+            backdrop-filter: blur(10px);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        /* Modern Context Menu */
-        .context-menu {
+        .compact-info {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            display: inline-block;
+        }
+
+        .jump-navigation {
             position: fixed;
-            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
-            border: 1px solid #3e3e42;
-            border-radius: 8px;
-            padding: 4px 0;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            z-index: 1000;
-            display: none;
-            min-width: 200px;
-        }
-
-        .context-menu-item {
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #d4d4d4;
+            bottom: 80px;
+            left: 20px;
+            background: var(--warning-gradient);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            box-shadow: var(--shadow-medium);
             font-size: 0.9rem;
-        }
-
-        .context-menu-item:hover {
-            background: rgba(102, 126, 234, 0.2);
-            color: #fff;
-        }
-
-        .context-menu-item i {
-            width: 16px;
-            text-align: center;
-        }
-
-        .context-menu-divider {
-            border-top: 1px solid #3e3e42;
-            margin: 4px 0;
-        }
-
-        /* Modern Jump Dialog */
-        .jump-dialog {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            z-index: 200;
+            z-index: 999;
             display: none;
-            border: 1px solid #3e3e42;
+            animation: slideInLeft 0.3s ease-out;
         }
 
-        .jump-dialog.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
+        @keyframes slideInLeft {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(0); }
         }
 
-        .jump-dialog h5 {
-            margin: 0 0 16px 0;
-            color: #fff;
-            font-weight: 500;
-        }
-
-        .jump-input {
-            background: #1e1e1e;
-            border: 1px solid #3e3e42;
-            color: #d4d4d4;
-            padding: 12px 16px;
-            border-radius: 8px;
-            width: 300px;
-            font-size: 1.1rem;
-            margin-top: 10px;
-        }
-
-        .jump-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-        }
-
-        .dialog-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        /* Modern Status Bar */
-        .status-bar {
+        .copyright-footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(135deg, #007acc 0%, #005a9e 100%);
-            color: #fff;
-            padding: 5px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            height: var(--status-height);
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.8rem;
             z-index: 100;
         }
 
-        .status-left {
-            display: flex;
-            gap: 20px;
+        .copyright-footer i {
+            color: #e74c3c;
+            margin: 0 5px;
         }
 
-        .status-right {
-            display: flex;
-            gap: 20px;
-        }
-
-        .status-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* Animations */
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
+        /* 響應式調整 */
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
             }
-            to {
-                opacity: 1;
-                transform: translateX(0);
+            
+            .toolbar-group {
+                justify-content: center;
+                flex-wrap: wrap;
             }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -45%);
+            
+            .search-container {
+                max-width: 100%;
+                min-width: auto;
             }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%);
+            
+            .line-number {
+                min-width: 60px;
+                font-size: 12px;
+            }
+            
+            .file-header {
+                padding: 1rem 0;
+            }
+            
+            .file-header .display-6 {
+                font-size: 1.5rem;
             }
         }
 
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar {
+        /* 滾動條美化 */
+        .line-container::-webkit-scrollbar {
             width: 12px;
-            height: 12px;
         }
 
-        ::-webkit-scrollbar-track {
-            background: #1e1e1e;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #3e3e42;
+        .line-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
             border-radius: 6px;
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4e4e52;
+        .line-container::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 6px;
         }
 
-        /* Smooth scroll indicator */
-        .scroll-shadow-top,
-        .scroll-shadow-bottom {
-            position: absolute;
-            left: 0;
-            right: 0;
-            height: 20px;
-            pointer-events: none;
-            z-index: 5;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .scroll-shadow-top {
-            top: 0;
-            background: linear-gradient(to bottom, rgba(30, 30, 30, 0.8), transparent);
-        }
-
-        .scroll-shadow-bottom {
-            bottom: 0;
-            background: linear-gradient(to top, rgba(30, 30, 30, 0.8), transparent);
-        }
-
-        .scroll-shadow-top.visible,
-        .scroll-shadow-bottom.visible {
-            opacity: 1;
+        .line-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         }
     </style>
 </head>
 <body>
-    <!-- Modern Header -->
-    <div class="file-viewer-header">
-        <div class="header-left">
-            <button class="action-btn" onclick="window.history.back()">
-                <i class="fas fa-arrow-left"></i> 返回
-            </button>
-            <div class="file-info">
-                <div class="file-name" id="fileName">載入中...</div>
-                <div class="file-path" id="filePath" title=""></div>
+    <!-- 檔案標題區域 -->
+    <div class="file-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h4 class="mb-2 animate__animated animate__fadeInLeft">
+                        <i class="fas fa-file-code me-2"></i>{{ file_name }}
+                    </h4>
+                    <div class="compact-info animate__animated animate__fadeInLeft animate__delay-1s">
+                        <i class="fas fa-info-circle me-1"></i>
+                        {{ file_path }} | {{ result.total_lines }} 行 | 
+                        顯示: {{ result.start_line }}-{{ result.end_line }} | 
+                        目標: {{ result.target_line }}
+                    </div>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="animate__animated animate__fadeInRight">
+                        <button class="btn btn-outline-light btn-modern me-2" onclick="window.history.back()">
+                            <i class="fas fa-arrow-left me-1"></i>返回
+                        </button>
+                        <button class="btn btn-gradient-success btn-modern" onclick="exportFile()">
+                            <i class="fas fa-download me-1"></i>匯出檔案
+                        </button>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="header-actions">
-            <button class="action-btn" onclick="toggleSearch()" title="搜尋 (Ctrl+F)">
-                <i class="fas fa-search"></i> 搜尋
-            </button>
-            <button class="action-btn" onclick="showJumpDialog()" title="跳至行 (F2)">
-                <i class="fas fa-arrows-alt-v"></i> 跳至
-            </button>
-            <button class="action-btn" onclick="clearAllHighlights()" title="清除標記">
-                <i class="fas fa-eraser"></i> 清除
-            </button>
-            <button class="action-btn" onclick="downloadFile()" title="下載檔案">
-                <i class="fas fa-download"></i> 下載
-            </button>
         </div>
     </div>
 
-    <!-- Modern Search Bar -->
-    <div class="search-bar" id="searchBar">
-        <input type="text" class="search-input" id="searchInput" placeholder="搜尋文字..." autocomplete="off">
-        <button class="action-btn" onclick="searchPrev()" title="上一個 (Shift+F3)">
-            <i class="fas fa-chevron-up"></i>
-        </button>
-        <button class="action-btn" onclick="searchNext()" title="下一個 (F3)">
-            <i class="fas fa-chevron-down"></i>
-        </button>
-        <span class="search-stats" id="searchStats">0/0</span>
-        <button class="action-btn" onclick="closeSearch()" title="關閉 (Esc)">
-            <i class="fas fa-times"></i>
-        </button>
+    <div class="container-fluid">
+        <!-- 工具列 -->
+        <div class="file-viewer">
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="btn btn-gradient-primary btn-modern" onclick="scrollToTarget()">
+                        <i class="fas fa-crosshairs me-1"></i>目標行
+                    </button>
+                    <button class="btn btn-outline-info btn-modern" onclick="showRangeSelector()">
+                        <i class="fas fa-edit me-1"></i>選擇範圍
+                    </button>
+                    <button class="btn btn-outline-warning btn-modern" onclick="clearAllHighlights()">
+                        <i class="fas fa-eraser me-1"></i>清除高亮
+                    </button>
+                    <button class="btn btn-outline-secondary btn-modern" onclick="toggleJumpMode()" id="jump-mode-btn">
+                        <i class="fas fa-crosshairs me-1"></i>跳轉模式
+                    </button>
+                </div>
+                
+                <div class="toolbar-group">
+                    <div class="search-container">
+                        <input type="text" class="form-control search-input" 
+                               id="search-input" placeholder="搜尋文字 (Ctrl+F)">
+                        <div class="search-info" id="search-info">0 / 0</div>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-modern" onclick="findPrevious()" title="上一個">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-modern" onclick="findNext()" title="下一個">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+                
+                <div class="toolbar-group">
+                    <div class="input-group" style="width: 200px;">
+                        <input type="number" class="form-control" id="jump-line" 
+                               placeholder="跳轉行號" min="1" max="{{ result.total_lines }}">
+                        <button class="btn btn-gradient-primary" onclick="jumpToLine()">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 範圍選擇器 -->
+            <div id="range-selector" class="range-selector" style="display: none;">
+                <h6><i class="fas fa-edit me-2"></i>選擇顯示範圍</h6>
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="form-label">起始行</label>
+                        <input type="number" class="form-control" id="range-start" 
+                               min="1" max="{{ result.total_lines }}" value="{{ result.start_line }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">結束行</label>
+                        <input type="number" class="form-control" id="range-end" 
+                               min="1" max="{{ result.total_lines }}" value="{{ result.end_line }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">上下文行數</label>
+                        <input type="number" class="form-control" id="range-context" 
+                               min="0" max="500" value="200">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button class="btn btn-gradient-primary me-2" onclick="applyRange()">
+                            <i class="fas fa-check me-1"></i>套用
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="closeRangeSelector()">
+                            <i class="fas fa-times me-1"></i>取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 程式碼內容 -->
+            <div class="line-container" id="line-container">
+                <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                    <div class="loading-spinner mb-3"></div>
+                    <p>載入更多內容中...</p>
+                </div>
+                {% for line in result.lines %}
+                <div class="code-line {% if line.is_target %}line-target{% endif %}" 
+                     id="line-{{ line.line_number }}" data-line="{{ line.line_number }}">
+                    <div class="line-number" 
+                         onclick="handleLineClick({{ line.line_number }})"
+                         oncontextmenu="showLineContextMenu(event, {{ line.line_number }})"
+                         title="點擊設定書籤/跳轉點，右鍵更多選項">
+                        {{ line.line_number }}
+                    </div>
+                    <div class="line-content" oncontextmenu="showContentContextMenu(event)">{{ line.content if line.content else ' ' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- 狀態列 -->
+            <div class="status-bar">
+                <div class="d-flex align-items-center">
+                    <div class="status-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="status-line">第 {{ result.target_line }} 行</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-bookmark"></i>
+                        <span id="status-bookmarks">書籤: 0</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-search"></i>
+                        <span id="status-search">搜尋: 無</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-crosshairs"></i>
+                        <span id="status-jumps">跳轉點: 0</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="status-item">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="status-position">{{ result.start_line }}-{{ result.end_line }} / {{ result.total_lines }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Editor Container -->
-    <div class="editor-container">
-        <!-- Line Numbers -->
-        <div class="line-numbers" id="lineNumbers"></div>
-        
-        <!-- Code Content -->
-        <div class="code-content" id="codeContent">
-            <div class="scroll-shadow-top" id="scrollShadowTop"></div>
-            
-            <!-- Loading Indicator Top -->
-            <div class="loading-indicator top" id="loadingTop">
-                <i class="fas fa-spinner"></i>
-                <span>載入更多內容...</span>
-            </div>
-            
-            <!-- Content will be inserted here -->
-            
-            <!-- Loading Indicator Bottom -->
-            <div class="loading-indicator bottom" id="loadingBottom">
-                <i class="fas fa-spinner"></i>
-                <span>載入更多內容...</span>
-            </div>
-            
-            <div class="scroll-shadow-bottom" id="scrollShadowBottom"></div>
-        </div>
+    <!-- 跳轉導航 -->
+    <div id="jump-navigation" class="jump-navigation">
+        <i class="fas fa-crosshairs me-2"></i>
+        跳轉模式已啟用 - F2: 下一個 | Shift+F2: 上一個
     </div>
 
-    <!-- Modern Context Menu -->
-    <div class="context-menu" id="contextMenu">
-        <div class="context-menu-item" onclick="markColor('red')">
-            <i class="fas fa-circle" style="color: #ff6b6b;"></i> 標記紅色
-        </div>
-        <div class="context-menu-item" onclick="markColor('green')">
-            <i class="fas fa-circle" style="color: #2ed573;"></i> 標記綠色
-        </div>
-        <div class="context-menu-item" onclick="markColor('blue')">
-            <i class="fas fa-circle" style="color: #4ecdc4;"></i> 標記藍色
-        </div>
-        <div class="context-menu-item" onclick="markColor('yellow')">
-            <i class="fas fa-circle" style="color: #ffeaa7;"></i> 標記黃色
-        </div>
-        <div class="context-menu-item" onclick="markColor('purple')">
-            <i class="fas fa-circle" style="color: #a55eea;"></i> 標記紫色
-        </div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item" onclick="clearSelection()">
-            <i class="fas fa-eraser"></i> 清除此標記
-        </div>
-        <div class="context-menu-item" onclick="copySelection()">
-            <i class="fas fa-copy"></i> 複製選取文字
-        </div>
+    <!-- 右鍵選單 -->
+    <div id="context-menu" class="context-menu" style="display: none;">
+        <!-- 動態生成 -->
     </div>
 
-    <!-- Modern Jump Dialog -->
-    <div class="jump-dialog" id="jumpDialog">
-        <h5><i class="fas fa-arrows-alt-v me-2"></i>跳至指定行</h5>
-        <input type="number" class="jump-input" id="jumpInput" placeholder="輸入行號" min="1" autocomplete="off">
-        <div class="dialog-actions">
-            <button class="action-btn" onclick="closeJumpDialog()">取消</button>
-            <button class="action-btn active" onclick="jumpToLine()">
-                <i class="fas fa-check"></i> 跳至
-            </button>
-        </div>
-    </div>
-
-    <!-- Modern Status Bar -->
-    <div class="status-bar">
-        <div class="status-left">
-            <div class="status-item">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>行 <span id="currentLine">1</span> / <span id="totalLines">0</span></span>
-            </div>
-            <div class="status-item">
-                <i class="fas fa-file-alt"></i>
-                <span id="loadedRange">已載入: 0-0</span>
-            </div>
-            <div class="status-item" id="loadStatus">
-                <i class="fas fa-check-circle"></i>
-                <span>就緒</span>
-            </div>
-        </div>
-        <div class="status-right">
-            <div class="status-item">
-                <i class="fas fa-code"></i>
-                <span>UTF-8</span>
-            </div>
-            <div class="status-item">
-                <i class="fas fa-desktop"></i>
-                <span>Enhanced File Viewer</span>
-            </div>
-        </div>
+    <!-- 版權聲明 -->
+    <div class="copyright-footer">
+        <i class="fas fa-heart"></i>
+        © 2025 Vince. All rights reserved.
+        <i class="fas fa-code"></i>
+        Enhanced File Viewer v5
     </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        // Enhanced File Viewer JavaScript
-        const fileViewer = {
-            filePath: '',
-            fileName: '',
-            targetLine: 1,
-            contextLines: 200,
-            totalLines: 0,
-            loadedRanges: [],
-            currentLine: 1,
-            searchTerm: '',
-            searchResults: [],
-            currentSearchIndex: 0,
-            colorMarkers: {},
-            isLoading: false,
-            scrollThreshold: 200,
+        // 全域變數
+        let bookmarks = new Set();
+        let jumpPoints = new Set();
+        let currentJumpIndex = 0;
+        let searchResults = [];
+        let currentSearchIndex = 0;
+        let highlightColors = {};
+        let colorIndex = 1;
+        let selectedText = '';
+        let isLoadingMore = false;
+        let jumpModeEnabled = false;
+        let lastSearchText = '';
+        
+        // 頁面初始化
+        $(document).ready(function() {
+            setupKeyboardShortcuts();
+            setupScrollHandler();
+            scrollToTarget();
+            updateStatus();
             
-            init: function() {
-                // 解析 URL 參數
-                const urlParams = new URLSearchParams(window.location.search);
-                this.filePath = urlParams.get('path') || '';
-                this.targetLine = parseInt(urlParams.get('line') || '1');
-                this.contextLines = parseInt(urlParams.get('context') || '200');
-                
-                if (!this.filePath) {
-                    this.showError('未指定檔案路徑');
-                    return;
-                }
-                
-                // 設置檔案資訊
-                this.fileName = this.filePath.split('/').pop();
-                $('#fileName').text(this.fileName);
-                $('#filePath').text(this.filePath).attr('title', this.filePath);
-                document.title = `${this.fileName} - 檔案檢視器`;
-                
-                // 初始載入
-                this.loadInitialContent();
-                
-                // 設置事件監聽器
-                this.setupEventListeners();
-            },
+            // 初始化工具提示
+            initializeTooltips();
+        });
+
+        function initializeTooltips() {
+            // 為工具列按鈕添加工具提示
+            $('[title]').each(function() {
+                $(this).attr('data-bs-toggle', 'tooltip');
+            });
             
-            loadInitialContent: function() {
-                const startLine = Math.max(1, this.targetLine - this.contextLines);
-                const endLine = this.targetLine + this.contextLines;
-                
-                this.loadLines(startLine, endLine, true);
-            },
-            
-            loadLines: function(startLine, endLine, scrollToTarget = false) {
-                if (this.isLoading) return;
-                
-                // 檢查是否已經載入
-                if (this.isRangeLoaded(startLine, endLine)) {
-                    if (scrollToTarget) {
-                        this.scrollToLine(this.targetLine);
-                    }
-                    return;
-                }
-                
-                this.isLoading = true;
-                this.updateLoadStatus('載入中...');
-                
-                $.ajax({
-                    url: '/api/file_content',
-                    data: {
-                        path: this.filePath,
-                        start_line: startLine,
-                        end_line: endLine
-                    },
-                    success: (response) => {
-                        if (response.success) {
-                            this.renderLines(response.lines, response.start_line, response.end_line);
-                            this.totalLines = response.total_lines;
-                            $('#totalLines').text(this.totalLines);
-                            
-                            // 記錄已載入的範圍
-                            this.updateLoadedRanges(response.start_line, response.end_line);
-                            
-                            if (scrollToTarget) {
-                                setTimeout(() => {
-                                    this.scrollToLine(this.targetLine);
-                                }, 100);
-                            }
-                            
-                            // 高亮搜尋詞
-                            if (this.searchTerm) {
-                                this.highlightSearchTerm();
-                            }
-                            
-                            // 更新載入範圍顯示
-                            this.updateLoadedRangeDisplay();
-                        } else {
-                            this.showError(response.error || '載入檔案失敗');
-                        }
-                        
-                        this.isLoading = false;
-                        this.updateLoadStatus('就緒');
-                        $('#loadingTop, #loadingBottom').removeClass('show');
-                    },
-                    error: () => {
-                        this.showError('載入檔案失敗');
-                        this.isLoading = false;
-                        this.updateLoadStatus('錯誤');
-                        $('#loadingTop, #loadingBottom').removeClass('show');
-                    }
-                });
-            },
-            
-            renderLines: function(lines, startLine, endLine) {
-                const lineNumbers = $('#lineNumbers');
-                const codeContent = $('#codeContent');
-                
-                // 準備內容
-                let numbersHtml = '';
-                let contentHtml = '';
-                
-                lines.forEach(line => {
-                    const lineNum = line.line_number;
-                    const isTarget = lineNum === this.targetLine;
-                    
-                    numbersHtml += `<div class="line-number ${isTarget ? 'current' : ''}" data-line="${lineNum}" onclick="fileViewer.clickLineNumber(${lineNum})">${lineNum}</div>`;
-                    contentHtml += `<div class="code-line ${isTarget ? 'highlighted' : ''}" data-line="${lineNum}">${this.escapeHtml(line.content)}</div>`;
-                });
-                
-                // 找到插入位置
-                const existingNumbers = lineNumbers.find('.line-number');
-                const existingLines = codeContent.find('.code-line');
-                
-                if (existingNumbers.length === 0) {
-                    // 初始載入
-                    lineNumbers.html(numbersHtml);
-                    codeContent.find('.loading-indicator').first().after(contentHtml);
-                } else {
-                    // 增量載入
-                    let inserted = false;
-                    
-                    existingNumbers.each(function(index) {
-                        const existingLine = parseInt($(this).data('line'));
-                        
-                        if (!inserted && startLine < existingLine) {
-                            $(this).before(numbersHtml);
-                            existingLines.eq(index).before(contentHtml);
-                            inserted = true;
-                            return false;
-                        }
-                    });
-                    
-                    if (!inserted) {
-                        lineNumbers.append(numbersHtml);
-                        codeContent.find('.loading-indicator').last().before(contentHtml);
-                    }
-                }
-            },
-            
-            clickLineNumber: function(lineNum) {
-                // 清除之前的高亮
-                $('.line-number.current').removeClass('current');
-                $('.code-line.highlighted').removeClass('highlighted');
-                
-                // 設置新的目標行
-                this.targetLine = lineNum;
-                
-                // 載入該行及前後內容
-                const startLine = Math.max(1, lineNum - this.contextLines);
-                const endLine = Math.min(this.totalLines, lineNum + this.contextLines);
-                
-                this.loadLines(startLine, endLine, true);
-            },
-            
-            scrollToLine: function(lineNum) {
-                const lineElement = $(`.code-line[data-line="${lineNum}"]`);
-                const lineNumberElement = $(`.line-number[data-line="${lineNum}"]`);
-                
-                if (lineElement.length && lineNumberElement.length) {
-                    const codeContent = $('#codeContent');
-                    const scrollTop = lineElement.position().top + codeContent.scrollTop() - (codeContent.height() / 2);
-                    
-                    codeContent.animate({ scrollTop: scrollTop }, 300, () => {
-                        // 高亮當前行
-                        lineNumberElement.addClass('current');
-                        lineElement.addClass('highlighted');
-                    });
-                }
-            },
-            
-            handleScroll: function() {
-                const codeContent = $('#codeContent')[0];
-                const scrollTop = codeContent.scrollTop;
-                const scrollHeight = codeContent.scrollHeight;
-                const clientHeight = codeContent.clientHeight;
-                
-                // 更新當前行
-                const lineHeight = 20;
-                const visibleLine = Math.floor(scrollTop / lineHeight) + 1;
-                this.currentLine = Math.max(1, Math.min(this.totalLines, visibleLine));
-                $('#currentLine').text(this.currentLine);
-                
-                // 更新滾動陰影
-                if (scrollTop > 50) {
-                    $('#scrollShadowTop').addClass('visible');
-                } else {
-                    $('#scrollShadowTop').removeClass('visible');
-                }
-                
-                if (scrollTop + clientHeight < scrollHeight - 50) {
-                    $('#scrollShadowBottom').addClass('visible');
-                } else {
-                    $('#scrollShadowBottom').removeClass('visible');
-                }
-                
-                // 檢查是否需要載入更多內容
-                if (scrollTop < this.scrollThreshold) {
-                    this.loadMoreTop();
-                } else if (scrollTop + clientHeight > scrollHeight - this.scrollThreshold) {
-                    this.loadMoreBottom();
-                }
-            },
-            
-            loadMoreTop: function() {
-                const firstLoadedLine = this.getFirstLoadedLine();
-                if (firstLoadedLine > 1 && !this.isLoading) {
-                    $('#loadingTop').addClass('show');
-                    const startLine = Math.max(1, firstLoadedLine - this.contextLines);
-                    const endLine = firstLoadedLine - 1;
-                    
-                    // 記錄當前滾動位置
-                    const codeContent = $('#codeContent');
-                    const scrollBefore = codeContent.scrollTop();
-                    const heightBefore = codeContent[0].scrollHeight;
-                    
-                    this.loadLines(startLine, endLine, false);
-                    
-                    // 載入後調整滾動位置
-                    setTimeout(() => {
-                        const heightAfter = codeContent[0].scrollHeight;
-                        const heightDiff = heightAfter - heightBefore;
-                        codeContent.scrollTop(scrollBefore + heightDiff);
-                    }, 100);
-                }
-            },
-            
-            loadMoreBottom: function() {
-                const lastLoadedLine = this.getLastLoadedLine();
-                if (lastLoadedLine < this.totalLines && !this.isLoading) {
-                    $('#loadingBottom').addClass('show');
-                    const startLine = lastLoadedLine + 1;
-                    const endLine = Math.min(this.totalLines, lastLoadedLine + this.contextLines);
-                    this.loadLines(startLine, endLine);
-                }
-            },
-            
-            // 搜尋功能
-            toggleSearch: function() {
-                $('#searchBar').toggleClass('show');
-                if ($('#searchBar').hasClass('show')) {
-                    $('#searchInput').focus().select();
-                }
-            },
-            
-            closeSearch: function() {
-                $('#searchBar').removeClass('show');
-                this.clearSearchHighlights();
-                this.searchTerm = '';
-                this.searchResults = [];
-                this.currentSearchIndex = 0;
-            },
-            
-            performSearch: function() {
-                this.searchTerm = $('#searchInput').val();
-                if (!this.searchTerm) {
-                    this.clearSearchHighlights();
-                    return;
-                }
-                
-                this.highlightSearchTerm();
-                this.updateSearchStats();
-                
-                if (this.searchResults.length > 0) {
-                    this.scrollToSearchResult(0);
-                }
-            },
-            
-            highlightSearchTerm: function() {
-                this.clearSearchHighlights();
-                this.searchResults = [];
-                
-                const regex = new RegExp(`(${this.escapeRegex(this.searchTerm)})`, 'gi');
-                
-                $('.code-line').each((index, element) => {
-                    const $line = $(element);
-                    const text = $line.text();
-                    const matches = text.match(regex);
-                    
-                    if (matches) {
-                        const lineNum = parseInt($line.data('line'));
-                        this.searchResults.push({ lineNum, element: $line });
-                        
-                        const highlighted = this.escapeHtml(text).replace(regex, '<span class="search-highlight">$1</span>');
-                        $line.html(highlighted);
-                    }
-                });
-            },
-            
-            searchNext: function() {
-                if (this.searchResults.length === 0) return;
-                
-                this.currentSearchIndex = (this.currentSearchIndex + 1) % this.searchResults.length;
-                this.scrollToSearchResult(this.currentSearchIndex);
-            },
-            
-            searchPrev: function() {
-                if (this.searchResults.length === 0) return;
-                
-                this.currentSearchIndex = (this.currentSearchIndex - 1 + this.searchResults.length) % this.searchResults.length;
-                this.scrollToSearchResult(this.currentSearchIndex);
-            },
-            
-            scrollToSearchResult: function(index) {
-                const result = this.searchResults[index];
-                if (result) {
-                    this.scrollToLine(result.lineNum);
-                    this.updateSearchStats();
-                    
-                    // 強調當前搜尋結果
-                    $('.search-highlight').css('animation', 'none');
-                    setTimeout(() => {
-                        result.element.find('.search-highlight').css('animation', 'pulse 1s ease-in-out 2');
-                    }, 100);
-                }
-            },
-            
-            updateSearchStats: function() {
-                const stats = this.searchResults.length > 0 
-                    ? `${this.currentSearchIndex + 1}/${this.searchResults.length}`
-                    : '0/0';
-                $('#searchStats').text(stats);
-            },
-            
-            clearSearchHighlights: function() {
-                $('.search-highlight').each(function() {
-                    const $this = $(this);
-                    $this.replaceWith($this.text());
-                });
-            },
-            
-            // 顏色標記功能
-            showContextMenu: function(x, y) {
-                $('#contextMenu').css({
-                    left: x,
-                    top: y,
-                    display: 'block'
-                });
-            },
-            
-            hideContextMenu: function() {
-                $('#contextMenu').hide();
-            },
-            
-            markColor: function(color) {
-                const selection = window.getSelection();
-                if (selection.toString()) {
-                    const range = selection.getRangeAt(0);
-                    const span = document.createElement('span');
-                    span.className = `color-marker-${color}`;
-                    
-                    try {
-                        range.surroundContents(span);
-                    } catch (e) {
-                        // 如果選擇跨越多個元素，使用替代方法
-                        const contents = range.extractContents();
-                        span.appendChild(contents);
-                        range.insertNode(span);
-                    }
-                    
-                    selection.removeAllRanges();
-                }
-                this.hideContextMenu();
-            },
-            
-            clearSelection: function() {
-                const selection = window.getSelection();
-                if (selection.toString()) {
-                    const range = selection.getRangeAt(0);
-                    const container = range.commonAncestorContainer.parentElement;
-                    
-                    if (container && container.className && container.className.startsWith('color-marker-')) {
-                        const parent = container.parentNode;
-                        while (container.firstChild) {
-                            parent.insertBefore(container.firstChild, container);
-                        }
-                        parent.removeChild(container);
-                    }
-                }
-                this.hideContextMenu();
-            },
-            
-            copySelection: function() {
-                const selection = window.getSelection();
-                const text = selection.toString();
-                if (text) {
-                    navigator.clipboard.writeText(text).then(() => {
-                        this.showNotification('已複製到剪貼板');
-                    });
-                }
-                this.hideContextMenu();
-            },
-            
-            clearAllHighlights: function() {
-                if (confirm('確定要清除所有標記嗎？')) {
-                    $('[class^="color-marker-"]').each(function() {
-                        const $this = $(this);
-                        $this.replaceWith($this.html());
-                    });
-                    this.showNotification('已清除所有標記');
-                }
-            },
-            
-            // 跳轉功能
-            showJumpDialog: function() {
-                $('#jumpDialog').addClass('show');
-                $('#jumpInput').val('').focus();
-            },
-            
-            closeJumpDialog: function() {
-                $('#jumpDialog').removeClass('show');
-            },
-            
-            jumpToLine: function() {
-                const lineNum = parseInt($('#jumpInput').val());
-                if (lineNum && lineNum > 0 && lineNum <= this.totalLines) {
-                    this.clickLineNumber(lineNum);
-                    this.closeJumpDialog();
-                } else {
-                    alert(`請輸入有效的行號 (1-${this.totalLines})`);
-                }
-            },
-            
-            // 下載檔案
-            downloadFile: function() {
-                window.open(`/api/download_file?path=${encodeURIComponent(this.filePath)}`, '_blank');
-            },
-            
-            // 工具函數
-            escapeHtml: function(text) {
-                const map = {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#039;'
-                };
-                return text.replace(/[&<>"']/g, m => map[m]);
-            },
-            
-            escapeRegex: function(text) {
-                return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            },
-            
-            debounce: function(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            },
-            
-            updateLoadedRanges: function(start, end) {
-                // 更新已載入的行號範圍
-                this.loadedRanges.push({ start, end });
-                this.loadedRanges.sort((a, b) => a.start - b.start);
-                
-                // 合併相鄰的範圍
-                const merged = [];
-                this.loadedRanges.forEach(range => {
-                    if (merged.length === 0) {
-                        merged.push(range);
-                    } else {
-                        const last = merged[merged.length - 1];
-                        if (range.start <= last.end + 1) {
-                            last.end = Math.max(last.end, range.end);
-                        } else {
-                            merged.push(range);
-                        }
-                    }
-                });
-                this.loadedRanges = merged;
-            },
-            
-            updateLoadedRangeDisplay: function() {
-                const ranges = this.loadedRanges.map(r => `${r.start}-${r.end}`).join(', ');
-                $('#loadedRange').text(`已載入: ${ranges}`);
-            },
-            
-            isRangeLoaded: function(start, end) {
-                return this.loadedRanges.some(range => 
-                    start >= range.start && end <= range.end
-                );
-            },
-            
-            getFirstLoadedLine: function() {
-                return this.loadedRanges.length > 0 ? this.loadedRanges[0].start : 1;
-            },
-            
-            getLastLoadedLine: function() {
-                return this.loadedRanges.length > 0 
-                    ? this.loadedRanges[this.loadedRanges.length - 1].end 
-                    : 0;
-            },
-            
-            updateLoadStatus: function(status) {
-                const statusElement = $('#loadStatus');
-                const iconMap = {
-                    '載入中...': 'fa-spinner fa-spin',
-                    '就緒': 'fa-check-circle',
-                    '錯誤': 'fa-exclamation-circle'
-                };
-                
-                statusElement.html(`<i class="fas ${iconMap[status] || 'fa-info-circle'}"></i> <span>${status}</span>`);
-            },
-            
-            showNotification: function(message) {
-                // 簡單的通知顯示
-                const notification = $(`<div style="position: fixed; top: 80px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; animation: slideIn 0.3s ease;">${message}</div>`);
-                $('body').append(notification);
-                
-                setTimeout(() => {
-                    notification.fadeOut(() => notification.remove());
-                }, 2000);
-            },
-            
-            showError: function(message) {
-                $('#codeContent').html(`
-                    <div style="text-align: center; padding: 50px; color: #ff6b6b;">
-                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <h3>錯誤</h3>
-                        <p>${message}</p>
-                    </div>
-                `);
-            },
-            
-            // 設置事件監聽器
-            setupEventListeners: function() {
-                const codeContent = $('#codeContent');
-                
-                // 滾動事件
-                codeContent.on('scroll', this.debounce(() => {
-                    this.handleScroll();
-                }, 50));
-                
-                // 同步滾動行號
-                codeContent.on('scroll', () => {
-                    $('#lineNumbers').scrollTop(codeContent.scrollTop());
-                });
-                
-                // 右鍵選單
-                codeContent.on('contextmenu', '.code-line', (e) => {
+            // 初始化 Bootstrap 工具提示
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
+
+        // 鍵盤快捷鍵
+        function setupKeyboardShortcuts() {
+            $(document).keydown(function(e) {
+                // Ctrl+F 搜尋
+                if (e.ctrlKey && e.which === 70) {
                     e.preventDefault();
-                    const selection = window.getSelection();
-                    if (selection.toString()) {
-                        this.showContextMenu(e.pageX, e.pageY);
+                    $('#search-input').focus().select();
+                }
+                
+                // F2 跳轉功能
+                if (e.which === 113) { // F2
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        gotoPreviousJump();
+                    } else {
+                        gotoNextJump();
                     }
+                }
+                
+                // ESC 清除搜尋或關閉選單
+                if (e.which === 27) {
+                    if ($('#search-input').is(':focus')) {
+                        clearSearch();
+                    }
+                    hideContextMenu();
+                    if (jumpModeEnabled) {
+                        toggleJumpMode();
+                    }
+                }
+                
+                // Ctrl+G 跳轉行號
+                if (e.ctrlKey && e.which === 71) {
+                    e.preventDefault();
+                    $('#jump-line').focus().select();
+                }
+                
+                // Enter 在搜尋框中
+                if (e.which === 13 && $('#search-input').is(':focus')) {
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        findPrevious();
+                    } else {
+                        findNext();
+                    }
+                }
+            });
+            
+            // 搜尋輸入框事件
+            $('#search-input').on('input', debounce(performSearch, 300));
+        }
+
+        // 防抖函數
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 滾動處理 - 自動載入更多內容
+        function setupScrollHandler() {
+            const container = $('#line-container');
+            container.on('scroll', debounce(function() {
+                if (isLoadingMore) return;
+                
+                const scrollTop = container.scrollTop();
+                const scrollHeight = container[0].scrollHeight;
+                const clientHeight = container.height();
+                
+                // 接近頂部時載入前面的內容
+                if (scrollTop < 100 && {{ result.start_line }} > 1) {
+                    loadMoreContent('before');
+                }
+                
+                // 接近底部時載入後面的內容
+                if (scrollTop + clientHeight > scrollHeight - 100 && {{ result.end_line }} < {{ result.total_lines }}) {
+                    loadMoreContent('after');
+                }
+                
+                // 更新當前行狀態
+                updateCurrentLineStatus();
+            }, 100));
+        }
+
+        // 載入更多內容
+        function loadMoreContent(direction) {
+            if (isLoadingMore) return;
+            isLoadingMore = true;
+            
+            const loadingOverlay = $('#loading-overlay');
+            loadingOverlay.show();
+            
+            const currentStart = {{ result.start_line }};
+            const currentEnd = {{ result.end_line }};
+            let newStart, newEnd;
+            
+            if (direction === 'before') {
+                newStart = Math.max(1, currentStart - 200);
+                newEnd = currentStart - 1;
+            } else {
+                newStart = currentEnd + 1;
+                newEnd = Math.min({{ result.total_lines }}, currentEnd + 200);
+            }
+            
+            $.get('/file_viewer', {
+                path: '{{ file_path }}',
+                line: direction === 'before' ? newStart : newEnd,
+                context: 100,
+                start: newStart,
+                end: newEnd
+            }).done(function(data) {
+                // 解析返回的HTML並提取新行
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data, 'text/html');
+                const newLines = doc.querySelectorAll('.code-line');
+                
+                const container = $('#line-container');
+                
+                if (direction === 'before') {
+                    // 在前面插入
+                    const firstLine = container.find('.code-line').first();
+                    newLines.forEach(line => {
+                        const newElement = $(line.outerHTML);
+                        firstLine.before(newElement);
+                        
+                        // 重新綁定事件
+                        bindLineEvents(newElement);
+                    });
+                } else {
+                    // 在後面添加
+                    newLines.forEach(line => {
+                        const newElement = $(line.outerHTML);
+                        container.append(newElement);
+                        
+                        // 重新綁定事件
+                        bindLineEvents(newElement);
+                    });
+                }
+                
+                updateStatus();
+                
+                // 重新應用搜尋高亮
+                if (lastSearchText) {
+                    performSearch();
+                }
+                
+            }).always(function() {
+                loadingOverlay.hide();
+                isLoadingMore = false;
+            });
+        }
+
+        // 綁定行事件
+        function bindLineEvents(lineElement) {
+            const lineNumber = lineElement.data('line');
+            
+            lineElement.find('.line-number').on('click', function() {
+                handleLineClick(lineNumber);
+            }).on('contextmenu', function(e) {
+                showLineContextMenu(e, lineNumber);
+            });
+            
+            lineElement.find('.line-content').on('contextmenu', function(e) {
+                showContentContextMenu(e);
+            });
+        }
+
+        // 處理行點擊
+        function handleLineClick(lineNumber) {
+            if (jumpModeEnabled) {
+                toggleJumpPoint(lineNumber);
+            } else {
+                toggleBookmark(lineNumber);
+            }
+        }
+
+        // 跳轉模式切換
+        function toggleJumpMode() {
+            jumpModeEnabled = !jumpModeEnabled;
+            const btn = $('#jump-mode-btn');
+            const navigation = $('#jump-navigation');
+            
+            if (jumpModeEnabled) {
+                btn.removeClass('btn-outline-secondary').addClass('btn-gradient-warning');
+                btn.html('<i class="fas fa-crosshairs me-1"></i>退出跳轉');
+                navigation.show();
+                showAlert('跳轉模式已啟用', 'info');
+            } else {
+                btn.removeClass('btn-gradient-warning').addClass('btn-outline-secondary');
+                btn.html('<i class="fas fa-crosshairs me-1"></i>跳轉模式');
+                navigation.hide();
+                showAlert('跳轉模式已關閉', 'info');
+            }
+        }
+
+        // 切換跳轉點
+        function toggleJumpPoint(lineNumber) {
+            const lineElement = $(`#line-${lineNumber} .line-number`);
+            
+            if (jumpPoints.has(lineNumber)) {
+                jumpPoints.delete(lineNumber);
+                lineElement.removeClass('jump-point');
+            } else {
+                jumpPoints.add(lineNumber);
+                lineElement.addClass('jump-point');
+            }
+            
+            updateJumpStatus();
+        }
+
+        // 下一個跳轉點
+        function gotoNextJump() {
+            if (jumpPoints.size === 0) {
+                showAlert('沒有設定跳轉點，請先設定跳轉點', 'warning');
+                return;
+            }
+            
+            const sortedJumps = Array.from(jumpPoints).sort((a, b) => a - b);
+            const currentLine = getCurrentLine();
+            
+            let nextJump = sortedJumps.find(line => line > currentLine);
+            if (!nextJump) {
+                nextJump = sortedJumps[0]; // 循環到第一個
+            }
+            
+            scrollToLine(nextJump);
+            updateJumpStatus();
+            showAlert(`跳轉到第 ${nextJump} 行`, 'success');
+        }
+
+        // 上一個跳轉點
+        function gotoPreviousJump() {
+            if (jumpPoints.size === 0) {
+                showAlert('沒有設定跳轉點，請先設定跳轉點', 'warning');
+                return;
+            }
+            
+            const sortedJumps = Array.from(jumpPoints).sort((a, b) => b - a);
+            const currentLine = getCurrentLine();
+            
+            let prevJump = sortedJumps.find(line => line < currentLine);
+            if (!prevJump) {
+                prevJump = sortedJumps[0]; // 循環到最後一個
+            }
+            
+            scrollToLine(prevJump);
+            updateJumpStatus();
+            showAlert(`跳轉到第 ${prevJump} 行`, 'success');
+        }
+
+        // 搜尋功能
+        function performSearch() {
+            const searchText = $('#search-input').val().trim();
+            lastSearchText = searchText;
+            clearSearchHighlights();
+            
+            if (!searchText) {
+                updateSearchStatus('搜尋: 無');
+                return;
+            }
+            
+            searchResults = [];
+            const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            
+            $('.line-content').each(function(index) {
+                const content = $(this).text();
+                const matches = [...content.matchAll(regex)];
+                
+                if (matches.length > 0) {
+                    const lineNumber = parseInt($(this).siblings('.line-number').text());
+                    matches.forEach(match => {
+                        searchResults.push({
+                            line: lineNumber,
+                            element: this,
+                            index: match.index,
+                            text: match[0]
+                        });
+                    });
+                    
+                    // 高亮顯示
+                    const highlightedContent = content.replace(regex, '<span class="search-highlight">$&</span>');
+                    $(this).html(highlightedContent);
+                }
+            });
+            
+            currentSearchIndex = 0;
+            updateSearchStatus(`找到 ${searchResults.length} 個結果`);
+            
+            if (searchResults.length > 0) {
+                highlightCurrentResult();
+            }
+        }
+
+        function clearSearchHighlights() {
+            $('.search-highlight').each(function() {
+                const parent = $(this).parent();
+                const text = parent.text();
+                parent.text(text);
+            });
+        }
+
+        function highlightCurrentResult() {
+            $('.search-highlight').removeClass('current');
+            if (searchResults.length > 0 && currentSearchIndex < searchResults.length) {
+                const result = searchResults[currentSearchIndex];
+                
+                // 找到對應的高亮元素
+                const lineElement = $(`#line-${result.line}`);
+                const highlights = lineElement.find('.search-highlight');
+                
+                if (highlights.length > 0) {
+                    highlights.eq(0).addClass('current');
+                    scrollToElement(lineElement);
+                }
+                
+                updateSearchStatus(`${currentSearchIndex + 1} / ${searchResults.length}`);
+            }
+        }
+
+        function findNext() {
+            if (searchResults.length === 0) return;
+            currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+            highlightCurrentResult();
+        }
+
+        function findPrevious() {
+            if (searchResults.length === 0) return;
+            currentSearchIndex = currentSearchIndex > 0 ? currentSearchIndex - 1 : searchResults.length - 1;
+            highlightCurrentResult();
+        }
+
+        function clearSearch() {
+            $('#search-input').val('');
+            clearSearchHighlights();
+            searchResults = [];
+            currentSearchIndex = 0;
+            lastSearchText = '';
+            updateSearchStatus('搜尋: 無');
+        }
+
+        // 書籤功能
+        function toggleBookmark(lineNumber) {
+            const lineElement = $(`#line-${lineNumber} .line-number`);
+            
+            if (bookmarks.has(lineNumber)) {
+                bookmarks.delete(lineNumber);
+                lineElement.removeClass('bookmark');
+                showAlert(`已移除第 ${lineNumber} 行的書籤`, 'info');
+            } else {
+                bookmarks.add(lineNumber);
+                lineElement.addClass('bookmark');
+                showAlert(`已設定第 ${lineNumber} 行為書籤`, 'success');
+            }
+            
+            updateBookmarkStatus();
+        }
+
+        function gotoNextBookmark() {
+            if (bookmarks.size === 0) {
+                showAlert('沒有設定書籤', 'warning');
+                return;
+            }
+            
+            const sortedBookmarks = Array.from(bookmarks).sort((a, b) => a - b);
+            const currentLine = getCurrentLine();
+            
+            let nextBookmark = sortedBookmarks.find(line => line > currentLine);
+            if (!nextBookmark) {
+                nextBookmark = sortedBookmarks[0]; // 循環到第一個
+            }
+            
+            scrollToLine(nextBookmark);
+            updateStatus();
+            showAlert(`跳轉到書籤：第 ${nextBookmark} 行`, 'success');
+        }
+
+        function gotoPreviousBookmark() {
+            if (bookmarks.size === 0) {
+                showAlert('沒有設定書籤', 'warning');
+                return;
+            }
+            
+            const sortedBookmarks = Array.from(bookmarks).sort((a, b) => b - a);
+            const currentLine = getCurrentLine();
+            
+            let prevBookmark = sortedBookmarks.find(line => line < currentLine);
+            if (!prevBookmark) {
+                prevBookmark = sortedBookmarks[0]; // 循環到最後一個
+            }
+            
+            scrollToLine(prevBookmark);
+            updateStatus();
+            showAlert(`跳轉到書籤：第 ${prevBookmark} 行`, 'success');
+        }
+
+        // 右鍵選單
+        function showLineContextMenu(event, lineNumber) {
+            event.preventDefault();
+            selectedText = '';
+            showContextMenu(event, 'line', lineNumber);
+        }
+
+        function showContentContextMenu(event) {
+            event.preventDefault();
+            selectedText = window.getSelection().toString().trim();
+            showContextMenu(event, 'content');
+        }
+
+        function showContextMenu(event, type, lineNumber = null) {
+            const menu = $('#context-menu');
+            let menuItems = [];
+            
+            if (type === 'line') {
+                const isBookmarked = bookmarks.has(lineNumber);
+                const isJumpPoint = jumpPoints.has(lineNumber);
+                
+                menuItems = [
+                    { icon: 'bookmark', text: isBookmarked ? '移除書籤' : '設定書籤', action: () => toggleBookmark(lineNumber) },
+                    { icon: 'crosshairs', text: isJumpPoint ? '移除跳轉點' : '設定跳轉點', action: () => toggleJumpPoint(lineNumber) },
+                    { separator: true },
+                    { icon: 'copy', text: '複製行號', action: () => copyToClipboard(lineNumber.toString()) },
+                    { icon: 'link', text: '複製連結', action: () => copyLineLink(lineNumber) },
+                    { icon: 'external-link-alt', text: '在新頁面打開', action: () => openInNewPage(lineNumber) }
+                ];
+            } else {
+                menuItems = [
+                    { icon: 'copy', text: '複製', action: () => copySelectedText(), disabled: !selectedText },
+                    { separator: true },
+                    { icon: 'highlighter', text: '智能高亮', action: () => highlightSelected(), disabled: !selectedText },
+                    { separator: true }
+                ];
+                
+                // 添加顏色選項
+                const colors = [
+                    { name: '粉紅', value: 1 },
+                    { name: '綠色', value: 2 },
+                    { name: '藍色', value: 3 },
+                    { name: '橙色', value: 4 },
+                    { name: '紫色', value: 5 },
+                    { name: '黃色', value: 6 },
+                    { name: '青色', value: 7 },
+                    { name: '檸檬', value: 8 },
+                    { name: '草綠', value: 9 },
+                    { name: '紅橙', value: 10 }
+                ];
+                
+                colors.forEach(color => {
+                    menuItems.push({
+                        icon: 'circle',
+                        text: `${color.name}高亮`,
+                        color: color.value,
+                        action: () => highlightWithColor(selectedText, color.value),
+                        disabled: !selectedText
+                    });
                 });
                 
-                // 搜尋輸入
-                $('#searchInput').on('input', this.debounce(() => {
-                    this.performSearch();
-                }, 300));
+                menuItems.push({ separator: true });
+                menuItems.push({ icon: 'eraser', text: '清除所有高亮', action: clearAllHighlights });
+            }
+            
+            // 生成選單HTML
+            const menuHtml = menuItems.map(item => {
+                if (item.separator) {
+                    return '<div class="context-menu-separator"></div>';
+                } else {
+                    const disabledClass = item.disabled ? 'disabled' : '';
+                    const colorPreview = item.color ? 
+                        `<div class="color-preview highlight-color-${item.color}"></div>` : 
+                        `<i class="fas fa-${item.icon}"></i>`;
+                    
+                    return `<div class="context-menu-item ${disabledClass}" data-action="${JSON.stringify(item).replace(/"/g, '&quot;')}">
+                        ${colorPreview}
+                        <span>${item.text}</span>
+                    </div>`;
+                }
+            }).join('');
+            
+            menu.html(menuHtml);
+            
+            // 綁定點擊事件
+            menu.find('.context-menu-item').on('click', function() {
+                if ($(this).hasClass('disabled')) return;
                 
-                // 搜尋輸入 Enter 鍵
-                $('#searchInput').on('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        this.searchNext();
-                    }
-                });
-                
-                // 跳轉輸入
-                $('#jumpInput').on('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.jumpToLine();
-                    }
-                });
-                
-                // 鍵盤快捷鍵
-                $(document).on('keydown', (e) => {
-                    // Ctrl+F 搜尋
-                    if (e.ctrlKey && e.key === 'f') {
-                        e.preventDefault();
-                        this.toggleSearch();
-                    }
-                    // F2 跳轉
-                    if (e.key === 'F2') {
-                        e.preventDefault();
-                        this.showJumpDialog();
-                    }
-                    // F3 下一個搜尋結果
-                    if (e.key === 'F3') {
-                        e.preventDefault();
-                        if (e.shiftKey) {
-                            this.searchPrev();
-                        } else {
-                            this.searchNext();
-                        }
-                    }
-                    // Esc 關閉對話框
-                    if (e.key === 'Escape') {
-                        this.closeSearch();
-                        this.closeJumpDialog();
-                        this.hideContextMenu();
-                    }
-                });
-                
-                // 點擊其他地方隱藏右鍵選單
-                $(document).on('click', () => {
-                    this.hideContextMenu();
+                const actionData = JSON.parse($(this).attr('data-action'));
+                if (actionData.action) {
+                    actionData.action();
+                }
+                hideContextMenu();
+            });
+            
+            // 計算位置
+            const menuWidth = 220;
+            const menuHeight = menuItems.length * 40;
+            const windowWidth = $(window).width();
+            const windowHeight = $(window).height();
+            
+            let left = event.pageX;
+            let top = event.pageY;
+            
+            if (left + menuWidth > windowWidth) {
+                left = windowWidth - menuWidth - 10;
+            }
+            
+            if (top + menuHeight > windowHeight) {
+                top = windowHeight - menuHeight - 10;
+            }
+            
+            menu.css({
+                display: 'block',
+                left: left + 'px',
+                top: top + 'px'
+            });
+            
+            // 點擊其他地方關閉選單
+            $(document).one('click', hideContextMenu);
+        }
+
+        function hideContextMenu() {
+            $('#context-menu').hide();
+        }
+
+        // 高亮功能
+        function highlightSelected() {
+            if (!selectedText) return;
+            highlightWithColor(selectedText, colorIndex);
+            colorIndex = (colorIndex % 10) + 1;
+        }
+
+        function highlightWithColor(text, color) {
+            if (!text) return;
+            
+            const escapedText = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escapedText, 'gi');
+            
+            $('.line-content').each(function() {
+                const content = $(this).html();
+                const highlightedContent = content.replace(regex, `<span class="highlight-color-${color}">$&</span>`);
+                $(this).html(highlightedContent);
+            });
+            
+            highlightColors[text] = color;
+            showAlert(`已用顏色 ${color} 高亮文字: ${text}`, 'success');
+        }
+
+        function clearAllHighlights() {
+            for (let i = 1; i <= 10; i++) {
+                $(`.highlight-color-${i}`).each(function() {
+                    const parent = $(this).parent();
+                    const text = parent.text();
+                    parent.text(text);
                 });
             }
-        };
-        
-        // 全域函數
-        window.toggleSearch = () => fileViewer.toggleSearch();
-        window.closeSearch = () => fileViewer.closeSearch();
-        window.searchNext = () => fileViewer.searchNext();
-        window.searchPrev = () => fileViewer.searchPrev();
-        window.showJumpDialog = () => fileViewer.showJumpDialog();
-        window.closeJumpDialog = () => fileViewer.closeJumpDialog();
-        window.jumpToLine = () => fileViewer.jumpToLine();
-        window.markColor = (color) => fileViewer.markColor(color);
-        window.clearSelection = () => fileViewer.clearSelection();
-        window.copySelection = () => fileViewer.copySelection();
-        window.clearAllHighlights = () => fileViewer.clearAllHighlights();
-        window.downloadFile = () => fileViewer.downloadFile();
-        
-        // 初始化
-        $(document).ready(() => {
-            fileViewer.init();
-        });
+            highlightColors = {};
+            showAlert('已清除所有高亮', 'info');
+        }
+
+        // 工具函數
+        function scrollToTarget() {
+            const targetLine = {{ result.target_line }};
+            scrollToLine(targetLine);
+        }
+
+        function scrollToLine(lineNumber) {
+            const lineElement = $(`#line-${lineNumber}`);
+            if (lineElement.length > 0) {
+                scrollToElement(lineElement);
+            }
+        }
+
+        function scrollToElement(element) {
+            const container = $('#line-container');
+            const elementTop = element.position().top;
+            const containerHeight = container.height();
+            const scrollTo = container.scrollTop() + elementTop - (containerHeight / 2);
+            
+            container.animate({ scrollTop: scrollTo }, 300);
+            
+            // 添加高亮效果
+            element.addClass('animate__animated animate__pulse');
+            setTimeout(() => {
+                element.removeClass('animate__animated animate__pulse');
+            }, 1000);
+        }
+
+        function getCurrentLine() {
+            const container = $('#line-container');
+            const scrollTop = container.scrollTop();
+            const containerHeight = container.height();
+            const centerY = scrollTop + (containerHeight / 2);
+            
+            let closestLine = {{ result.target_line }};
+            let minDistance = Infinity;
+            
+            $('.code-line').each(function() {
+                const elementTop = $(this).position().top + scrollTop;
+                const distance = Math.abs(elementTop - centerY);
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestLine = parseInt($(this).data('line'));
+                }
+            });
+            
+            return closestLine;
+        }
+
+        function updateCurrentLineStatus() {
+            const currentLine = getCurrentLine();
+            $('#status-line').text(`第 ${currentLine} 行`);
+        }
+
+        function jumpToLine() {
+            const lineNumber = parseInt($('#jump-line').val());
+            if (lineNumber && lineNumber >= 1 && lineNumber <= {{ result.total_lines }}) {
+                const url = new URL(window.location);
+                url.searchParams.set('line', lineNumber);
+                window.location.href = url.toString();
+            } else {
+                showAlert('請輸入有效的行號 (1-{{ result.total_lines }})', 'warning');
+            }
+        }
+
+        // 範圍選擇
+        function showRangeSelector() {
+            $('#range-selector').slideDown(300);
+            $('#range-start').focus();
+        }
+
+        function closeRangeSelector() {
+            $('#range-selector').slideUp(300);
+        }
+
+        function applyRange() {
+            const start = parseInt($('#range-start').val());
+            const end = parseInt($('#range-end').val());
+            const context = parseInt($('#range-context').val()) || 200;
+            
+            if (start && end && start <= end && start >= 1 && end <= {{ result.total_lines }}) {
+                const url = new URL(window.location);
+                url.searchParams.set('line', Math.floor((start + end) / 2));
+                url.searchParams.set('start', start);
+                url.searchParams.set('end', end);
+                url.searchParams.set('context', context);
+                window.location.href = url.toString();
+            } else {
+                showAlert('請輸入有效的範圍', 'warning');
+            }
+        }
+
+        // 匯出功能
+        function exportFile() {
+            const url = `/api/export_file?path=${encodeURIComponent('{{ file_path }}')}`;
+            window.open(url, '_blank');
+            showAlert('正在準備下載檔案...', 'info');
+        }
+
+        // 複製功能
+        function copySelectedText() {
+            if (selectedText) {
+                navigator.clipboard.writeText(selectedText).then(() => {
+                    showAlert(`已複製到剪貼簿: ${selectedText.substring(0, 20)}...`, 'success');
+                });
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert(`已複製到剪貼簿: ${text}`, 'success');
+            });
+        }
+
+        function copyLineLink(lineNumber) {
+            const url = new URL(window.location);
+            url.searchParams.set('line', lineNumber);
+            copyToClipboard(url.toString());
+        }
+
+        function openInNewPage(lineNumber) {
+            const url = new URL(window.location);
+            url.searchParams.set('line', lineNumber);
+            window.open(url.toString(), '_blank');
+        }
+
+        // 狀態更新
+        function updateStatus() {
+            updateCurrentLineStatus();
+            updateBookmarkStatus();
+            updateJumpStatus();
+        }
+
+        function updateBookmarkStatus() {
+            $('#status-bookmarks').text(`書籤: ${bookmarks.size}`);
+        }
+
+        function updateJumpStatus() {
+            $('#status-jumps').text(`跳轉點: ${jumpPoints.size}`);
+        }
+
+        function updateSearchStatus(text) {
+            $('#status-search').text(text);
+        }
+
+        // 提示訊息
+        function showAlert(message, type) {
+            // 移除舊的提示
+            $('.floating-alert').remove();
+            
+            const alertClass = {
+                'success': 'alert-success',
+                'info': 'alert-info',
+                'warning': 'alert-warning',
+                'danger': 'alert-danger'
+            }[type] || 'alert-info';
+            
+            const alertHtml = `
+                <div class="alert ${alertClass} floating-alert position-fixed animate__animated animate__fadeInDown" 
+                     style="top: 20px; right: 20px; z-index: 9999; max-width: 300px; box-shadow: var(--shadow-medium);">
+                    ${message}
+                    <button type="button" class="btn-close" onclick="$(this).parent().remove()"></button>
+                </div>
+            `;
+            
+            $('body').append(alertHtml);
+            
+            setTimeout(() => {
+                $('.floating-alert').addClass('animate__fadeOutUp');
+                setTimeout(() => {
+                    $('.floating-alert').remove();
+                }, 500);
+            }, 3000);
+        }
+
+        // 監聽滾動更新狀態
+        $('#line-container').on('scroll', debounce(updateStatus, 100));
     </script>
 </body>
 </html>

@@ -1,0 +1,10 @@
+Module,Keyword list,,,,,,
+Error,error,ERROR,failed,FAILED,exception,Exception,EXCEPTION
+Warning,warning,WARN,alert,Alert,ALERT,,
+Security,unauthorized,forbidden,attack,intrusion,hack,breach,
+Database,database error,connection failed,timeout,deadlock,query failed,,
+Network,connection refused,network unreachable,dns resolution failed,timeout,,,
+System,out of memory,disk full,cpu usage,high load,memory leak,,
+Authentication,login failed,authentication error,invalid credentials,access denied,,,
+Performance,slow query,timeout,high latency,performance degradation,,,
+Kernel Error,Kernel panic,Tainted:,BUG:,,,,

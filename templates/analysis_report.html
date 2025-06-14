@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析報告 - {{ report.analysis_id }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    <!-- Print.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/print-js/1.6.0/print.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            --info-gradient: linear-gradient(135deg, #3742fa 0%, #2f3542 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        .report-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .report-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .card-header-gradient {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .card-header-success {
+            background: var(--success-gradient);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .card-header-warning {
+            background: var(--warning-gradient);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .card-header-info {
+            background: var(--info-gradient);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .stats-overview {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 5px solid #2196f3;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1976d2;
+            display: block;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .module-summary {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #9c27b0;
+            transition: all 0.3s ease;
+        }
+
+        .module-summary:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.2);
+        }
+
+        .file-summary {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #ff9800;
+            transition: all 0.3s ease;
+        }
+
+        .file-summary:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+        }
+
+        .keyword-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .keyword-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .search-container {
+            position: relative;
+            max-width: 400px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-input {
+            border-radius: 25px;
+            border: 2px solid #dee2e6;
+            padding: 12px 20px;
+            padding-right: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 2rem 0;
+        }
+
+        .toolbar {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .btn-modern {
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-primary-gradient {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary-gradient:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-success-gradient {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-success-gradient:hover {
+            background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-info-gradient {
+            background: var(--info-gradient);
+            color: white;
+        }
+
+        .btn-info-gradient:hover {
+            background: linear-gradient(135deg, #2f3542 0%, #3742fa 100%);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .comment-section {
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border: 2px dashed #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .comment-section:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .comment-form {
+            display: none;
+        }
+
+        .comment-display {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 4px solid #28a745;
+        }
+
+        .analysis-conclusion {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 5px solid #4caf50;
+        }
+
+        .recommendation-item {
+            background: linear-gradient(135deg, #fff9c4 0%, #ffeb3b 0.1%, #fff9c4 100%);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-left: 4px solid #ffc107;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+        }
+
+        .copyright-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.8rem;
+            z-index: 100;
+        }
+
+        .copyright-footer i {
+            color: #e74c3c;
+            margin: 0 5px;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .report-header {
+                padding: 2rem 0;
+            }
+            
+            .stats-overview {
+                padding: 1rem;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container {
+                max-width: 100%;
+            }
+        }
+
+        /* 打印樣式 */
+        @media print {
+            .toolbar,
+            .copyright-footer,
+            .btn {
+                display: none !important;
+            }
+            
+            .report-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                margin-bottom: 1rem;
+                page-break-inside: avoid;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 報告標題區域 -->
+    <div class="report-header">
+        <div class="container report-content">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="fas fa-chart-line me-3"></i>日誌分析報告
+                    </h1>
+                    <div class="mb-3">
+                        <span class="badge bg-light text-dark me-2 fs-6">
+                            <i class="fas fa-calendar me-1"></i>{{ report.timestamp }}
+                        </span>
+                        <span class="badge bg-success me-2 fs-6">
+                            <i class="fas fa-check-circle me-1"></i>分析完成
+                        </span>
+                        <span class="badge bg-info fs-6">
+                            <i class="fas fa-fingerprint me-1"></i>ID: {{ report.analysis_id[:8] }}
+                        </span>
+                    </div>
+                    <p class="lead mb-0">
+                        基於流式分析技術的日誌檔案深度分析報告，包含模組和檔案雙重維度的詳細統計
+                    </p>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="d-flex flex-column gap-2">
+                        <button class="btn btn-light btn-modern" onclick="window.history.back()">
+                            <i class="fas fa-arrow-left me-2"></i>返回分析
+                        </button>
+                        <button class="btn btn-success-gradient btn-modern" onclick="exportReport()">
+                            <i class="fas fa-download me-2"></i>匯出 HTML
+                        </button>
+                        <button class="btn btn-info-gradient btn-modern" onclick="printReport()">
+                            <i class="fas fa-print me-2"></i>列印報告
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <!-- 工具列 -->
+        <div class="toolbar">
+            <div class="d-flex align-items-center gap-3">
+                <div class="search-container">
+                    <input type="text" class="form-control search-input" id="search-input" placeholder="搜尋報告內容...">
+                    <button class="search-btn" onclick="searchReport()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary-gradient btn-modern" onclick="scrollToSection('summary')">
+                    <i class="fas fa-chart-pie me-1"></i>摘要
+                </button>
+                <button class="btn btn-primary-gradient btn-modern" onclick="scrollToSection('module-view')">
+                    <i class="fas fa-cube me-1"></i>模組檢視
+                </button>
+                <button class="btn btn-primary-gradient btn-modern" onclick="scrollToSection('file-view')">
+                    <i class="fas fa-file me-1"></i>檔案檢視
+                </button>
+                <button class="btn btn-primary-gradient btn-modern" onclick="scrollToSection('conclusion')">
+                    <i class="fas fa-lightbulb me-1"></i>結論
+                </button>
+            </div>
+        </div>
+
+        <!-- 分析摘要 -->
+        <div id="summary" class="report-card">
+            <div class="card-header-gradient">
+                <h3 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>分析摘要
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="stats-overview">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ report.summary.total_files }}</span>
+                                <div class="stat-label">分析檔案數</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ report.summary.total_modules }}</span>
+                                <div class="stat-label">監控模組數</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ report.summary.total_matches }}</span>
+                                <div class="stat-label">總匹配數</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ "%.1f"|format(report.summary.analysis_time) }}s</span>
+                                <div class="stat-label">分析時間</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 圖表區域 -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-bar me-2"></i>模組匹配分佈
+                        </h5>
+                        <div class="chart-container">
+                            <canvas id="moduleChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">
+                            <i class="fas fa-chart-pie me-2"></i>檔案匹配分佈
+                        </h5>
+                        <div class="chart-container">
+                            <canvas id="fileChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用戶評論區域 -->
+                <div class="comment-section" onclick="toggleCommentForm('summary')">
+                    <div class="comment-display" id="summary-comment-display" style="display: none;">
+                        <h6><i class="fas fa-comment me-2"></i>摘要分析</h6>
+                        <p id="summary-comment-text"></p>
+                        <small class="text-muted">點擊編輯評論</small>
+                    </div>
+                    <div class="comment-form" id="summary-comment-form">
+                        <h6><i class="fas fa-comment-dots me-2"></i>添加摘要分析</h6>
+                        <textarea class="form-control mb-2" id="summary-comment" rows="3" placeholder="請輸入您對整體分析結果的觀察和見解..."></textarea>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success-gradient btn-sm" onclick="saveComment('summary')">
+                                <i class="fas fa-save me-1"></i>儲存
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="cancelComment('summary')">
+                                <i class="fas fa-times me-1"></i>取消
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-center text-muted" id="summary-comment-prompt">
+                        <i class="fas fa-plus-circle me-2"></i>點擊添加您的分析評論
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模組檢視 -->
+        <div id="module-view" class="report-card">
+            <div class="card-header-success">
+                <h3 class="mb-0">
+                    <i class="fas fa-cube me-2"></i>模組檢視分析
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="lead mb-4">
+                    以監控模組為維度的分析結果，展示各模組的關鍵字匹配情況和相關檔案分佈。
+                </p>
+
+                {% for module in report.module_view %}
+                <div class="module-summary">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-2">
+                                <i class="fas fa-cube me-2 text-primary"></i>{{ module.name }}
+                            </h5>
+                            <div class="keyword-list">
+                                {% for keyword in module.keywords_found %}
+                                <span class="keyword-tag">{{ keyword }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="stat-number" style="font-size: 1.5rem;">{{ module.matches }}</div>
+                            <div class="stat-label">匹配數</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-file me-1"></i>涉及檔案: {{ module.files_count }} 個 |
+                                <i class="fas fa-clock me-1"></i>搜尋時間: {{ "%.2f"|format(module.search_time) }}s
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-primary" 
+                                     style="width: {{ (module.matches / report.summary.total_matches * 100) if report.summary.total_matches > 0 else 0 }}%"></div>
+                            </div>
+                            <small class="text-muted">
+                                {{ "%.1f"|format((module.matches / report.summary.total_matches * 100) if report.summary.total_matches > 0 else 0) }}% 
+                                總匹配佔比
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 模組評論 -->
+                    <div class="comment-section mt-3" onclick="toggleCommentForm('module-{{ loop.index0 }}')">
+                        <div class="comment-display" id="module-{{ loop.index0 }}-comment-display" style="display: none;">
+                            <h6><i class="fas fa-comment me-2"></i>模組分析</h6>
+                            <p id="module-{{ loop.index0 }}-comment-text"></p>
+                            <small class="text-muted">點擊編輯評論</small>
+                        </div>
+                        <div class="comment-form" id="module-{{ loop.index0 }}-comment-form">
+                            <h6><i class="fas fa-comment-dots me-2"></i>添加模組分析</h6>
+                            <textarea class="form-control mb-2" id="module-{{ loop.index0 }}-comment" rows="2" 
+                                      placeholder="請輸入對 {{ module.name }} 模組的分析和建議..."></textarea>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success-gradient btn-sm" onclick="saveComment('module-{{ loop.index0 }}')">
+                                    <i class="fas fa-save me-1"></i>儲存
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="cancelComment('module-{{ loop.index0 }}')">
+                                    <i class="fas fa-times me-1"></i>取消
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-center text-muted" id="module-{{ loop.index0 }}-comment-prompt">
+                            <i class="fas fa-plus-circle me-1"></i>添加分析評論
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 檔案檢視 -->
+        <div id="file-view" class="report-card">
+            <div class="card-header-warning">
+                <h3 class="mb-0">
+                    <i class="fas fa-file me-2"></i>檔案檢視分析
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="lead mb-4">
+                    以檔案為維度的分析結果，展示各檔案中發現的問題模組和關鍵字匹配詳情。
+                </p>
+
+                {% for file_path, file_data in report.file_view.items() %}
+                <div class="file-summary">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div class="flex-grow-1">
+                            <h5 class="mb-2">
+                                <i class="fas fa-file-alt me-2 text-warning"></i>{{ file_path.split('/')[-1] }}
+                            </h5>
+                            <p class="text-muted small mb-2">{{ file_path }}</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for module_info in file_data.modules %}
+                                <span class="badge bg-warning text-dark">
+                                    {{ module_info.module }} ({{ module_info.matches }} 次)
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="stat-number" style="font-size: 1.5rem;">{{ file_data.total_matches }}</div>
+                            <div class="stat-label">總匹配數</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-cube me-1"></i>涉及模組: {{ file_data.modules|length }} 個
+                                <a href="/file_viewer?path={{ file_path|urlencode }}&line=1" class="btn btn-outline-primary btn-sm ms-2" target="_blank">
+                                    <i class="fas fa-external-link-alt me-1"></i>檢視檔案
+                                </a>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" 
+                                     style="width: {{ (file_data.total_matches / report.summary.total_matches * 100) if report.summary.total_matches > 0 else 0 }}%"></div>
+                            </div>
+                            <small class="text-muted">
+                                {{ "%.1f"|format((file_data.total_matches / report.summary.total_matches * 100) if report.summary.total_matches > 0 else 0) }}% 
+                                總匹配佔比
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- 檔案評論 -->
+                    <div class="comment-section mt-3" onclick="toggleCommentForm('file-{{ loop.index0 }}')">
+                        <div class="comment-display" id="file-{{ loop.index0 }}-comment-display" style="display: none;">
+                            <h6><i class="fas fa-comment me-2"></i>檔案分析</h6>
+                            <p id="file-{{ loop.index0 }}-comment-text"></p>
+                            <small class="text-muted">點擊編輯評論</small>
+                        </div>
+                        <div class="comment-form" id="file-{{ loop.index0 }}-comment-form">
+                            <h6><i class="fas fa-comment-dots me-2"></i>添加檔案分析</h6>
+                            <textarea class="form-control mb-2" id="file-{{ loop.index0 }}-comment" rows="2" 
+                                      placeholder="請輸入對此檔案的分析和建議..."></textarea>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-success-gradient btn-sm" onclick="saveComment('file-{{ loop.index0 }}')">
+                                    <i class="fas fa-save me-1"></i>儲存
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="cancelComment('file-{{ loop.index0 }}')">
+                                    <i class="fas fa-times me-1"></i>取消
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-center text-muted" id="file-{{ loop.index0 }}-comment-prompt">
+                            <i class="fas fa-plus-circle me-1"></i>添加分析評論
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- 分析結論 -->
+        <div id="conclusion" class="report-card">
+            <div class="card-header-info">
+                <h3 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>分析結論與建議
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="analysis-conclusion">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-line me-2 text-success"></i>總體分析結論
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>關鍵發現：</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    成功分析 {{ report.summary.total_files }} 個檔案，發現 {{ report.summary.total_matches }} 次關鍵字匹配
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-cube text-primary me-2"></i>
+                                    {{ report.summary.total_modules }} 個監控模組中，
+                                    {{ report.module_view|selectattr('matches', 'gt', 0)|list|length }} 個發現異常
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-clock text-info me-2"></i>
+                                    分析效率良好，平均每個檔案處理時間 
+                                    {{ "%.2f"|format(report.summary.analysis_time / report.summary.total_files) }}s
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>優先處理建議：</h6>
+                            {% set top_modules = report.module_view|sort(attribute='matches', reverse=true)[:3] %}
+                            {% for module in top_modules %}
+                            <div class="recommendation-item">
+                                <strong>{{ loop.index }}. {{ module.name }}</strong>
+                                <p class="mb-1 small">發現 {{ module.matches }} 次匹配，涉及 {{ module.files_count }} 個檔案</p>
+                                <small class="text-muted">建議優先檢查相關日誌內容</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 結論評論 -->
+                <div class="comment-section mt-4" onclick="toggleCommentForm('conclusion')">
+                    <div class="comment-display" id="conclusion-comment-display" style="display: none;">
+                        <h6><i class="fas fa-comment me-2"></i>結論與建議</h6>
+                        <p id="conclusion-comment-text"></p>
+                        <small class="text-muted">點擊編輯評論</small>
+                    </div>
+                    <div class="comment-form" id="conclusion-comment-form">
+                        <h6><i class="fas fa-comment-dots me-2"></i>添加總體結論</h6>
+                        <textarea class="form-control mb-2" id="conclusion-comment" rows="4" 
+                                  placeholder="請輸入您對整體分析結果的結論和改進建議..."></textarea>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success-gradient btn-sm" onclick="saveComment('conclusion')">
+                                <i class="fas fa-save me-1"></i>儲存
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="cancelComment('conclusion')">
+                                <i class="fas fa-times me-1"></i>取消
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-center text-muted" id="conclusion-comment-prompt">
+                        <i class="fas fa-plus-circle me-2"></i>點擊添加您的總體結論和建議
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版權聲明 -->
+    <div class="copyright-footer">
+        <i class="fas fa-heart"></i>
+        © 2025 Vince. All rights reserved.
+        <i class="fas fa-chart-line"></i>
+        Enhanced Log Analysis Report v5
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 報告數據
+        const reportData = {{ report|tojson }};
+        let moduleChart, fileChart;
+        let userComments = {};
+
+        // 頁面初始化
+        $(document).ready(function() {
+            initializeCharts();
+            loadUserComments();
+            setupSearchFunction();
+            
+            console.log('📊 分析報告載入完成');
+        });
+
+        // 初始化圖表
+        function initializeCharts() {
+            // 模組圖表
+            const moduleCtx = document.getElementById('moduleChart');
+            if (moduleCtx) {
+                const moduleData = reportData.module_view;
+                
+                moduleChart = new Chart(moduleCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: moduleData.map(m => m.name),
+                        datasets: [{
+                            label: '匹配數量',
+                            data: moduleData.map(m => m.matches),
+                            backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                            borderColor: 'rgba(102, 126, 234, 1)',
+                            borderWidth: 2,
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: function(context) {
+                                        const index = context[0].dataIndex;
+                                        const module = moduleData[index];
+                                        return [`檔案數: ${module.files_count}`, `搜尋時間: ${module.search_time.toFixed(2)}s`];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            // 檔案圖表
+            const fileCtx = document.getElementById('fileChart');
+            if (fileCtx) {
+                const fileData = Object.entries(reportData.file_view);
+                const topFiles = fileData
+                    .sort((a, b) => b[1].total_matches - a[1].total_matches)
+                    .slice(0, 10);
+
+                fileChart = new Chart(fileCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: topFiles.map(f => f[0].split('/').pop()),
+                        datasets: [{
+                            data: topFiles.map(f => f[1].total_matches),
+                            backgroundColor: [
+                                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                                '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
+                                '#4BC0C0', '#FF6384'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const percentage = ((context.raw / reportData.summary.total_matches) * 100).toFixed(1);
+                                        return `${context.label}: ${context.raw} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 搜尋功能
+        function setupSearchFunction() {
+            $('#search-input').on('input', function() {
+                const searchTerm = $(this).val().toLowerCase();
+                
+                if (searchTerm.length >= 2) {
+                    highlightSearchResults(searchTerm);
+                } else {
+                    clearSearchHighlights();
+                }
+            });
+        }
+
+        function searchReport() {
+            const searchTerm = $('#search-input').val().toLowerCase();
+            if (searchTerm.length < 2) {
+                showAlert('請輸入至少2個字符進行搜尋', 'warning');
+                return;
+            }
+            
+            highlightSearchResults(searchTerm);
+            scrollToFirstResult();
+        }
+
+        function highlightSearchResults(searchTerm) {
+            clearSearchHighlights();
+            
+            $('.report-card').each(function() {
+                const content = $(this).text().toLowerCase();
+                if (content.includes(searchTerm)) {
+                    $(this).addClass('search-highlight-container');
+                    
+                    // 高亮文字
+                    $(this).find('h3, h5, h6, p, span').each(function() {
+                        const text = $(this).text();
+                        const regex = new RegExp(`(${searchTerm})`, 'gi');
+                        const highlightedText = text.replace(regex, '<mark class="search-highlight">$1</mark>');
+                        
+                        if (highlightedText !== text) {
+                            $(this).html(highlightedText);
+                        }
+                    });
+                }
+            });
+        }
+
+        function clearSearchHighlights() {
+            $('.search-highlight').each(function() {
+                $(this).replaceWith($(this).text());
+            });
+            $('.search-highlight-container').removeClass('search-highlight-container');
+        }
+
+        function scrollToFirstResult() {
+            const firstResult = $('.search-highlight').first();
+            if (firstResult.length > 0) {
+                $('html, body').animate({
+                    scrollTop: firstResult.offset().top - 100
+                }, 500);
+            }
+        }
+
+        // 評論功能
+        function toggleCommentForm(sectionId) {
+            const form = $(`#${sectionId}-comment-form`);
+            const display = $(`#${sectionId}-comment-display`);
+            const prompt = $(`#${sectionId}-comment-prompt`);
+            
+            if (display.is(':visible')) {
+                // 編輯現有評論
+                const currentText = $(`#${sectionId}-comment-text`).text();
+                $(`#${sectionId}-comment`).val(currentText);
+                display.hide();
+                form.show();
+                prompt.hide();
+            } else if (form.is(':visible')) {
+                // 取消編輯
+                form.hide();
+                if (userComments[sectionId]) {
+                    display.show();
+                } else {
+                    prompt.show();
+                }
+            } else {
+                // 新增評論
+                form.show();
+                prompt.hide();
+            }
+        }
+
+        function saveComment(sectionId) {
+            const commentText = $(`#${sectionId}-comment`).val().trim();
+            
+            if (!commentText) {
+                showAlert('請輸入評論內容', 'warning');
+                return;
+            }
+            
+            userComments[sectionId] = {
+                text: commentText,
+                timestamp: new Date().toLocaleString(),
+                user: 'Current User'
+            };
+            
+            // 保存到本地儲存
+            localStorage.setItem(`report_comments_${reportData.analysis_id}`, JSON.stringify(userComments));
+            
+            // 更新顯示
+            $(`#${sectionId}-comment-text`).text(commentText);
+            $(`#${sectionId}-comment-display`).show();
+            $(`#${sectionId}-comment-form`).hide();
+            $(`#${sectionId}-comment-prompt`).hide();
+            
+            showAlert('評論已儲存', 'success');
+        }
+
+        function cancelComment(sectionId) {
+            $(`#${sectionId}-comment-form`).hide();
+            $(`#${sectionId}-comment`).val('');
+            
+            if (userComments[sectionId]) {
+                $(`#${sectionId}-comment-display`).show();
+            } else {
+                $(`#${sectionId}-comment-prompt`).show();
+            }
+        }
+
+        function loadUserComments() {
+            const saved = localStorage.getItem(`report_comments_${reportData.analysis_id}`);
+            if (saved) {
+                userComments = JSON.parse(saved);
+                
+                // 顯示已保存的評論
+                Object.keys(userComments).forEach(sectionId => {
+                    const comment = userComments[sectionId];
+                    $(`#${sectionId}-comment-text`).text(comment.text);
+                    $(`#${sectionId}-comment-display`).show();
+                    $(`#${sectionId}-comment-prompt`).hide();
+                });
+            }
+        }
+
+        // 導航功能
+        function scrollToSection(sectionId) {
+            const element = $(`#${sectionId}`);
+            if (element.length > 0) {
+                $('html, body').animate({
+                    scrollTop: element.offset().top - 100
+                }, 500);
+                
+                // 添加高亮效果
+                element.addClass('animate__animated animate__pulse');
+                setTimeout(() => {
+                    element.removeClass('animate__animated animate__pulse');
+                }, 1000);
+            }
+        }
+
+        // 匯出功能
+        function exportReport() {
+            // 創建完整的HTML內容
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html lang="zh-TW">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>日誌分析報告 - ${reportData.analysis_id}</title>
+                    <style>${document.querySelector('style').textContent}</style>
+                </head>
+                <body>
+                    ${document.querySelector('.container').outerHTML}
+                </body>
+                </html>
+            `;
+            
+            // 創建下載連結
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `analysis_report_${reportData.analysis_id}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert('📄 報告已匯出為 HTML 檔案', 'success');
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        // 提示訊息
+        function showAlert(message, type) {
+            const alertClass = {
+                'success': 'alert-success',
+                'info': 'alert-info',
+                'warning': 'alert-warning',
+                'danger': 'alert-danger'
+            }[type] || 'alert-info';
+            
+            const alertHtml = `
+                <div class="alert ${alertClass} position-fixed" 
+                     style="top: 20px; right: 20px; z-index: 9999; max-width: 300px;">
+                    ${message}
+                    <button type="button" class="btn-close" onclick="$(this).parent().remove()"></button>
+                </div>
+            `;
+            
+            $('.alert').remove();
+            $('body').append(alertHtml);
+            
+            setTimeout(() => {
+                $('.alert').fadeOut();
+            }, 3000);
+        }
+
+        // 鍵盤快捷鍵
+        $(document).keydown(function(e) {
+            // Ctrl+F 搜尋
+            if (e.ctrlKey && e.which === 70) {
+                e.preventDefault();
+                $('#search-input').focus();
+            }
+            
+            // Ctrl+P 列印
+            if (e.ctrlKey && e.which === 80) {
+                e.preventDefault();
+                printReport();
+            }
+            
+            // Ctrl+S 匯出
+            if (e.ctrlKey && e.which === 83) {
+                e.preventDefault();
+                exportReport();
+            }
+        });
+    </script>
+</body>
+</html>

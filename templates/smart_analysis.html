@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能分析 - {{ module }} | {{ keyword }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --warning-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 3rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .analysis-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .analysis-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .card-header-gradient {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .severity-critical {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .severity-high {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .severity-medium {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .severity-low {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .insight-item {
+            background: rgba(102, 126, 234, 0.05);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .insight-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        .recommendation-item {
+            background: rgba(17, 153, 142, 0.05);
+            border-left: 4px solid #11998e;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-item:hover {
+            background: rgba(17, 153, 142, 0.1);
+            transform: translateX(5px);
+        }
+
+        .pattern-highlight {
+            background: linear-gradient(135deg, #ff5722 0%, #ff6347 100%);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(255, 87, 34, 0.3);
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 0;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary-gradient);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -25px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+        }
+
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .priority-badge {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+        }
+
+        .error-pattern {
+            font-family: 'Courier New', monospace;
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .suggestion-box {
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0fff0 100%);
+            border: 1px solid #11998e;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 標題區域 -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-5 fw-bold mb-3 animate__animated animate__fadeInLeft">
+                        <i class="fas fa-brain me-3"></i>AI 智能分析報告
+                    </h1>
+                    <div class="mb-3">
+                        <span class="badge bg-light text-dark me-2 fs-6">
+                            <i class="fas fa-cube me-1"></i>{{ analysis.module }}
+                        </span>
+                        <span class="badge bg-warning text-dark me-2 fs-6">
+                            <i class="fas fa-key me-1"></i>{{ analysis.keyword }}
+                        </span>
+                        <span class="badge bg-info text-white fs-6">
+                            <i class="fas fa-file me-1"></i>{{ analysis.filename }}
+                        </span>
+                    </div>
+                    <p class="lead mb-4 animate__animated animate__fadeInLeft animate__delay-1s">
+                        基於 AI 技術的深度日誌分析，自動識別問題模式並提供解決建議
+                    </p>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <button class="btn back-btn btn-lg animate__animated animate__fadeInRight" onclick="window.history.back()">
+                        <i class="fas fa-arrow-left me-2"></i>返回分析
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4 mb-5">
+        <!-- 載入中顯示 -->
+        <div id="loading-container" class="loading-container" style="display: none;">
+            <div class="loading-spinner mb-4"></div>
+            <h4>AI 正在分析中...</h4>
+            <p class="text-muted">正在識別問題模式和生成建議，請稍候</p>
+        </div>
+
+        <!-- 分析結果內容 -->
+        <div id="analysis-content">
+            <!-- 分析摘要 -->
+            <div class="analysis-card animate__animated animate__fadeInUp">
+                <div class="card-header-gradient">
+                    <h3 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>分析摘要
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h2 class="text-primary mb-1">{{ analysis.total_matches }}</h2>
+                                <small class="text-muted">總匹配數</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h2 class="mb-1" style="color: {{ analysis.severity_color }}">{{ analysis.severity_level }}</h2>
+                                <small class="text-muted">嚴重程度</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h2 class="text-info mb-1">{{ analysis.pattern_count }}</h2>
+                                <small class="text-muted">識別模式</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h2 class="text-success mb-1">{{ analysis.confidence }}%</h2>
+                                <small class="text-muted">分析信心度</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h5><i class="fas fa-exclamation-triangle me-2 text-warning"></i>核心問題</h5>
+                            <p class="fs-5 text-dark">{{ analysis.core_issue }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 問題嚴重程度 -->
+            <div class="analysis-card animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="card-header severity-{{ analysis.severity_class }}">
+                    <h3 class="mb-0">
+                        <i class="fas fa-thermometer-half me-2"></i>問題嚴重程度評估
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="priority-badge severity-{{ analysis.severity_class }}">
+                            {{ analysis.severity_level }}
+                        </span>
+                        <div class="flex-grow-1 mx-3">
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar" style="width: {{ analysis.severity_percentage }}%; background: {{ analysis.severity_color }};"></div>
+                            </div>
+                        </div>
+                        <span class="fw-bold">{{ analysis.severity_percentage }}%</span>
+                    </div>
+                    <p class="text-muted">{{ analysis.severity_description }}</p>
+                </div>
+            </div>
+
+            <!-- 識別模式 -->
+            <div class="analysis-card animate__animated animate__fadeInUp animate__delay-2s">
+                <div class="card-header-gradient">
+                    <h3 class="mb-0">
+                        <i class="fas fa-search me-2"></i>識別模式
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    {% for pattern in analysis.patterns %}
+                    <div class="insight-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold text-primary mb-2">
+                                    <i class="fas fa-{{ pattern.icon }} me-2"></i>{{ pattern.title }}
+                                </h6>
+                                <p class="mb-2">{{ pattern.description }}</p>
+                                <div class="error-pattern">{{ pattern.example }}</div>
+                                <small class="text-muted">
+                                    <i class="fas fa-chart-bar me-1"></i>出現頻率: {{ pattern.frequency }}次
+                                    <span class="ms-3">
+                                        <i class="fas fa-clock me-1"></i>時間範圍: {{ pattern.time_range }}
+                                    </span>
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ pattern.priority_class }} priority-badge">
+                                {{ pattern.priority }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 根本原因分析 -->
+            <div class="analysis-card animate__animated animate__fadeInUp animate__delay-3s">
+                <div class="card-header-gradient">
+                    <h3 class="mb-0">
+                        <i class="fas fa-microscope me-2"></i>根本原因分析
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="timeline">
+                        {% for cause in analysis.root_causes %}
+                        <div class="timeline-item">
+                            <h6 class="fw-bold text-primary">{{ cause.title }}</h6>
+                            <p>{{ cause.description }}</p>
+                            {% if cause.evidence %}
+                            <div class="error-pattern">{{ cause.evidence }}</div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 解決建議 -->
+            <div class="analysis-card animate__animated animate__fadeInUp animate__delay-4s">
+                <div class="card-header" style="background: var(--success-gradient); color: white;">
+                    <h3 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>解決建議
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    {% for recommendation in analysis.recommendations %}
+                    <div class="recommendation-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="fw-bold text-success mb-2">
+                                    <i class="fas fa-{{ recommendation.icon }} me-2"></i>{{ recommendation.title }}
+                                </h6>
+                                <p class="mb-2">{{ recommendation.description }}</p>
+                                {% if recommendation.commands %}
+                                <div class="suggestion-box">
+                                    <h6 class="fw-bold mb-2">
+                                        <i class="fas fa-terminal me-1"></i>建議執行命令:
+                                    </h6>
+                                    {% for command in recommendation.commands %}
+                                    <div class="error-pattern">{{ command }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>預估實施時間: {{ recommendation.effort }}
+                                    <span class="ms-3">
+                                        <i class="fas fa-star me-1"></i>預期效果: {{ recommendation.impact }}
+                                    </span>
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ recommendation.priority_class }} priority-badge">
+                                {{ recommendation.priority }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 相關資源 -->
+            <div class="analysis-card animate__animated animate__fadeInUp animate__delay-5s">
+                <div class="card-header-gradient">
+                    <h3 class="mb-0">
+                        <i class="fas fa-book me-2"></i>相關資源
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        {% for resource in analysis.resources %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <i class="fas fa-{{ resource.icon }} me-2 text-primary"></i>{{ resource.title }}
+                                    </h6>
+                                    <p class="card-text small text-muted">{{ resource.description }}</p>
+                                    <a href="{{ resource.url }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="fas fa-external-link-alt me-1"></i>查看詳情
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 如果是通過AJAX載入的，顯示載入動畫
+        if (window.location.hash === '#loading') {
+            $('#loading-container').show();
+            $('#analysis-content').hide();
+            
+            // 模擬AI分析過程
+            setTimeout(() => {
+                $('#loading-container').hide();
+                $('#analysis-content').show();
+                // 移除hash
+                history.replaceState(null, null, window.location.pathname + window.location.search);
+            }, 3000);
+        }
+        
+        // 添加複製功能
+        $(document).on('click', '.error-pattern', function() {
+            const text = $(this).text();
+            navigator.clipboard.writeText(text).then(() => {
+                // 顯示複製成功提示
+                const tooltip = $('<div class="position-absolute bg-dark text-white px-2 py-1 rounded small" style="z-index: 1000;">已複製到剪貼板</div>');
+                $(this).parent().append(tooltip);
+                setTimeout(() => tooltip.remove(), 2000);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Log 分析平台 v5</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.9.1/chart.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            --warning-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            --info-gradient: linear-gradient(135deg, #3742fa 0%, #2f3542 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 60px;
+        }
+
+        .hero-section {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 4rem 0 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .card-modern {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.95);
+            position: relative;
+        }
+
+        .card-modern:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .collapsible-card {
+            position: relative;
+        }
+
+        .collapse-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid #dee2e6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .collapse-btn:hover {
+            background: var(--danger-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .btn-gradient {
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary-gradient {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary-gradient:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+
+        .btn-success-gradient {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-danger-gradient {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .file-browser {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+
+        .file-browser-header {
+            background: var(--info-gradient);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .file-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .file-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-item.selected {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .file-icon.directory {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            color: white;
+        }
+
+        .file-icon.log-file {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .upload-zone {
+            border: 2px dashed #ddd;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.7);
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.02);
+        }
+
+        .keyword-preview {
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        .keyword-module {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .keyword-module:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .keyword-module .delete-btn {
+            margin-left: 8px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .keyword-module .delete-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .stats-card {
+            transition: all 0.3s ease;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .floating-actions {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .floating-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        .floating-btn:hover {
+            transform: scale(1.1);
+            color: white;
+        }
+
+        .floating-btn-primary {
+            background: var(--primary-gradient);
+        }
+
+        .floating-btn-success {
+            background: var(--success-gradient);
+        }
+
+        .floating-btn-chat {
+            background: var(--warning-gradient);
+        }
+
+        .floating-btn-broadcast {
+            background: var(--info-gradient);
+        }
+
+        .breadcrumb-modern {
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            padding: 8px 15px;
+            margin: 0;
+        }
+
+        .breadcrumb-modern .breadcrumb-item {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .breadcrumb-modern .breadcrumb-item.active {
+            color: white;
+        }
+
+        .breadcrumb-modern .breadcrumb-item a {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+        }
+
+        .analysis-results {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            margin-top: 30px;
+        }
+
+        .result-module {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #1565c0;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .result-module:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+        }
+
+        .result-file {
+            background: rgba(255,255,255,0.4);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .result-line {
+            background: rgba(255,255,255,0.2);
+            border-left: 3px solid rgba(21, 101, 192, 0.5);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .result-line:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateX(8px);
+            border-left-color: rgba(21, 101, 192, 0.8);
+        }
+
+        .keyword-highlight {
+            background: linear-gradient(135deg, #ff5722 0%, #ff6347 100%);
+            color: white;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+        }
+
+        .copyright-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        .copyright-footer i {
+            color: #e74c3c;
+            margin: 0 5px;
+        }
+
+        .statistics-chart {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            margin-bottom: 20px;
+        }
+
+        .comment-section {
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+
+        .tab-view-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+
+        .sidebar-tabs {
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            height: 600px;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .content-tabs {
+            background: white;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .minimized-blocks {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .minimized-block {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .minimized-block:hover {
+            transform: scale(1.05);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .floating-actions {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1rem;
+            }
+            
+            .hero-section {
+                padding: 2rem 0;
+            }
+            
+            .card-modern {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3 animate__animated animate__fadeInLeft">
+                        <i class="fas fa-search-plus me-3"></i>Enhanced Log 分析平台 v5
+                    </h1>
+                    <p class="lead mb-4 animate__animated animate__fadeInLeft animate__delay-1s">
+                        全新升級版本：增強檔案檢視器、智能檢視模式、聊天室系統、投票功能、壓縮檔支援
+                    </p>
+                    <div class="d-flex align-items-center animate__animated animate__fadeInLeft animate__delay-2s">
+                        <span class="badge bg-light text-dark me-2 fs-6">檔案檢視器增強</span>
+                        <span class="badge bg-success me-2 fs-6">聊天室系統</span>
+                        <span class="badge bg-warning text-dark me-2 fs-6">壓縮檔支援</span>
+                        <span class="badge bg-info fs-6">AI 智能分析</span>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="animate__animated animate__fadeInRight animate__delay-1s">
+                        <i class="fas fa-stream fa-5x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-5">
+        <!-- 警告訊息區域 -->
+        <div id="alert-container"></div>
+
+        <!-- 統計圖表區域 -->
+        <div id="statistics-section" class="statistics-chart collapsible-card" style="display: none;">
+            <div class="collapse-btn" onclick="minimizeBlock('statistics-section', '統計圖表')">
+                <i class="fas fa-times"></i>
+            </div>
+            <h4 class="mb-4">
+                <i class="fas fa-chart-bar text-primary me-2"></i>分析統計
+            </h4>
+            <div class="row">
+                <div class="col-md-8">
+                    <canvas id="moduleChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-4">
+                    <div id="chart-summary">
+                        <h6>統計摘要</h6>
+                        <p>總模組數: <span id="total-modules">0</span></p>
+                        <p>總匹配數: <span id="total-matches-chart">0</span></p>
+                        <p>分析檔案: <span id="total-files-chart">0</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要功能區域 -->
+        <div class="row">
+            <!-- 左側：關鍵字設定 -->
+            <div class="col-lg-4 mb-4">
+                <div class="card-modern h-100 fade-in collapsible-card" id="keyword-section">
+                    <div class="collapse-btn" onclick="minimizeBlock('keyword-section', '關鍵字管理')">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="card-body p-4">
+                        <h4 class="card-title mb-4">
+                            <i class="fas fa-tags text-primary me-2"></i>關鍵字管理
+                        </h4>
+                        
+                        <!-- 上傳區域 -->
+                        <div class="upload-zone mb-4" id="upload-zone">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <h6 class="mb-2">拖拽檔案或點擊上傳</h6>
+                            <p class="text-muted small mb-3">支援 CSV 格式關鍵字檔案</p>
+                            <input type="file" id="keyword-file" accept=".csv,.txt" class="d-none">
+                            <button class="btn btn-primary-gradient btn-gradient btn-sm" onclick="document.getElementById('keyword-file').click()">
+                                <i class="fas fa-plus me-2"></i>選擇檔案
+                            </button>
+                            <br><br>
+                            <a href="/download_sample" class="btn btn-outline-info btn-sm" target="_blank">
+                                <i class="fas fa-download me-2"></i>下載範例檔案
+                            </a>
+                            <button class="btn btn-outline-warning btn-sm ms-2" onclick="restoreKeywords()">
+                                <i class="fas fa-undo me-2"></i>復原全部
+                            </button>
+                        </div>
+
+                        <!-- 關鍵字預覽 -->
+                        <div id="keyword-preview" class="keyword-preview" style="display: none;">
+                            <h6 class="mb-3">
+                                <i class="fas fa-eye me-2"></i>關鍵字預覽
+                            </h6>
+                            <div id="keyword-modules"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：檔案瀏覽器 -->
+            <div class="col-lg-8 mb-4">
+                <div class="file-browser fade-in collapsible-card" id="file-browser-section">
+                    <div class="collapse-btn" onclick="minimizeBlock('file-browser-section', '檔案瀏覽器')">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="file-browser-header">
+                        <div>
+                            <h4 class="mb-2">
+                                <i class="fas fa-folder-open me-2"></i>檔案選擇
+                            </h4>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb breadcrumb-modern" id="breadcrumb">
+                                    <li class="breadcrumb-item active">/home/vince_lin/Rust_Project</li>
+                                </ol>
+                            </nav>
+                        </div>
+                        <div>
+                            <button class="btn btn-light btn-sm me-2" onclick="refreshBrowser()" title="重新整理">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="btn btn-success-gradient btn-gradient btn-sm" onclick="toggleSelectAll()">
+                                <i class="fas fa-check-square me-1"></i>全選
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 路徑輸入 -->
+                    <div class="p-3 border-bottom">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </span>
+                            <input type="text" class="form-control" id="path-input" value="/home/vince_lin/Rust_Project" placeholder="輸入路徑">
+                            <button class="btn btn-primary-gradient btn-gradient" onclick="navigateToPath()">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 檔案列表 -->
+                    <div class="file-list" id="file-list" style="max-height: 500px; overflow-y: auto;">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">載入中...</span>
+                            </div>
+                            <p class="mt-3 text-muted">載入檔案列表中...</p>
+                        </div>
+                    </div>
+
+                    <!-- 選擇檔案統計 -->
+                    <div class="p-3 border-top bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">
+                                已選擇 <span id="selected-count" class="fw-bold text-primary">0</span> 個檔案
+                            </span>
+                            <button class="btn btn-danger-gradient btn-gradient" id="analyze-btn" onclick="startStreamAnalysis()" disabled>
+                                <i class="fas fa-stream me-2"></i>開始流式分析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快速拖曳分析區域 -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card-modern fade-in collapsible-card" id="quick-analysis-section">
+                    <div class="collapse-btn" onclick="minimizeBlock('quick-analysis-section', '快速分析')">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    <div class="card-body p-4">
+                        <h4 class="card-title mb-3">
+                            <i class="fas fa-bolt text-warning me-2"></i>快速分析
+                        </h4>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- 拖曳分析區域 -->
+                                <div class="upload-zone" id="drop-analysis-zone">
+                                    <div class="drop-zone-content">
+                                        <i class="fas fa-file-upload fa-3x text-primary mb-3"></i>
+                                        <h5>拖曳檔案到此處進行快速分析</h5>
+                                        <p class="text-muted mb-3">
+                                            支援 .log, .txt, .out, .err 等格式<br>
+                                            <strong>新增支援：</strong>.zip, .7z, .tar.gz, .gz, .tar 壓縮檔案
+                                        </p>
+                                        <div class="drop-zone-actions">
+                                            <input type="file" id="quick-analysis-file" multiple 
+                                                   accept=".log,.txt,.out,.err,.zip,.7z,.tar.gz,.gz,.tar" class="d-none">
+                                            <button class="btn btn-primary-gradient btn-gradient" onclick="document.getElementById('quick-analysis-file').click()">
+                                                <i class="fas fa-folder-open me-2"></i>選擇檔案
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 拖曳檔案列表 -->
+                                    <div id="dropped-files-list" class="dropped-files-list" style="display: none;">
+                                        <h6 class="mb-3">
+                                            <i class="fas fa-list me-2"></i>待分析檔案
+                                            <button class="btn btn-outline-danger btn-sm float-end" onclick="clearDroppedFiles()">
+                                                <i class="fas fa-trash me-1"></i>清空
+                                            </button>
+                                        </h6>
+                                        <div id="dropped-files-container"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <!-- 快速分析選項 -->
+                                <div class="quick-analysis-options">
+                                    <h6 class="mb-3">
+                                        <i class="fas fa-cogs me-2"></i>分析選項
+                                    </h6>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="include-browser-files" checked>
+                                        <label class="form-check-label" for="include-browser-files">
+                                            包含瀏覽器選擇的檔案
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="include-dropped-files" checked>
+                                        <label class="form-check-label" for="include-dropped-files">
+                                            包含拖曳的檔案
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="analysis-summary">
+                                        <div class="summary-item">
+                                            <span class="text-muted">瀏覽器選擇：</span>
+                                            <span class="fw-bold" id="browser-files-count">0</span> 個
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="text-muted">拖曳檔案：</span>
+                                            <span class="fw-bold" id="dropped-files-count">0</span> 個
+                                        </div>
+                                        <div class="summary-item total-summary">
+                                            <span class="text-muted">總計：</span>
+                                            <span class="fw-bold text-primary" id="total-files-count">0</span> 個檔案
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="btn btn-success-gradient btn-gradient w-100 mt-3" id="quick-analyze-btn" onclick="startQuickAnalysis()" disabled>
+                                        <i class="fas fa-rocket me-2"></i>開始快速分析
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分析結果區域 -->
+        <div id="analysis-results" class="analysis-results collapsible-card" style="display: none;">
+            <div class="collapse-btn" onclick="minimizeBlock('analysis-results', '分析結果')">
+                <i class="fas fa-times"></i>
+            </div>
+            <h3 class="mb-4">
+                <i class="fas fa-chart-line text-primary me-2"></i>即時分析結果
+                <div class="float-end">
+                    <button class="btn btn-outline-secondary btn-sm me-2" onclick="exportResults()">
+                        <i class="fas fa-download me-1"></i>匯出結果
+                    </button>
+                    <button class="btn btn-outline-info btn-sm me-2" onclick="generateReport()" id="report-btn">
+                        <i class="fas fa-file-alt me-1"></i>生成報告
+                    </button>
+                    <button class="btn btn-outline-info btn-sm me-2" onclick="toggleViewMode()" id="view-mode-btn">
+                        <i class="fas fa-exchange-alt me-1"></i>切換檢視
+                    </button>
+                </div>
+            </h3>
+            
+            <!-- 結果統計 -->
+            <div class="row mb-4" id="result-stats">
+                <!-- 統計卡片將動態插入 -->
+            </div>
+
+            <!-- 檢視模式切換 -->
+            <div id="view-controls" class="view-controls mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5><i class="fas fa-eye me-2"></i>檢視模式</h5>
+                    </div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary active" id="module-view-btn" onclick="setViewMode('module')">
+                            <i class="fas fa-cube me-1"></i>按模組
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="file-view-btn" onclick="setViewMode('file')">
+                            <i class="fas fa-file me-1"></i>按檔案
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="tab-view-btn" onclick="setViewMode('tab')">
+                            <i class="fas fa-th me-1"></i>標籤檢視
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 標籤式檢視 -->
+            <div id="tab-view-container" class="tab-view-container mb-4" style="display: none;">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="sidebar-tabs">
+                            <div class="sidebar-header">
+                                <h6 id="sidebar-title">檔案列表</h6>
+                            </div>
+                            <div class="nav flex-column nav-pills" id="sidebar-tabs" role="tablist">
+                                <!-- 動態生成標籤 -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="content-tabs">
+                            <div class="content-header">
+                                <ul class="nav nav-tabs" id="content-tabs" role="tablist">
+                                    <!-- 動態生成內容標籤 -->
+                                </ul>
+                            </div>
+                            <div class="tab-content" id="content-tab-content">
+                                <!-- 動態生成內容 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 詳細結果 -->
+            <div id="detailed-results">
+                <!-- 詳細結果將動態插入 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 浮動操作按鈕 -->
+    <div class="floating-actions">
+        <button class="floating-btn floating-btn-primary" onclick="scrollToTop()" title="回到頂部">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        <button class="floating-btn floating-btn-success" onclick="openChat()" title="聊天室">
+            <i class="fas fa-comments"></i>
+        </button>
+        <button class="floating-btn floating-btn-chat" onclick="openLottery()" title="幸運轉盤">
+            <i class="fas fa-dice"></i>
+        </button>
+        <button class="floating-btn floating-btn-broadcast" onclick="openBroadcast()" title="廣播系統">
+            <i class="fas fa-broadcast-tower"></i>
+        </button>
+    </div>
+
+    <!-- 最小化區塊容器 -->
+    <div class="minimized-blocks" id="minimized-blocks"></div>
+
+    <!-- 版權聲明 -->
+    <div class="copyright-footer">
+        <div class="container">
+            <i class="fas fa-heart"></i>
+            © 2025 Vince. All rights reserved.
+            <i class="fas fa-code"></i>
+            Enhanced Log Analysis Platform v5
+        </div>
+    </div>
+
+    <!-- 聊天室模態框 -->
+    <div class="modal fade" id="chatModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-comments me-2"></i>聊天室
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chat-interface">
+                        <!-- 聊天室介面 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 幸運轉盤模態框 -->
+    <div class="modal fade" id="lotteryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-dice me-2"></i>幸運轉盤
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="lottery-wheel">
+                        <!-- 轉盤界面 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/enhanced-app-v5.js') }}"></script>
+</body>
+</html>

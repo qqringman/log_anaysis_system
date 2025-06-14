@@ -38,48 +38,90 @@
 
         .layout-grid .dashboard-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(102, 126, 234, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(102, 126, 234, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .layout-grid .dashboard-block {
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .layout-masonry {
+            margin-top: 20px;
         }
 
         .layout-masonry .dashboard-container {
             column-count: 3;
-            column-gap: 20px;
+            column-gap: 25px;
+            padding: 20px;
         }
 
         .layout-masonry .dashboard-block {
             break-inside: avoid;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            display: inline-block;
+            width: 100%;
         }
 
-        /* Draggable blocks */
+        @media (max-width: 1200px) {
+            .layout-masonry .dashboard-container {
+                column-count: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .layout-masonry .dashboard-container {
+                column-count: 1;
+            }
+        }
+
+        /* Draggable blocks - Improved spacing */
         .dashboard-block {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             transition: all 0.3s ease;
+            padding: 10px; /* Increased padding for better spacing */
         }
 
         .dashboard-block.ui-draggable-dragging {
-            opacity: 0.8;
-            transform: scale(0.95);
+            opacity: 0.9;
+            transform: scale(0.98);
             z-index: 1000;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            cursor: move;
         }
 
         .dashboard-block .drag-handle {
             position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 25px;
+            left: 25px;
             cursor: move;
-            color: #6c757d;
-            opacity: 0.5;
-            transition: opacity 0.3s ease;
+            color: rgba(102, 126, 234, 0.6);
+            opacity: 0;
+            transition: all 0.3s ease;
             z-index: 10;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px;
+            border-radius: 6px;
         }
 
         .dashboard-block:hover .drag-handle {
             opacity: 1;
+        }
+
+        .dashboard-block .drag-handle:hover {
+            color: #667eea;
+            transform: scale(1.1);
         }
 
         .hero-section {
@@ -104,16 +146,17 @@
         .card-modern {
             border: none;
             border-radius: 20px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
             transition: all 0.3s ease;
-            background: rgba(255,255,255,0.95);
+            background: rgba(255,255,255,0.98);
             position: relative;
             overflow: hidden;
+            margin: 5px; /* Better spacing */
         }
 
         .card-modern:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
         }
 
         .collapsible-card {
@@ -122,25 +165,27 @@
 
         .collapse-btn {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 20px;
+            right: 20px;
             z-index: 10;
             background: rgba(255,255,255,0.9);
-            border: 1px solid #dee2e6;
+            border: 1px solid #e9ecef;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            color: #6c757d;
         }
 
         .collapse-btn:hover {
-            background: var(--danger-gradient);
+            background: #ff6b6b;
             color: white;
-            border-color: transparent;
+            border-color: #ff6b6b;
+            transform: rotate(360deg);			
         }
 
         /* Floating action buttons - improved positioning */
@@ -237,36 +282,37 @@
             font-size: 1rem;
         }
 
-        /* Top Controls Bar - Modern Design */
+        /* Enhanced Top Controls Bar - Modern Glass Design */
         .top-controls-bar {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 100;
             background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 12px 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 16px 24px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
         .controls-group {
             display: flex;
-            gap: 30px;
+            gap: 40px;
             align-items: center;
         }
 
         .control-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #6c757d;
-            margin-bottom: 8px;
-            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-weight: 700;
         }
 
-        /* Layout Controls */
+        /* Enhanced Layout Controls */
         .layout-controls {
             display: flex;
             flex-direction: column;
@@ -274,22 +320,24 @@
 
         .layout-buttons {
             display: flex;
-            gap: 4px;
+            gap: 0;
             background: #f0f2f5;
             padding: 4px;
-            border-radius: 12px;
+            border-radius: 16px;
+            position: relative;
         }
 
         .layout-btn {
             background: transparent;
             border: none;
-            padding: 8px 12px;
+            padding: 10px 16px;
             cursor: pointer;
             transition: all 0.3s ease;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
             color: #6c757d;
             position: relative;
+            z-index: 2;
         }
 
         .layout-btn:hover {
@@ -297,26 +345,23 @@
         }
 
         .layout-btn.active {
-            background: white;
             color: #667eea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .layout-btn[data-tooltip]:hover::after {
-            content: attr(data-tooltip);
+        /* Sliding background for active button */
+        .layout-slider {
             position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #333;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            white-space: nowrap;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
         }
 
-        /* Device Toggle - Modern Radio Style */
+        /* Enhanced Device Toggle - iOS Style */
         .device-toggle {
             display: flex;
             flex-direction: column;
@@ -325,10 +370,11 @@
         .device-selector {
             position: relative;
             display: flex;
-            gap: 4px;
+            gap: 0;
             background: #f0f2f5;
             padding: 4px;
-            border-radius: 12px;
+            border-radius: 16px;
+            height: 44px;
         }
 
         .device-selector input[type="radio"] {
@@ -336,13 +382,17 @@
         }
 
         .device-selector label {
-            padding: 8px 16px;
+            padding: 10px 20px;
             cursor: pointer;
             transition: all 0.3s ease;
-            border-radius: 8px;
+            border-radius: 12px;
             color: #6c757d;
             z-index: 2;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
         }
 
         .device-selector label:hover {
@@ -360,13 +410,13 @@
             width: calc(50% - 6px);
             height: calc(100% - 8px);
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         #mobile-view:checked ~ .selector-bg {
-            transform: translateX(100%);
+            transform: translateX(calc(100% + 4px));
         }
 
         /* Enhanced drag and drop zone */
@@ -388,42 +438,95 @@
 
         /* File browser improvements */
         .file-browser {
-            max-height: 600px;
+            max-height: 650px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            background: #fafbfc;
         }
 
         .file-browser-header {
-            padding: 20px;
-            border-bottom: 1px solid #dee2e6;
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-bottom: 2px solid #e3e8ee;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
+        .breadcrumb-modern {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-modern .breadcrumb-item {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb-modern .breadcrumb-item.active {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .breadcrumb-modern .breadcrumb-item + .breadcrumb-item::before {
+            content: '/';
+            color: #dee2e6;
+        }
+
         .file-list {
             flex: 1;
             overflow-y: auto;
-            padding: 15px;
+            padding: 20px;
+            background: #fafbfc;
         }
 
         .file-item {
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: #f8f9fa;
+            background: white;
+            border: 1px solid #e3e8ee;
         }
 
         .file-item:hover {
-            background: #e9ecef;
-            transform: translateX(5px);
+            background: linear-gradient(135deg, #f0f3ff 0%, #f8f9fa 100%);
+            transform: translateX(8px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
         }
 
         .file-item.selected {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .file-item.selected .text-muted {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .file-item:not(.selected) .file-icon {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3f4f6 100%);
+            color: #667eea;
+        }
+
+        .file-item.selected .file-icon {
+            background: rgba(255, 255, 255, 0.2);
             color: white;
         }
 
@@ -508,22 +611,15 @@
                 overflow-y: hidden;
             }
             
-            .layout-controls,
-            .device-toggle {
-                position: fixed;
-                top: auto;
-                bottom: 10px;
+            .top-controls-bar {
+                top: 10px;
+                right: 10px;
                 left: 10px;
-                right: auto;
-                display: flex;
-                flex-direction: row;
-                gap: 10px;
-                padding: 10px;
+                padding: 12px 16px;
             }
             
-            .device-toggle {
-                left: auto;
-                right: 10px;
+            .controls-group {
+                gap: 20px;
             }
             
             .hero-section {
@@ -611,28 +707,32 @@
 
         /* Sortable placeholder */
         .ui-sortable-placeholder {
-            border: 2px dashed #667eea;
+            border: 3px dashed #667eea;
             background: rgba(102, 126, 234, 0.1);
             visibility: visible !important;
             border-radius: 20px;
+            min-height: 100px;
+            margin: 10px;
+            box-shadow: inset 0 0 20px rgba(102, 126, 234, 0.2);
         }
 
-        /* Login Modal Styles */
+        /* Enhanced Login Modal Styles */
         .login-backdrop {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(5px);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             z-index: 2000;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s ease;
+            transition: all 0.4s ease;
         }
 
         .login-backdrop.show {
@@ -642,73 +742,209 @@
 
         .login-container {
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
             padding: 20px;
         }
 
         .login-box {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 30px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
             overflow: hidden;
-            transform: translateY(20px);
-            transition: transform 0.3s ease;
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .login-backdrop.show .login-box {
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
 
         .login-header {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 40px 30px;
+            padding: 50px 40px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
         }
 
         .login-logo {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             background: rgba(255,255,255,0.2);
+            border: 3px solid rgba(255,255,255,0.3);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 2.5rem;
+            margin: 0 auto 25px;
+            font-size: 3rem;
+            position: relative;
+            z-index: 1;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         .login-header h2 {
             margin: 0 0 10px;
-            font-size: 1.8rem;
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
         }
 
         .login-header p {
             margin: 0;
             opacity: 0.9;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
         }
 
         .login-body {
-            padding: 30px;
+            padding: 40px;
+        }
+
+        .form-floating {
+            position: relative;
+        }
+
+        .form-floating .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 1.5rem 1rem 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-floating .form-control:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+        }
+
+        .form-floating label {
+            color: #6c757d;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-floating .form-control:focus ~ label,
+        .form-floating .form-control:not(:placeholder-shown) ~ label {
+            color: #667eea;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 14px 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-login:hover::before {
+            left: 100%;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
         .login-footer {
-            padding: 0 30px 30px;
+            padding: 0 40px 40px;
             text-align: center;
-            border-top: 1px solid #e9ecef;
-            padding-top: 20px;
         }
 
-        .login-footer p {
-            margin-bottom: 10px;
+        .login-divider {
+            position: relative;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .login-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e9ecef;
+        }
+
+        .login-divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
             color: #6c757d;
-            font-size: 0.9rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-guest {
+            background: white;
+            border: 2px solid #e9ecef;
+            color: #6c757d;
+            border-radius: 15px;
+            padding: 12px 25px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-guest:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
         }
 
         /* Copyright footer position adjustment when login modal is shown */
         .copyright-footer {
             z-index: 50;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            text-align: center;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .copyright-footer i {
@@ -749,50 +985,82 @@
         .stream-results {
             max-height: 600px;
             overflow-y: auto;
-            padding: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
         }
 
         .module-result {
-            background: #f8f9fa;
+            background: white;
             border-radius: 15px;
-            padding: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border: 1px solid #e9ecef;
+        }
+
+        .module-result h5 {
+            color: #2d3436;
+            font-weight: 600;
             margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f3f7;
         }
 
         .file-matches {
-            margin-top: 15px;
+            margin-top: 20px;
         }
 
         .match-item {
-            background: white;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            border-radius: 10px;
             border-left: 4px solid #667eea;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .match-item:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3f4f6 100%);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.15);
             transform: translateX(5px);
+            border-left-color: #764ba2;
+        }
+
+        .match-item:hover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+            pointer-events: none;
         }
 
         /* Highlighted keyword in context */
         .match-content {
-            font-family: 'Consolas', 'Monaco', monospace;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 0.9rem;
-            line-height: 1.5;
+            line-height: 1.6;
             color: #2d3436;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
         .match-content .highlight {
-            background-color: #ffeaa7;
-            padding: 2px 4px;
-            border-radius: 3px;
+            background: linear-gradient(135deg, #fff59d 0%, #ffeb3b 100%);
+            padding: 3px 6px;
+            border-radius: 4px;
             font-weight: 600;
             color: #2d3436;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: inline-block;
+            margin: 0 2px;
         }
 
         /* Line number link styling */
@@ -832,23 +1100,38 @@
             background: var(--primary-gradient);
             border-radius: 5px;
         }
+
+        /* Analysis results block spacing */
+        .analysis-results {
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        .result-stats {
+            margin-bottom: 20px;
+        }
+
+        #detailed-results {
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
-    <!-- Top Controls Bar -->
+    <!-- Enhanced Top Controls Bar -->
     <div class="top-controls-bar">
         <div class="controls-group">
             <!-- Layout Controls -->
             <div class="layout-controls">
-                <div class="control-label">佈局</div>
+                <div class="control-label">佈局模式</div>
                 <div class="layout-buttons">
-                    <button class="layout-btn active" onclick="layoutManager.setLayout('default')" title="預設佈局" data-tooltip="預設">
+                    <div class="layout-slider"></div>
+                    <button class="layout-btn active" onclick="layoutManager.setLayout('default')" title="預設佈局" data-layout="default">
                         <i class="fas fa-th-large"></i>
                     </button>
-                    <button class="layout-btn" onclick="layoutManager.setLayout('grid')" title="網格佈局" data-tooltip="網格">
+                    <button class="layout-btn" onclick="layoutManager.setLayout('grid')" title="網格佈局" data-layout="grid">
                         <i class="fas fa-th"></i>
                     </button>
-                    <button class="layout-btn" onclick="layoutManager.setLayout('masonry')" title="瀑布流佈局" data-tooltip="瀑布流">
+                    <button class="layout-btn" onclick="layoutManager.setLayout('masonry')" title="瀑布流佈局" data-layout="masonry">
                         <i class="fas fa-grip-vertical"></i>
                     </button>
                 </div>
@@ -856,7 +1139,7 @@
             
             <!-- Device Toggle -->
             <div class="device-toggle">
-                <div class="control-label">檢視</div>
+                <div class="control-label">檢視模式</div>
                 <div class="device-selector">
                     <input type="radio" name="device" id="desktop-view" checked onchange="layoutManager.setDeviceView('desktop')">
                     <label for="desktop-view" title="桌面版">
@@ -913,8 +1196,8 @@
                 <div class="collapse-btn" onclick="blockManager.minimizeBlock('statistics-block', '統計圖表')">
                     <i class="fas fa-times"></i>
                 </div>
-                <div class="card-body">
-                    <h4 class="mb-4">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-3">
                         <i class="fas fa-chart-bar text-primary me-2"></i>分析統計
                     </h4>
                     <div class="row">
@@ -945,7 +1228,7 @@
                 </div>
                 <div class="card-body p-4">
                     <h4 class="card-title mb-4">
-                        <i class="fas fa-tags text-primary me-2"></i>關鍵字管理
+                        <i class="fas fa-tags me-2" style="color: #e74c3c;"></i>關鍵字管理
                     </h4>
                     
                     <!-- 上傳區域 -->
@@ -988,8 +1271,8 @@
                 </div>
                 <div class="file-browser-header">
                     <div>
-                        <h4 class="mb-2">
-                            <i class="fas fa-folder-open me-2"></i>檔案選擇
+                        <h4 class="card-title mb-4">
+                            <i class="fas fa-folder-open me-2" style="color: #f39c12;"></i>檔案選擇
                         </h4>
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb breadcrumb-modern" id="breadcrumb">
@@ -1055,7 +1338,7 @@
                 </div>
                 <div class="card-body p-4">
                     <h4 class="card-title mb-3">
-                        <i class="fas fa-bolt text-warning me-2"></i>快速分析
+                        <i class="fas fa-bolt me-2" style="color: #9b59b6;"></i>快速分析
                     </h4>
                     
                     <div class="row">
@@ -1138,7 +1421,7 @@
         </div>
 
         <!-- 分析結果區塊 -->
-        <div class="dashboard-block" id="results-block" style="display: none;">
+        <div class="dashboard-block" id="results-block" style="display: block;">
             <div class="card-modern collapsible-card analysis-results">
                 <div class="drag-handle">
                     <i class="fas fa-grip-vertical"></i>
@@ -1146,24 +1429,25 @@
                 <div class="collapse-btn" onclick="blockManager.minimizeBlock('results-block', '分析結果')">
                     <i class="fas fa-times"></i>
                 </div>
-                <div class="card-body">
-                    <h3 class="mb-4">
-                        <i class="fas fa-chart-line text-primary me-2"></i>即時分析結果
-                        <div class="float-end">
-                            <button class="btn btn-outline-secondary btn-sm me-2" onclick="resultsManager.exportResults()">
-                                <i class="fas fa-download me-1"></i>匯出結果
-                            </button>
-                            <button class="btn btn-outline-info btn-sm me-2" onclick="resultsManager.generateReport()" id="report-btn">
-                                <i class="fas fa-file-alt me-1"></i>生成報告
-                            </button>
-                            <button class="btn btn-outline-primary btn-sm me-2" onclick="shareManager.shareResults()">
-                                <i class="fas fa-share me-1"></i>分享結果
-                            </button>
-                            <button class="btn btn-outline-info btn-sm" onclick="resultsManager.toggleViewMode()" id="view-mode-btn">
-                                <i class="fas fa-exchange-alt me-1"></i>切換檢視
-                            </button>
-                        </div>
-                    </h3>
+                <div class="card-body p-4">
+                    <h4 class="mb-4">
+                        <i class="fas fa-chart-line me-2" style="color: #27ae60;"></i>即時分析結果
+                    </h4>
+					
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="resultsManager.exportResults()">
+                            <i class="fas fa-download me-1"></i>匯出結果
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="resultsManager.generateReport()" id="report-btn">
+                            <i class="fas fa-file-alt me-1"></i>生成報告
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="shareManager.shareResults()">
+                            <i class="fas fa-share me-1"></i>分享結果
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="resultsManager.toggleViewMode()" id="view-mode-btn">
+                            <i class="fas fa-exchange-alt me-1"></i>切換檢視
+                        </button>
+                    </div>
                     
                     <!-- 結果統計 -->
                     <div class="row mb-4" id="result-stats">
@@ -1193,7 +1477,7 @@
         <button class="floating-btn floating-btn-broadcast" onclick="broadcastManager.openBroadcast()" title="廣播系統">
             <i class="fas fa-broadcast-tower"></i>
         </button>
-        <button class="floating-btn floating-btn-chat" onclick="roomManager.openRoomManager()" title="聊天室管理">
+        <button class="floating-btn floating-btn-chat" id="room-manager-btn" onclick="roomManager.openRoomManager()" title="聊天室管理" style="display: none;">
             <i class="fas fa-cog"></i>
         </button>
         <button class="floating-btn floating-btn-share" onclick="shareManager.openShareManager()" title="分享管理">
@@ -1214,7 +1498,7 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
+    <!-- Enhanced Login Modal -->
     <div class="login-backdrop" id="loginModal">
         <div class="login-container">
             <div class="login-box">
@@ -1227,20 +1511,20 @@
                 </div>
                 <div class="login-body">
                     <form id="loginForm" onsubmit="return false;">
-                        <div class="form-floating mb-3">
+                        <div class="form-floating mb-4">
                             <input type="text" class="form-control" id="username" placeholder="您的名稱" required>
                             <label for="username">請輸入您的名稱</label>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100" onclick="handleLogin()">
+                        <button type="submit" class="btn btn-primary btn-login w-100" onclick="handleLogin()">
                             進入平台
                             <i class="fas fa-arrow-right ms-2"></i>
                         </button>
                     </form>
-                </div>
-                <div class="login-footer">
-                    <p>或使用訪客身份</p>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="handleGuestLogin()">
-                        訪客登入
+                    <div class="login-divider">
+                        <span>或</span>
+                    </div>
+                    <button class="btn btn-guest w-100" onclick="handleGuestLogin()">
+                        <i class="fas fa-user-secret me-2"></i>訪客登入
                     </button>
                 </div>
             </div>
@@ -1249,6 +1533,44 @@
 
     <!-- Include modals from separate file -->
     <div id="modals-container"></div>
+    
+    <!-- Chat Login Modal -->
+    <div class="modal fade" id="chatLoginModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px; overflow: hidden;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-comments me-2"></i>加入聊天室
+                    </h5>
+                </div>
+                <div class="modal-body" style="padding: 30px;">
+                    <div class="text-center mb-4">
+                        <div style="width: 80px; height: 80px; background: rgba(102, 126, 234, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                            <i class="fas fa-user-circle fa-3x" style="color: #667eea;"></i>
+                        </div>
+                    </div>
+                    <form id="chatLoginForm">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="chatUsername" placeholder="請輸入您的名稱" required style="border-radius: 10px;">
+                            <label for="chatUsername">請輸入您的名稱</label>
+                        </div>
+                        <div class="text-muted small mb-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            這個名稱將在聊天室中顯示
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="border: none; padding: 20px;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 10px;">
+                        取消
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="chatManager.confirmChatLogin()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 10px;">
+                        <i class="fas fa-sign-in-alt me-2"></i>進入聊天室
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
@@ -1278,10 +1600,41 @@
     <!-- Main app initialization -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     
-    <!-- Load modals -->
+    <!-- Layout controls enhancement script -->
     <script>
+        // Enhanced layout controls with sliding animation
         $(document).ready(function() {
+            // Load modals
             $('#modals-container').load("{{ url_for('static', filename='modals.html') }}");
+            
+            // Initialize layout slider
+            const updateLayoutSlider = () => {
+                const activeBtn = $('.layout-btn.active');
+                const slider = $('.layout-slider');
+                
+                if (activeBtn.length) {
+                    const btnWidth = activeBtn.outerWidth();
+                    const btnLeft = activeBtn.position().left;
+                    
+                    slider.css({
+                        width: btnWidth + 'px',
+                        left: btnLeft + 'px'
+                    });
+                }
+            };
+            
+            // Update slider on button click
+            $('.layout-btn').on('click', function() {
+                $('.layout-btn').removeClass('active');
+                $(this).addClass('active');
+                updateLayoutSlider();
+            });
+            
+            // Initialize slider position
+            setTimeout(updateLayoutSlider, 100);
+            
+            // Update on window resize
+            $(window).on('resize', updateLayoutSlider);
         });
     </script>
 </body>

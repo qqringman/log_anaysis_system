@@ -23,6 +23,12 @@
             --highlight-fg: #2d3436;
             --search-highlight: #ff6b6b;
             --current-line-bg: rgba(255, 255, 255, 0.1);
+            --header-height: 60px;
+            --status-height: 30px;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -30,11 +36,12 @@
             padding: 0;
             background: var(--editor-bg);
             color: var(--editor-fg);
-            font-family: 'Consolas', 'Monaco', monospace;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
             overflow: hidden;
+            height: 100vh;
         }
 
-        /* Header Bar */
+        /* Modern Header Bar */
         .file-viewer-header {
             background: linear-gradient(135deg, #2d2d30 0%, #1e1e1e 100%);
             border-bottom: 1px solid #3e3e42;
@@ -42,7 +49,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 60px;
+            height: var(--header-height);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
         }
 
         .header-left {
@@ -60,11 +72,16 @@
             font-size: 1.1rem;
             font-weight: 600;
             color: #fff;
+            letter-spacing: 0.5px;
         }
 
         .file-path {
             font-size: 0.85rem;
             color: #858585;
+            max-width: 500px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .header-actions {
@@ -77,15 +94,19 @@
             border: none;
             color: #d4d4d4;
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .action-btn:hover {
             background: rgba(255, 255, 255, 0.2);
             color: #fff;
+            transform: translateY(-1px);
         }
 
         .action-btn.active {
@@ -93,18 +114,19 @@
             color: #fff;
         }
 
-        /* Search Bar */
+        /* Modern Search Bar */
         .search-bar {
             position: fixed;
             top: 70px;
             right: 20px;
-            background: #2d2d30;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             z-index: 100;
             display: none;
             animation: slideIn 0.3s ease;
+            border: 1px solid #3e3e42;
         }
 
         .search-bar.show {
@@ -117,21 +139,31 @@
             background: #1e1e1e;
             border: 1px solid #3e3e42;
             color: #d4d4d4;
-            padding: 6px 12px;
-            border-radius: 4px;
-            width: 250px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            width: 300px;
+            font-size: 0.9rem;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
         }
 
         .search-stats {
             font-size: 0.85rem;
             color: #858585;
+            min-width: 60px;
+            text-align: center;
         }
 
         /* Editor Container */
         .editor-container {
             display: flex;
-            height: calc(100vh - 60px);
+            height: calc(100vh - var(--header-height) - var(--status-height));
             position: relative;
+            margin-top: var(--header-height);
         }
 
         /* Line Numbers */
@@ -139,19 +171,21 @@
             background: var(--line-number-bg);
             color: var(--line-number-fg);
             padding: 20px 0;
-            min-width: 60px;
+            min-width: 80px;
             text-align: right;
             user-select: none;
             overflow: hidden;
             border-right: 1px solid #3e3e42;
+            font-size: 0.9rem;
         }
 
         .line-number {
-            padding: 2px 15px 2px 5px;
+            padding: 2px 20px 2px 10px;
             cursor: pointer;
             transition: all 0.2s ease;
             height: 20px;
             line-height: 20px;
+            position: relative;
         }
 
         .line-number:hover {
@@ -165,12 +199,20 @@
             font-weight: bold;
         }
 
+        .line-number:hover::after {
+            content: '→';
+            position: absolute;
+            right: 5px;
+            opacity: 0.7;
+        }
+
         /* Code Content */
         .code-content {
             flex: 1;
             overflow: auto;
             padding: 20px;
             position: relative;
+            background: var(--editor-bg);
         }
 
         .code-line {
@@ -179,6 +221,7 @@
             height: 20px;
             line-height: 20px;
             position: relative;
+            transition: background 0.1s ease;
         }
 
         .code-line:hover {
@@ -187,6 +230,7 @@
 
         .code-line.highlighted {
             background: rgba(102, 126, 234, 0.1);
+            box-shadow: inset 3px 0 0 #667eea;
         }
 
         /* Text Highlights */
@@ -196,6 +240,7 @@
             padding: 1px 3px;
             border-radius: 3px;
             font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
         .search-highlight {
@@ -203,26 +248,53 @@
             color: #fff;
             padding: 1px 3px;
             border-radius: 3px;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
 
         /* Color Markers */
-        .color-marker-red { background: rgba(255, 107, 107, 0.3); }
-        .color-marker-green { background: rgba(46, 213, 115, 0.3); }
-        .color-marker-blue { background: rgba(78, 205, 196, 0.3); }
-        .color-marker-yellow { background: rgba(255, 234, 167, 0.3); }
-        .color-marker-purple { background: rgba(165, 94, 234, 0.3); }
+        .color-marker-red { 
+            background: rgba(255, 107, 107, 0.3);
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        .color-marker-green { 
+            background: rgba(46, 213, 115, 0.3);
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        .color-marker-blue { 
+            background: rgba(78, 205, 196, 0.3);
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        .color-marker-yellow { 
+            background: rgba(255, 234, 167, 0.3);
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
+        .color-marker-purple { 
+            background: rgba(165, 94, 234, 0.3);
+            padding: 1px 3px;
+            border-radius: 3px;
+        }
 
         /* Loading Indicators */
         .loading-indicator {
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
-            background: #2d2d30;
-            padding: 10px 20px;
+            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
+            padding: 12px 24px;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             display: none;
             z-index: 10;
+            border: 1px solid #3e3e42;
         }
 
         .loading-indicator.top {
@@ -236,29 +308,40 @@
         .loading-indicator.show {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
-        /* Context Menu */
+        .loading-indicator i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modern Context Menu */
         .context-menu {
             position: fixed;
-            background: #2d2d30;
+            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
             border: 1px solid #3e3e42;
             border-radius: 8px;
-            padding: 5px 0;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            padding: 4px 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             z-index: 1000;
             display: none;
+            min-width: 200px;
         }
 
         .context-menu-item {
-            padding: 8px 20px;
+            padding: 10px 20px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             color: #d4d4d4;
+            font-size: 0.9rem;
         }
 
         .context-menu-item:hover {
@@ -266,23 +349,29 @@
             color: #fff;
         }
 
-        .context-menu-divider {
-            border-top: 1px solid #3e3e42;
-            margin: 5px 0;
+        .context-menu-item i {
+            width: 16px;
+            text-align: center;
         }
 
-        /* Jump Dialog */
+        .context-menu-divider {
+            border-top: 1px solid #3e3e42;
+            margin: 4px 0;
+        }
+
+        /* Modern Jump Dialog */
         .jump-dialog {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #2d2d30;
+            background: linear-gradient(135deg, #2d2d30 0%, #252525 100%);
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             z-index: 200;
             display: none;
+            border: 1px solid #3e3e42;
         }
 
         .jump-dialog.show {
@@ -290,31 +379,51 @@
             animation: fadeIn 0.3s ease;
         }
 
+        .jump-dialog h5 {
+            margin: 0 0 16px 0;
+            color: #fff;
+            font-weight: 500;
+        }
+
         .jump-input {
             background: #1e1e1e;
             border: 1px solid #3e3e42;
             color: #d4d4d4;
-            padding: 10px 15px;
-            border-radius: 6px;
+            padding: 12px 16px;
+            border-radius: 8px;
             width: 300px;
             font-size: 1.1rem;
             margin-top: 10px;
         }
 
-        /* Status Bar */
+        .jump-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+
+        .dialog-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Modern Status Bar */
         .status-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: #007acc;
+            background: linear-gradient(135deg, #007acc 0%, #005a9e 100%);
             color: #fff;
             padding: 5px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.85rem;
-            height: 25px;
+            height: var(--status-height);
+            z-index: 100;
         }
 
         .status-left {
@@ -325,6 +434,12 @@
         .status-right {
             display: flex;
             gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         /* Animations */
@@ -368,10 +483,38 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #4e4e52;
         }
+
+        /* Smooth scroll indicator */
+        .scroll-shadow-top,
+        .scroll-shadow-bottom {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 20px;
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .scroll-shadow-top {
+            top: 0;
+            background: linear-gradient(to bottom, rgba(30, 30, 30, 0.8), transparent);
+        }
+
+        .scroll-shadow-bottom {
+            bottom: 0;
+            background: linear-gradient(to top, rgba(30, 30, 30, 0.8), transparent);
+        }
+
+        .scroll-shadow-top.visible,
+        .scroll-shadow-bottom.visible {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
-    <!-- Header -->
+    <!-- Modern Header -->
     <div class="file-viewer-header">
         <div class="header-left">
             <button class="action-btn" onclick="window.history.back()">
@@ -379,7 +522,7 @@
             </button>
             <div class="file-info">
                 <div class="file-name" id="fileName">載入中...</div>
-                <div class="file-path" id="filePath"></div>
+                <div class="file-path" id="filePath" title=""></div>
             </div>
         </div>
         <div class="header-actions">
@@ -387,7 +530,7 @@
                 <i class="fas fa-search"></i> 搜尋
             </button>
             <button class="action-btn" onclick="showJumpDialog()" title="跳至行 (F2)">
-                <i class="fas fa-arrow-right"></i> 跳至
+                <i class="fas fa-arrows-alt-v"></i> 跳至
             </button>
             <button class="action-btn" onclick="clearAllHighlights()" title="清除標記">
                 <i class="fas fa-eraser"></i> 清除
@@ -398,17 +541,17 @@
         </div>
     </div>
 
-    <!-- Search Bar -->
+    <!-- Modern Search Bar -->
     <div class="search-bar" id="searchBar">
-        <input type="text" class="search-input" id="searchInput" placeholder="搜尋文字...">
-        <button class="action-btn" onclick="searchPrev()" title="上一個">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜尋文字..." autocomplete="off">
+        <button class="action-btn" onclick="searchPrev()" title="上一個 (Shift+F3)">
             <i class="fas fa-chevron-up"></i>
         </button>
-        <button class="action-btn" onclick="searchNext()" title="下一個">
+        <button class="action-btn" onclick="searchNext()" title="下一個 (F3)">
             <i class="fas fa-chevron-down"></i>
         </button>
         <span class="search-stats" id="searchStats">0/0</span>
-        <button class="action-btn" onclick="closeSearch()" title="關閉">
+        <button class="action-btn" onclick="closeSearch()" title="關閉 (Esc)">
             <i class="fas fa-times"></i>
         </button>
     </div>
@@ -420,9 +563,11 @@
         
         <!-- Code Content -->
         <div class="code-content" id="codeContent">
+            <div class="scroll-shadow-top" id="scrollShadowTop"></div>
+            
             <!-- Loading Indicator Top -->
             <div class="loading-indicator top" id="loadingTop">
-                <i class="fas fa-spinner fa-spin"></i>
+                <i class="fas fa-spinner"></i>
                 <span>載入更多內容...</span>
             </div>
             
@@ -430,13 +575,15 @@
             
             <!-- Loading Indicator Bottom -->
             <div class="loading-indicator bottom" id="loadingBottom">
-                <i class="fas fa-spinner fa-spin"></i>
+                <i class="fas fa-spinner"></i>
                 <span>載入更多內容...</span>
             </div>
+            
+            <div class="scroll-shadow-bottom" id="scrollShadowBottom"></div>
         </div>
     </div>
 
-    <!-- Context Menu -->
+    <!-- Modern Context Menu -->
     <div class="context-menu" id="contextMenu">
         <div class="context-menu-item" onclick="markColor('red')">
             <i class="fas fa-circle" style="color: #ff6b6b;"></i> 標記紅色
@@ -457,35 +604,55 @@
         <div class="context-menu-item" onclick="clearSelection()">
             <i class="fas fa-eraser"></i> 清除此標記
         </div>
-    </div>
-
-    <!-- Jump Dialog -->
-    <div class="jump-dialog" id="jumpDialog">
-        <h5 style="margin-bottom: 10px; color: #fff;">跳至指定行</h5>
-        <input type="number" class="jump-input" id="jumpInput" placeholder="輸入行號" min="1">
-        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
-            <button class="action-btn" onclick="closeJumpDialog()">取消</button>
-            <button class="action-btn active" onclick="jumpToLine()">跳至</button>
+        <div class="context-menu-item" onclick="copySelection()">
+            <i class="fas fa-copy"></i> 複製選取文字
         </div>
     </div>
 
-    <!-- Status Bar -->
+    <!-- Modern Jump Dialog -->
+    <div class="jump-dialog" id="jumpDialog">
+        <h5><i class="fas fa-arrows-alt-v me-2"></i>跳至指定行</h5>
+        <input type="number" class="jump-input" id="jumpInput" placeholder="輸入行號" min="1" autocomplete="off">
+        <div class="dialog-actions">
+            <button class="action-btn" onclick="closeJumpDialog()">取消</button>
+            <button class="action-btn active" onclick="jumpToLine()">
+                <i class="fas fa-check"></i> 跳至
+            </button>
+        </div>
+    </div>
+
+    <!-- Modern Status Bar -->
     <div class="status-bar">
         <div class="status-left">
-            <span>行 <span id="currentLine">1</span></span>
-            <span>總行數 <span id="totalLines">0</span></span>
-            <span id="loadStatus">就緒</span>
+            <div class="status-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>行 <span id="currentLine">1</span> / <span id="totalLines">0</span></span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-file-alt"></i>
+                <span id="loadedRange">已載入: 0-0</span>
+            </div>
+            <div class="status-item" id="loadStatus">
+                <i class="fas fa-check-circle"></i>
+                <span>就緒</span>
+            </div>
         </div>
         <div class="status-right">
-            <span>UTF-8</span>
-            <span>Enhanced File Viewer</span>
+            <div class="status-item">
+                <i class="fas fa-code"></i>
+                <span>UTF-8</span>
+            </div>
+            <div class="status-item">
+                <i class="fas fa-desktop"></i>
+                <span>Enhanced File Viewer</span>
+            </div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <script>
-        // File Viewer JavaScript
+        // Enhanced File Viewer JavaScript
         const fileViewer = {
             filePath: '',
             fileName: '',
@@ -499,6 +666,7 @@
             currentSearchIndex: 0,
             colorMarkers: {},
             isLoading: false,
+            scrollThreshold: 200,
             
             init: function() {
                 // 解析 URL 參數
@@ -515,7 +683,7 @@
                 // 設置檔案資訊
                 this.fileName = this.filePath.split('/').pop();
                 $('#fileName').text(this.fileName);
-                $('#filePath').text(this.filePath);
+                $('#filePath').text(this.filePath).attr('title', this.filePath);
                 document.title = `${this.fileName} - 檔案檢視器`;
                 
                 // 初始載入
@@ -535,8 +703,16 @@
             loadLines: function(startLine, endLine, scrollToTarget = false) {
                 if (this.isLoading) return;
                 
+                // 檢查是否已經載入
+                if (this.isRangeLoaded(startLine, endLine)) {
+                    if (scrollToTarget) {
+                        this.scrollToLine(this.targetLine);
+                    }
+                    return;
+                }
+                
                 this.isLoading = true;
-                $('#loadStatus').text('載入中...');
+                this.updateLoadStatus('載入中...');
                 
                 $.ajax({
                     url: '/api/file_content',
@@ -555,24 +731,31 @@
                             this.updateLoadedRanges(response.start_line, response.end_line);
                             
                             if (scrollToTarget) {
-                                this.scrollToLine(this.targetLine);
+                                setTimeout(() => {
+                                    this.scrollToLine(this.targetLine);
+                                }, 100);
                             }
                             
                             // 高亮搜尋詞
                             if (this.searchTerm) {
                                 this.highlightSearchTerm();
                             }
+                            
+                            // 更新載入範圍顯示
+                            this.updateLoadedRangeDisplay();
                         } else {
                             this.showError(response.error || '載入檔案失敗');
                         }
                         
                         this.isLoading = false;
-                        $('#loadStatus').text('就緒');
+                        this.updateLoadStatus('就緒');
+                        $('#loadingTop, #loadingBottom').removeClass('show');
                     },
                     error: () => {
                         this.showError('載入檔案失敗');
                         this.isLoading = false;
-                        $('#loadStatus').text('錯誤');
+                        this.updateLoadStatus('錯誤');
+                        $('#loadingTop, #loadingBottom').removeClass('show');
                     }
                 });
             },
@@ -593,99 +776,65 @@
                     contentHtml += `<div class="code-line ${isTarget ? 'highlighted' : ''}" data-line="${lineNum}">${this.escapeHtml(line.content)}</div>`;
                 });
                 
-                // 根據載入位置決定如何插入
-                if (startLine === 1) {
-                    // 載入頂部內容
-                    lineNumbers.prepend(numbersHtml);
-                    codeContent.find('.loading-indicator.top').after(contentHtml);
-                } else if (this.isConsecutiveRange(startLine, endLine)) {
-                    // 載入底部內容
-                    lineNumbers.append(numbersHtml);
-                    codeContent.find('.loading-indicator.bottom').before(contentHtml);
-                } else {
-                    // 初始載入或跳轉
+                // 找到插入位置
+                const existingNumbers = lineNumbers.find('.line-number');
+                const existingLines = codeContent.find('.code-line');
+                
+                if (existingNumbers.length === 0) {
+                    // 初始載入
                     lineNumbers.html(numbersHtml);
-                    codeContent.html(`
-                        <div class="loading-indicator top" id="loadingTop">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <span>載入更多內容...</span>
-                        </div>
-                        ${contentHtml}
-                        <div class="loading-indicator bottom" id="loadingBottom">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <span>載入更多內容...</span>
-                        </div>
-                    `);
+                    codeContent.find('.loading-indicator').first().after(contentHtml);
+                } else {
+                    // 增量載入
+                    let inserted = false;
+                    
+                    existingNumbers.each(function(index) {
+                        const existingLine = parseInt($(this).data('line'));
+                        
+                        if (!inserted && startLine < existingLine) {
+                            $(this).before(numbersHtml);
+                            existingLines.eq(index).before(contentHtml);
+                            inserted = true;
+                            return false;
+                        }
+                    });
+                    
+                    if (!inserted) {
+                        lineNumbers.append(numbersHtml);
+                        codeContent.find('.loading-indicator').last().before(contentHtml);
+                    }
                 }
             },
             
-            setupEventListeners: function() {
-                const codeContent = $('#codeContent');
+            clickLineNumber: function(lineNum) {
+                // 清除之前的高亮
+                $('.line-number.current').removeClass('current');
+                $('.code-line.highlighted').removeClass('highlighted');
                 
-                // 滾動事件
-                codeContent.on('scroll', this.debounce(() => {
-                    this.handleScroll();
-                }, 200));
+                // 設置新的目標行
+                this.targetLine = lineNum;
                 
-                // 右鍵選單
-                codeContent.on('contextmenu', '.code-line', (e) => {
-                    e.preventDefault();
-                    const selection = window.getSelection();
-                    if (selection.toString()) {
-                        this.showContextMenu(e.pageX, e.pageY);
-                    }
-                });
+                // 載入該行及前後內容
+                const startLine = Math.max(1, lineNum - this.contextLines);
+                const endLine = Math.min(this.totalLines, lineNum + this.contextLines);
                 
-                // 搜尋輸入
-                $('#searchInput').on('input', this.debounce(() => {
-                    this.performSearch();
-                }, 300));
+                this.loadLines(startLine, endLine, true);
+            },
+            
+            scrollToLine: function(lineNum) {
+                const lineElement = $(`.code-line[data-line="${lineNum}"]`);
+                const lineNumberElement = $(`.line-number[data-line="${lineNum}"]`);
                 
-                // 跳轉輸入
-                $('#jumpInput').on('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.jumpToLine();
-                    }
-                });
-                
-                // 鍵盤快捷鍵
-                $(document).on('keydown', (e) => {
-                    // Ctrl+F 搜尋
-                    if (e.ctrlKey && e.key === 'f') {
-                        e.preventDefault();
-                        this.toggleSearch();
-                    }
-                    // F2 跳轉
-                    if (e.key === 'F2') {
-                        e.preventDefault();
-                        this.showJumpDialog();
-                    }
-                    // F3 下一個搜尋結果
-                    if (e.key === 'F3') {
-                        e.preventDefault();
-                        if (e.shiftKey) {
-                            this.searchPrev();
-                        } else {
-                            this.searchNext();
-                        }
-                    }
-                    // Esc 關閉對話框
-                    if (e.key === 'Escape') {
-                        this.closeSearch();
-                        this.closeJumpDialog();
-                        this.hideContextMenu();
-                    }
-                });
-                
-                // 點擊其他地方隱藏右鍵選單
-                $(document).on('click', () => {
-                    this.hideContextMenu();
-                });
-                
-                // 同步滾動行號
-                codeContent.on('scroll', () => {
-                    $('#lineNumbers').scrollTop(codeContent.scrollTop());
-                });
+                if (lineElement.length && lineNumberElement.length) {
+                    const codeContent = $('#codeContent');
+                    const scrollTop = lineElement.position().top + codeContent.scrollTop() - (codeContent.height() / 2);
+                    
+                    codeContent.animate({ scrollTop: scrollTop }, 300, () => {
+                        // 高亮當前行
+                        lineNumberElement.addClass('current');
+                        lineElement.addClass('highlighted');
+                    });
+                }
             },
             
             handleScroll: function() {
@@ -696,15 +845,27 @@
                 
                 // 更新當前行
                 const lineHeight = 20;
-                this.currentLine = Math.floor(scrollTop / lineHeight) + 1;
+                const visibleLine = Math.floor(scrollTop / lineHeight) + 1;
+                this.currentLine = Math.max(1, Math.min(this.totalLines, visibleLine));
                 $('#currentLine').text(this.currentLine);
                 
+                // 更新滾動陰影
+                if (scrollTop > 50) {
+                    $('#scrollShadowTop').addClass('visible');
+                } else {
+                    $('#scrollShadowTop').removeClass('visible');
+                }
+                
+                if (scrollTop + clientHeight < scrollHeight - 50) {
+                    $('#scrollShadowBottom').addClass('visible');
+                } else {
+                    $('#scrollShadowBottom').removeClass('visible');
+                }
+                
                 // 檢查是否需要載入更多內容
-                if (scrollTop < 100) {
-                    // 接近頂部
+                if (scrollTop < this.scrollThreshold) {
                     this.loadMoreTop();
-                } else if (scrollTop + clientHeight > scrollHeight - 100) {
-                    // 接近底部
+                } else if (scrollTop + clientHeight > scrollHeight - this.scrollThreshold) {
                     this.loadMoreBottom();
                 }
             },
@@ -715,7 +876,20 @@
                     $('#loadingTop').addClass('show');
                     const startLine = Math.max(1, firstLoadedLine - this.contextLines);
                     const endLine = firstLoadedLine - 1;
-                    this.loadLines(startLine, endLine);
+                    
+                    // 記錄當前滾動位置
+                    const codeContent = $('#codeContent');
+                    const scrollBefore = codeContent.scrollTop();
+                    const heightBefore = codeContent[0].scrollHeight;
+                    
+                    this.loadLines(startLine, endLine, false);
+                    
+                    // 載入後調整滾動位置
+                    setTimeout(() => {
+                        const heightAfter = codeContent[0].scrollHeight;
+                        const heightDiff = heightAfter - heightBefore;
+                        codeContent.scrollTop(scrollBefore + heightDiff);
+                    }, 100);
                 }
             },
             
@@ -729,41 +903,20 @@
                 }
             },
             
-            clickLineNumber: function(lineNum) {
-                // 載入該行及前後內容
-                const startLine = Math.max(1, lineNum - this.contextLines);
-                const endLine = Math.min(this.totalLines, lineNum + this.contextLines);
-                
-                this.targetLine = lineNum;
-                this.loadLines(startLine, endLine, true);
-            },
-            
-            scrollToLine: function(lineNum) {
-                setTimeout(() => {
-                    const lineElement = $(`.code-line[data-line="${lineNum}"]`);
-                    if (lineElement.length) {
-                        const codeContent = $('#codeContent');
-                        const scrollTop = lineElement.position().top + codeContent.scrollTop() - (codeContent.height() / 2);
-                        codeContent.animate({ scrollTop: scrollTop }, 300);
-                        
-                        // 高亮當前行
-                        $('.line-number.current').removeClass('current');
-                        $(`.line-number[data-line="${lineNum}"]`).addClass('current');
-                    }
-                }, 100);
-            },
-            
             // 搜尋功能
             toggleSearch: function() {
                 $('#searchBar').toggleClass('show');
                 if ($('#searchBar').hasClass('show')) {
-                    $('#searchInput').focus();
+                    $('#searchInput').focus().select();
                 }
             },
             
             closeSearch: function() {
                 $('#searchBar').removeClass('show');
                 this.clearSearchHighlights();
+                this.searchTerm = '';
+                this.searchResults = [];
+                this.currentSearchIndex = 0;
             },
             
             performSearch: function() {
@@ -775,6 +928,10 @@
                 
                 this.highlightSearchTerm();
                 this.updateSearchStats();
+                
+                if (this.searchResults.length > 0) {
+                    this.scrollToSearchResult(0);
+                }
             },
             
             highlightSearchTerm: function() {
@@ -792,15 +949,10 @@
                         const lineNum = parseInt($line.data('line'));
                         this.searchResults.push({ lineNum, element: $line });
                         
-                        const highlighted = text.replace(regex, '<span class="search-highlight">$1</span>');
+                        const highlighted = this.escapeHtml(text).replace(regex, '<span class="search-highlight">$1</span>');
                         $line.html(highlighted);
                     }
                 });
-                
-                if (this.searchResults.length > 0) {
-                    this.currentSearchIndex = 0;
-                    this.scrollToSearchResult(0);
-                }
             },
             
             searchNext: function() {
@@ -822,6 +974,12 @@
                 if (result) {
                     this.scrollToLine(result.lineNum);
                     this.updateSearchStats();
+                    
+                    // 強調當前搜尋結果
+                    $('.search-highlight').css('animation', 'none');
+                    setTimeout(() => {
+                        result.element.find('.search-highlight').css('animation', 'pulse 1s ease-in-out 2');
+                    }, 100);
                 }
             },
             
@@ -890,12 +1048,24 @@
                 this.hideContextMenu();
             },
             
+            copySelection: function() {
+                const selection = window.getSelection();
+                const text = selection.toString();
+                if (text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        this.showNotification('已複製到剪貼板');
+                    });
+                }
+                this.hideContextMenu();
+            },
+            
             clearAllHighlights: function() {
                 if (confirm('確定要清除所有標記嗎？')) {
                     $('[class^="color-marker-"]').each(function() {
                         const $this = $(this);
                         $this.replaceWith($this.html());
                     });
+                    this.showNotification('已清除所有標記');
                 }
             },
             
@@ -974,6 +1144,17 @@
                 this.loadedRanges = merged;
             },
             
+            updateLoadedRangeDisplay: function() {
+                const ranges = this.loadedRanges.map(r => `${r.start}-${r.end}`).join(', ');
+                $('#loadedRange').text(`已載入: ${ranges}`);
+            },
+            
+            isRangeLoaded: function(start, end) {
+                return this.loadedRanges.some(range => 
+                    start >= range.start && end <= range.end
+                );
+            },
+            
             getFirstLoadedLine: function() {
                 return this.loadedRanges.length > 0 ? this.loadedRanges[0].start : 1;
             },
@@ -984,11 +1165,25 @@
                     : 0;
             },
             
-            isConsecutiveRange: function(start, end) {
-                // 檢查是否為連續的範圍
-                return this.loadedRanges.some(range => 
-                    (start === range.end + 1) || (end === range.start - 1)
-                );
+            updateLoadStatus: function(status) {
+                const statusElement = $('#loadStatus');
+                const iconMap = {
+                    '載入中...': 'fa-spinner fa-spin',
+                    '就緒': 'fa-check-circle',
+                    '錯誤': 'fa-exclamation-circle'
+                };
+                
+                statusElement.html(`<i class="fas ${iconMap[status] || 'fa-info-circle'}"></i> <span>${status}</span>`);
+            },
+            
+            showNotification: function(message) {
+                // 簡單的通知顯示
+                const notification = $(`<div style="position: fixed; top: 80px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; animation: slideIn 0.3s ease;">${message}</div>`);
+                $('body').append(notification);
+                
+                setTimeout(() => {
+                    notification.fadeOut(() => notification.remove());
+                }, 2000);
             },
             
             showError: function(message) {
@@ -999,6 +1194,84 @@
                         <p>${message}</p>
                     </div>
                 `);
+            },
+            
+            // 設置事件監聽器
+            setupEventListeners: function() {
+                const codeContent = $('#codeContent');
+                
+                // 滾動事件
+                codeContent.on('scroll', this.debounce(() => {
+                    this.handleScroll();
+                }, 50));
+                
+                // 同步滾動行號
+                codeContent.on('scroll', () => {
+                    $('#lineNumbers').scrollTop(codeContent.scrollTop());
+                });
+                
+                // 右鍵選單
+                codeContent.on('contextmenu', '.code-line', (e) => {
+                    e.preventDefault();
+                    const selection = window.getSelection();
+                    if (selection.toString()) {
+                        this.showContextMenu(e.pageX, e.pageY);
+                    }
+                });
+                
+                // 搜尋輸入
+                $('#searchInput').on('input', this.debounce(() => {
+                    this.performSearch();
+                }, 300));
+                
+                // 搜尋輸入 Enter 鍵
+                $('#searchInput').on('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.searchNext();
+                    }
+                });
+                
+                // 跳轉輸入
+                $('#jumpInput').on('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.jumpToLine();
+                    }
+                });
+                
+                // 鍵盤快捷鍵
+                $(document).on('keydown', (e) => {
+                    // Ctrl+F 搜尋
+                    if (e.ctrlKey && e.key === 'f') {
+                        e.preventDefault();
+                        this.toggleSearch();
+                    }
+                    // F2 跳轉
+                    if (e.key === 'F2') {
+                        e.preventDefault();
+                        this.showJumpDialog();
+                    }
+                    // F3 下一個搜尋結果
+                    if (e.key === 'F3') {
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            this.searchPrev();
+                        } else {
+                            this.searchNext();
+                        }
+                    }
+                    // Esc 關閉對話框
+                    if (e.key === 'Escape') {
+                        this.closeSearch();
+                        this.closeJumpDialog();
+                        this.hideContextMenu();
+                    }
+                });
+                
+                // 點擊其他地方隱藏右鍵選單
+                $(document).on('click', () => {
+                    this.hideContextMenu();
+                });
             }
         };
         
@@ -1012,6 +1285,7 @@
         window.jumpToLine = () => fileViewer.jumpToLine();
         window.markColor = (color) => fileViewer.markColor(color);
         window.clearSelection = () => fileViewer.clearSelection();
+        window.copySelection = () => fileViewer.copySelection();
         window.clearAllHighlights = () => fileViewer.clearAllHighlights();
         window.downloadFile = () => fileViewer.downloadFile();
         

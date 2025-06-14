@@ -115,35 +115,10 @@ window.blockManager = {
     loadMinimizedBlocks: function() {
         const savedMinimized = utils.loadLocal('minimizedBlocks', []);
         
-        savedMinimized.forEach(blockId => {
-            const block = $(`#${blockId}`);
-            if (block.length) {
-                const blockName = block.find('h4').first().text().trim();
-                
-                // 直接設置狀態，不顯示動畫
-                block.hide();
-                appConfig.state.minimizedBlocks.add(blockId);
-                
-                // 創建最小化圖標
-                const minimizedContainer = $('#minimized-blocks');
-                const minimizedItem = $(`
-                    <div class="minimized-block" 
-                         data-block="${blockId}" 
-                         title="點擊恢復: ${blockName}">
-                        <i class="fas fa-window-restore"></i>
-                        <span>${blockName}</span>
-                    </div>
-                `);
-                
-                minimizedItem.on('click', () => {
-                    this.restoreBlock(blockId);
-                });
-                
-                minimizedContainer.append(minimizedItem);
-            }
-        });
+        // 清空已儲存的最小化狀態，讓所有區塊預設顯示
+        utils.clearLocal('minimizedBlocks');
         
-        console.log('📂 載入最小化區塊:', savedMinimized.length);
+        console.log('📂 已清除最小化區塊設定，所有區塊將顯示');
     },
     
     // 設置事件監聽器

@@ -82,8 +82,8 @@ window.keywordManager = {
         }
         
         // 檢查檔案類型
-        if (!file.name.endsWith('.csv')) {
-            utils.showAlert('❌ 請上傳 CSV 格式的檔案', 'danger');
+        if (!file.name.endsWith('.csv') && !file.name.endsWith('.txt')) {
+            utils.showAlert('❌ 請上傳 CSV 或 TXT 格式的檔案', 'danger');
             return;
         }
         
@@ -95,7 +95,7 @@ window.keywordManager = {
         utils.showAlert('📤 上傳中...', 'info', 2000);
         
         $.ajax({
-            url: appConfig.api.uploadKeywords,
+            url: '/upload_keywords',  // 修正為正確的路徑
             type: 'POST',
             data: formData,
             processData: false,
@@ -111,12 +111,22 @@ window.keywordManager = {
                     // 更新分析按鈕狀態
                     this.updateAnalysisButtons();
                 } else {
-                    utils.showAlert(`❌ ${response.message}`, 'danger');
+                    utils.showAlert(`❌ ${response.message || '上傳失敗'}`, 'danger');
                 }
             },
             error: (xhr, status, error) => {
                 console.error('❌ 上傳失敗:', status, error);
-                utils.showAlert('❌ 上傳失敗', 'danger');
+                let errorMessage = '上傳失敗';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.status === 404) {
+                    errorMessage = '上傳接口不存在，請檢查後端服務';
+                } else if (xhr.status === 500) {
+                    errorMessage = '伺服器錯誤，請稍後再試';
+                }
+                
+                utils.showAlert(`❌ ${errorMessage}`, 'danger');
             }
         });
     },

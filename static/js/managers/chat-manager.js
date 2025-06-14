@@ -155,16 +155,75 @@ window.chatManager = {
     
     // 開啟聊天室
     openChat: function() {
+        // 檢查是否有聊天室名稱
+        if (!this.chatUserName) {
+            // 顯示聊天室登入對話框
+            $('#chatLoginModal').modal('show');
+            $('#chatUsername').focus();
+            
+            // Enter 鍵提交
+            $('#chatUsername').off('keypress').on('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.confirmChatLogin();
+                }
+            });
+            return;
+        }
+        
+        // 已登入，開啟聊天室
         const modal = new bootstrap.Modal(document.getElementById('chatModal'));
         modal.show();
         this.loadRoomList();
         this.updateOnlineUsersList();
+        
+        // 顯示或隱藏管理功能
+        this.updateAdminUI();
         
         // 如果還沒有加入任何聊天室，自動加入預設聊天室
         if (!appConfig.state.currentRoom) {
             setTimeout(() => {
                 this.joinRoom('general');
             }, 500);
+        }
+    },
+
+    // 確認聊天室登入
+    confirmChatLogin: function() {
+        const username = $('#chatUsername').val().trim();
+        
+        if (!username) {
+            utils.showAlert('請輸入您的名稱', 'warning');
+            return;
+        }
+        
+        this.chatUserName = username;
+        this.isAdmin = (username === 'vince_lin');
+        
+        // 關閉登入對話框
+        $('#chatLoginModal').modal('hide');
+        
+        // 更新全域用戶名稱為聊天室用戶名稱
+        if (appConfig.state.socket) {
+            appConfig.state.socket.emit('update_chat_username', { username: username });
+        }
+        
+        // 開啟聊天室
+        setTimeout(() => {
+            this.openChat();
+        }, 300);
+    },
+    
+    // 更新管理員UI
+    updateAdminUI: function() {
+        if (this.isAdmin) {
+            // 顯示管理功能按鈕
+            $('.admin-only').show();
+            $('#room-manager-btn').show();
+        } else {
+            // 隱藏管理功能按鈕
+            $('.admin-only').hide();
+            $('#room-manager-btn').hide();
         }
     },
     

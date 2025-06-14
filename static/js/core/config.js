@@ -9,7 +9,7 @@ window.appConfig = {
     // API 端點
     api: {
         browse: '/api/browse',
-        uploadKeywords: '/api/upload_keywords',
+        uploadKeywords: '/upload_keywords',
         keywords: '/api/keywords',
         deleteKeyword: '/api/keywords/delete/',
         restoreKeywords: '/api/keywords/restore',

@@ -72,7 +72,10 @@ window.layoutManager = {
         
         // 更新按鈕狀態
         $('.layout-btn').removeClass('active');
-        $(`.layout-btn[onclick="layoutManager.setLayout('${layout}')"]`).addClass('active');
+        $(`.layout-btn[data-layout="${layout}"]`).addClass('active');
+        
+        // 更新滑動背景位置
+        this.updateLayoutSlider();
         
         // 根據佈局類型重新初始化拖動功能
         if (layout === 'default') {
@@ -102,6 +105,22 @@ window.layoutManager = {
         utils.saveLocal('currentLayout', layout);
         
         utils.showAlert(`🔄 已切換到${layout === 'default' ? '預設' : layout === 'grid' ? '網格' : '瀑布流'}佈局`, 'info');
+    },
+    
+    // 更新佈局滑動背景
+    updateLayoutSlider: function() {
+        const activeBtn = $('.layout-btn.active');
+        const slider = $('.layout-slider');
+        
+        if (activeBtn.length && slider.length) {
+            const btnWidth = activeBtn.outerWidth();
+            const btnLeft = activeBtn.position().left;
+            
+            slider.css({
+                width: btnWidth + 'px',
+                left: btnLeft + 'px'
+            });
+        }
     },
     
     // 設置設備視圖

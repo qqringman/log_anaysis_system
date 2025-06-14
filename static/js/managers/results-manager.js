@@ -107,7 +107,7 @@ window.resultsManager = {
                                 <div class="flex-grow-1">
                                     <pre class="match-content mb-0">${highlightedContent}</pre>
                                 </div>
-                                <a href="/file_viewer?path=${encodeURIComponent(file)}&line=${match.line_number}" 
+                                <a href="/file_viewer?path=${encodeURIComponent(file)}&line=${match.line_number}&context=200" 
                                    target="_blank" class="btn btn-sm btn-outline-primary ms-2" title="在檔案檢視器中開啟">
                                    <i class="fas fa-external-link-alt"></i>
                                 </a>

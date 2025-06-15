@@ -561,10 +561,10 @@ function initializeEnhancements() {
             const icons = $(`
                 <div class="line-icons">
                     <div class="line-icon bookmark-icon" onclick="toggleBookmarkIcon(${lineNumber})" title="書籤">
-                        <i class="fas fa-bookmark"></i>
+                        📌
                     </div>
                     <div class="line-icon jump-icon" onclick="toggleJumpIcon(${lineNumber})" title="跳轉點">
-                        <i class="fas fa-crosshairs"></i>
+                        🎯
                     </div>
                 </div>
             `);

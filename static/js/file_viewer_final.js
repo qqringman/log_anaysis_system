@@ -88,7 +88,7 @@ function updateMarksListFixed() {
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
-                    <div class="marks-item-line">第 ${lineNumber} 行</div>
+                    <div onclick="goToMarkLine(${lineNumber})" class="marks-item-line">第 ${lineNumber} 行</div>
                     <div class="marks-item-preview">${preview}</div>
                 </div>
             </div>

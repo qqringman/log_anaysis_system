@@ -517,11 +517,11 @@ function toggleRegex() {
     if (useRegex) {
         btn.addClass('active');
         searchInput.addClass('regex-mode');
-        showToast('info', '已啟用正規表達式搜尋');
+        //showToast('info', '已啟用正規表達式搜尋');
     } else {
         btn.removeClass('active');
         searchInput.removeClass('regex-mode');
-        showToast('info', '已切換到一般搜尋模式');
+        //showToast('info', '已切換到一般搜尋模式');
     }
     
     // 重新執行搜尋

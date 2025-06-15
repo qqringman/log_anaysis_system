@@ -109,7 +109,7 @@
     font-weight: 500;
     background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
     width: 100%;
-    text-align: center;
+    text-align: left;
     height: 40px;
 }
 
@@ -125,16 +125,17 @@
     background: white;
     transform: translateY(-1px);
     outline: none;
+	margin:2px 0px 0px 0px;
 }
 
 #jump-line-wrapper .btn {
     position: absolute;
-    right: 2px;
+    right: 0px;
     top: 50%;
     transform: translateY(-50%);
-    height: 36px;
-    border-radius: 28px;
-    padding: 0 20px;
+    height: 39px;
+    border-radius: 20px;
+    padding: 0 35px;
     font-size: 14px;
     background: var(--primary-gradient);
     border: none;
@@ -145,6 +146,7 @@
 #jump-line-wrapper .btn:hover {
     transform: translateY(-50%) scale(1.02);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+	background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
 /* 選擇顯示範圍輸入框美化 */
@@ -152,7 +154,7 @@
     border-radius: 25px;
     border: 2px solid #e8edf7;
     transition: all 0.3s ease;
-    padding: 14px 55px 14px 24px;
+    padding: 10px;
     font-size: 1rem;
     font-weight: 500;
     background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);

@@ -25,6 +25,7 @@
             --shadow-light: 0 4px 6px rgba(0,0,0,0.07);
             --shadow-medium: 0 8px 25px rgba(0,0,0,0.12);
             --shadow-heavy: 0 15px 35px rgba(0,0,0,0.1);
+            --line-hover: rgba(52, 152, 219, 0.08);
         }
 
         body {
@@ -32,8 +33,9 @@
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             font-size: 14px;
             margin: 0;
-            padding-bottom: 60px;
+            padding-bottom: 80px;
             position: relative;
+            min-height: 100vh;
         }
 
         .file-header {
@@ -61,6 +63,38 @@
             z-index: 1;
         }
 
+        /* 檔案資訊設計 */
+        .file-info-badge {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 24px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-info-badge .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-info-badge .info-item i {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .file-info-badge .divider {
+            width: 1px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
         .file-viewer {
             background: white;
             border-radius: 20px;
@@ -68,6 +102,7 @@
             overflow: hidden;
             margin-top: 1.5rem;
             position: relative;
+            margin-bottom: 30px;
         }
 
         .toolbar {
@@ -87,35 +122,64 @@
             align-items: center;
         }
 
+        /* 搜尋框設計 */
         .search-container {
             position: relative;
-            max-width: 350px;
-            min-width: 250px;
+            min-width: 400px;
+            max-width: 500px;
         }
 
         .search-input {
-            padding-right: 3rem;
-            border-radius: 25px;
+            padding: 10px 140px 10px 20px;
+            border-radius: 50px;
             border: 2px solid #dee2e6;
             transition: all 0.3s ease;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
         }
 
         .search-input:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: white;
+        }
+
+        .search-controls {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .regex-toggle {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #6c757d;
+        }
+
+        .regex-toggle.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
         }
 
         .search-info {
-            position: absolute;
-            right: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
+            background: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid #dee2e6;
             font-size: 0.8rem;
             color: #6c757d;
-            background: white;
-            padding: 2px 6px;
-            border-radius: 12px;
-            border: 1px solid #dee2e6;
+            font-weight: 500;
         }
 
         .btn-modern {
@@ -171,8 +235,10 @@
             min-height: 22px;
         }
 
+        /* 滑鼠hover效果 */
         .code-line:hover {
-            background: rgba(102, 126, 234, 0.05);
+            background: var(--line-hover);
+            box-shadow: inset 3px 0 0 rgba(52, 152, 219, 0.4);
         }
 
         .line-number {
@@ -225,7 +291,7 @@
         .line-number.jump-point::after {
             content: '🎯';
             position: absolute;
-            left: 4px;
+            left: 20px;
             top: 50%;
             transform: translateY(-50%);
             font-size: 10px;
@@ -291,16 +357,16 @@
         }
 
         /* 右鍵選單highlight顏色 */
-        .highlight-color-1 { background: rgba(255, 235, 238, 0.9) !important; border-left: 3px solid #e91e63; }
-        .highlight-color-2 { background: rgba(232, 245, 233, 0.9) !important; border-left: 3px solid #4caf50; }
-        .highlight-color-3 { background: rgba(227, 242, 253, 0.9) !important; border-left: 3px solid #2196f3; }
-        .highlight-color-4 { background: rgba(255, 243, 224, 0.9) !important; border-left: 3px solid #ff9800; }
-        .highlight-color-5 { background: rgba(243, 229, 245, 0.9) !important; border-left: 3px solid #9c27b0; }
-        .highlight-color-6 { background: rgba(255, 249, 196, 0.9) !important; border-left: 3px solid #ffeb3b; }
-        .highlight-color-7 { background: rgba(224, 247, 250, 0.9) !important; border-left: 3px solid #00bcd4; }
-        .highlight-color-8 { background: rgba(248, 231, 28, 0.9) !important; border-left: 3px solid #cddc39; }
-        .highlight-color-9 { background: rgba(230, 238, 156, 0.9) !important; border-left: 3px solid #8bc34a; }
-        .highlight-color-10 { background: rgba(255, 204, 188, 0.9) !important; border-left: 3px solid #ff5722; }
+        .highlight-color-1 { background: rgba(255, 182, 193, 0.7) !important; border-left: 3px solid #e91e63; }
+        .highlight-color-2 { background: rgba(144, 238, 144, 0.7) !important; border-left: 3px solid #4caf50; }
+        .highlight-color-3 { background: rgba(173, 216, 230, 0.7) !important; border-left: 3px solid #2196f3; }
+        .highlight-color-4 { background: rgba(255, 218, 185, 0.7) !important; border-left: 3px solid #ff9800; }
+        .highlight-color-5 { background: rgba(221, 160, 221, 0.7) !important; border-left: 3px solid #9c27b0; }
+        .highlight-color-6 { background: rgba(255, 255, 224, 0.7) !important; border-left: 3px solid #ffeb3b; }
+        .highlight-color-7 { background: rgba(176, 224, 230, 0.7) !important; border-left: 3px solid #00bcd4; }
+        .highlight-color-8 { background: rgba(255, 250, 205, 0.7) !important; border-left: 3px solid #cddc39; }
+        .highlight-color-9 { background: rgba(152, 251, 152, 0.7) !important; border-left: 3px solid #8bc34a; }
+        .highlight-color-10 { background: rgba(255, 160, 122, 0.7) !important; border-left: 3px solid #ff5722; }
 
         .status-bar {
             background: linear-gradient(135deg, #343a40 0%, #495057 100%);
@@ -378,36 +444,74 @@
             border: 1px solid #dee2e6;
         }
 
+        /* 範圍選擇器設計 */
         .range-selector {
             background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border: 2px solid #dee2e6;
-            border-radius: 15px;
-            padding: 1.5rem;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            padding: 2rem;
             margin: 1rem;
-            box-shadow: var(--shadow-light);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
             backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
         }
 
-        .loading-overlay {
+        .range-selector::before {
+            content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.95);
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .range-selector h6 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .range-selector .form-control {
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .range-selector .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 1000;
             backdrop-filter: blur(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .loading-overlay.top {
+            top: 0;
+        }
+
+        .loading-overlay.bottom {
+            bottom: 0;
         }
 
         .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -427,24 +531,154 @@
             display: inline-block;
         }
 
+        /* 跳轉提示 */
         .jump-navigation {
             position: fixed;
-            bottom: 80px;
-            left: 20px;
-            background: var(--warning-gradient);
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 152, 0, 0.95);
             color: white;
-            padding: 10px 15px;
-            border-radius: 25px;
-            box-shadow: var(--shadow-medium);
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(255, 152, 0, 0.3);
             font-size: 0.9rem;
             z-index: 999;
             display: none;
-            animation: slideInLeft 0.3s ease-out;
+            animation: slideInUp 0.3s ease-out;
+            backdrop-filter: blur(10px);
         }
 
-        @keyframes slideInLeft {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(0); }
+        @keyframes slideInUp {
+            0% { transform: translate(-50%, 100%); opacity: 0; }
+            100% { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        @keyframes slideOutDown {
+            0% { transform: translate(-50%, 0); opacity: 1; }
+            100% { transform: translate(-50%, 100%); opacity: 0; }
+        }
+
+        /* 右下角提示樣式 */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .custom-toast {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            0% { transform: translateX(100%); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+
+        .custom-toast.hiding {
+            animation: slideOutRight 0.3s ease-out;
+        }
+
+        .custom-toast .toast-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .custom-toast.success .toast-icon {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .custom-toast.info .toast-icon {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .custom-toast.warning .toast-icon {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .custom-toast.danger .toast-icon {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .custom-toast .toast-message {
+            flex: 1;
+            font-size: 0.95rem;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        .custom-toast .toast-close {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.05);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .custom-toast .toast-close:hover {
+            background: rgba(0,0,0,0.1);
+            transform: scale(1.1);
+        }
+
+        /* 匯出按鈕設計 */
+        .btn-export {
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(58, 123, 213, 0.3);
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(58, 123, 213, 0.4);
+            color: white;
+        }
+
+        .btn-export i {
+            font-size: 1.1rem;
         }
 
         .copyright-footer {
@@ -479,8 +713,7 @@
             }
             
             .search-container {
-                max-width: 100%;
-                min-width: auto;
+                min-width: 100%;
             }
             
             .line-number {
@@ -494,6 +727,16 @@
             
             .file-header .display-6 {
                 font-size: 1.5rem;
+            }
+            
+            .file-info-badge {
+                flex-wrap: wrap;
+                gap: 10px;
+                font-size: 0.8rem;
+            }
+            
+            .file-info-badge .divider {
+                display: none;
             }
         }
 
@@ -526,11 +769,26 @@
                     <h4 class="mb-2 animate__animated animate__fadeInLeft">
                         <i class="fas fa-file-code me-2"></i>{{ file_name }}
                     </h4>
-                    <div class="compact-info animate__animated animate__fadeInLeft animate__delay-1s">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {{ file_path }} | {{ result.total_lines }} 行 | 
-                        顯示: {{ result.start_line }}-{{ result.end_line }} | 
-                        目標: {{ result.target_line }}
+                    <div class="file-info-badge animate__animated animate__fadeInLeft animate__delay-1s">
+                        <div class="info-item">
+                            <i class="fas fa-folder-open"></i>
+                            <span>{{ file_path }}</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="info-item">
+                            <i class="fas fa-list-ol"></i>
+                            <span>{{ result.total_lines }} 行</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="info-item">
+                            <i class="fas fa-eye"></i>
+                            <span>顯示: {{ result.start_line }}-{{ result.end_line }}</span>
+                        </div>
+                        <div class="divider"></div>
+                        <div class="info-item">
+                            <i class="fas fa-crosshairs"></i>
+                            <span>目標: 第 {{ result.target_line }} 行</span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-lg-4 text-end">
@@ -538,8 +796,9 @@
                         <button class="btn btn-outline-light btn-modern me-2" onclick="window.history.back()">
                             <i class="fas fa-arrow-left me-1"></i>返回
                         </button>
-                        <button class="btn btn-gradient-success btn-modern" onclick="exportFile()">
-                            <i class="fas fa-download me-1"></i>匯出檔案
+                        <button class="btn btn-export" onclick="exportFile()">
+                            <i class="fas fa-cloud-download-alt"></i>
+                            <span>匯出檔案</span>
                         </button>
                     </div>
                 </div>
@@ -569,15 +828,20 @@
                 <div class="toolbar-group">
                     <div class="search-container">
                         <input type="text" class="form-control search-input" 
-                               id="search-input" placeholder="搜尋文字 (Ctrl+F)">
-                        <div class="search-info" id="search-info">0 / 0</div>
+                               id="search-input" placeholder="搜尋文字 (支援正規表達式)">
+                        <div class="search-controls">
+                            <button class="regex-toggle" id="regex-toggle" onclick="toggleRegex()">
+                                <i class="fas fa-code"></i> Regex
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="findPrevious()" title="上一個">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="findNext()" title="下一個">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="search-info" id="search-info">0 / 0</div>
+                        </div>
                     </div>
-                    <button class="btn btn-outline-secondary btn-modern" onclick="findPrevious()" title="上一個">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
-                    <button class="btn btn-outline-secondary btn-modern" onclick="findNext()" title="下一個">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
                 </div>
                 
                 <div class="toolbar-group">
@@ -593,7 +857,7 @@
 
             <!-- 範圍選擇器 -->
             <div id="range-selector" class="range-selector" style="display: none;">
-                <h6><i class="fas fa-edit me-2"></i>選擇顯示範圍</h6>
+                <h6><i class="fas fa-sliders-h me-2"></i>選擇顯示範圍</h6>
                 <div class="row">
                     <div class="col-md-3">
                         <label class="form-label">起始行</label>
@@ -623,20 +887,23 @@
 
             <!-- 程式碼內容 -->
             <div class="line-container" id="line-container">
-                <div id="loading-overlay" class="loading-overlay" style="display: none;">
-                    <div class="loading-spinner mb-3"></div>
-                    <p>載入更多內容中...</p>
+                <div id="loading-overlay-top" class="loading-overlay top" style="display: none;">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div id="loading-overlay-bottom" class="loading-overlay bottom" style="display: none;">
+                    <div class="loading-spinner"></div>
                 </div>
                 {% for line in result.lines %}
                 <div class="code-line {% if line.is_target %}line-target{% endif %}" 
                      id="line-{{ line.line_number }}" data-line="{{ line.line_number }}">
                     <div class="line-number" 
                          onclick="handleLineClick({{ line.line_number }})"
+                         ondblclick="handleLineDoubleClick({{ line.line_number }})"
                          oncontextmenu="showLineContextMenu(event, {{ line.line_number }})"
-                         title="點擊設定書籤/跳轉點，右鍵更多選項">
+                         title="點擊設定書籤/跳轉點，雙擊顯示上下文，右鍵更多選項">
                         {{ line.line_number }}
                     </div>
-                    <div class="line-content" oncontextmenu="showContentContextMenu(event)">{{ line.content if line.content else ' ' }}</div>
+                    <div class="line-content" oncontextmenu="showContentContextMenu(event, {{ line.line_number }})">{{ line.content if line.content else ' ' }}</div>
                 </div>
                 {% endfor %}
             </div>
@@ -678,9 +945,10 @@
     </div>
 
     <!-- 右鍵選單 -->
-    <div id="context-menu" class="context-menu" style="display: none;">
-        <!-- 動態生成 -->
-    </div>
+    <div id="context-menu" class="context-menu" style="display: none;"></div>
+
+    <!-- Toast 容器 -->
+    <div class="toast-container" id="toast-container"></div>
 
     <!-- 版權聲明 -->
     <div class="copyright-footer">
@@ -707,6 +975,10 @@
         let isLoadingMore = false;
         let jumpModeEnabled = false;
         let lastSearchText = '';
+        let useRegex = false;
+        let currentStartLine = {{ result.start_line }};
+        let currentEndLine = {{ result.end_line }};
+        let totalLines = {{ result.total_lines }};
         
         // 頁面初始化
         $(document).ready(function() {
@@ -748,6 +1020,16 @@
                         gotoPreviousJump();
                     } else {
                         gotoNextJump();
+                    }
+                }
+                
+                // F3 書籤跳轉
+                if (e.which === 114) { // F3
+                    e.preventDefault();
+                    if (e.shiftKey) {
+                        gotoPreviousBookmark();
+                    } else {
+                        gotoNextBookmark();
                     }
                 }
                 
@@ -807,12 +1089,12 @@
                 const clientHeight = container.height();
                 
                 // 接近頂部時載入前面的內容
-                if (scrollTop < 100 && {{ result.start_line }} > 1) {
+                if (scrollTop < 100 && currentStartLine > 1) {
                     loadMoreContent('before');
                 }
                 
                 // 接近底部時載入後面的內容
-                if (scrollTop + clientHeight > scrollHeight - 100 && {{ result.end_line }} < {{ result.total_lines }}) {
+                if (scrollTop + clientHeight > scrollHeight - 100 && currentEndLine < totalLines) {
                     loadMoreContent('after');
                 }
                 
@@ -826,19 +1108,17 @@
             if (isLoadingMore) return;
             isLoadingMore = true;
             
-            const loadingOverlay = $('#loading-overlay');
+            const loadingOverlay = direction === 'before' ? $('#loading-overlay-top') : $('#loading-overlay-bottom');
             loadingOverlay.show();
             
-            const currentStart = {{ result.start_line }};
-            const currentEnd = {{ result.end_line }};
             let newStart, newEnd;
             
             if (direction === 'before') {
-                newStart = Math.max(1, currentStart - 200);
-                newEnd = currentStart - 1;
+                newStart = Math.max(1, currentStartLine - 200);
+                newEnd = currentStartLine - 1;
             } else {
-                newStart = currentEnd + 1;
-                newEnd = Math.min({{ result.total_lines }}, currentEnd + 200);
+                newStart = currentEndLine + 1;
+                newEnd = Math.min(totalLines, currentEndLine + 200);
             }
             
             $.get('/file_viewer', {
@@ -854,6 +1134,8 @@
                 const newLines = doc.querySelectorAll('.code-line');
                 
                 const container = $('#line-container');
+                const scrollBefore = container[0].scrollHeight;
+                const scrollTop = container.scrollTop();
                 
                 if (direction === 'before') {
                     // 在前面插入
@@ -865,6 +1147,12 @@
                         // 重新綁定事件
                         bindLineEvents(newElement);
                     });
+                    
+                    // 保持滾動位置
+                    const scrollAfter = container[0].scrollHeight;
+                    container.scrollTop(scrollTop + (scrollAfter - scrollBefore));
+                    
+                    currentStartLine = newStart;
                 } else {
                     // 在後面添加
                     newLines.forEach(line => {
@@ -874,6 +1162,8 @@
                         // 重新綁定事件
                         bindLineEvents(newElement);
                     });
+                    
+                    currentEndLine = newEnd;
                 }
                 
                 updateStatus();
@@ -883,8 +1173,11 @@
                     performSearch();
                 }
                 
+                // 重新應用顏色高亮
+                reapplyHighlights();
+                
             }).always(function() {
-                loadingOverlay.hide();
+                loadingOverlay.fadeOut(300);
                 isLoadingMore = false;
             });
         }
@@ -893,14 +1186,21 @@
         function bindLineEvents(lineElement) {
             const lineNumber = lineElement.data('line');
             
-            lineElement.find('.line-number').on('click', function() {
-                handleLineClick(lineNumber);
-            }).on('contextmenu', function(e) {
-                showLineContextMenu(e, lineNumber);
-            });
+            lineElement.find('.line-number')
+                .on('click', function() {
+                    handleLineClick(lineNumber);
+                })
+                .on('dblclick', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleLineDoubleClick(lineNumber);
+                })
+                .on('contextmenu', function(e) {
+                    showLineContextMenu(e, lineNumber);
+                });
             
             lineElement.find('.line-content').on('contextmenu', function(e) {
-                showContentContextMenu(e);
+                showContentContextMenu(e, lineNumber);
             });
         }
 
@@ -913,6 +1213,18 @@
             }
         }
 
+        // 處理行雙擊
+        function handleLineDoubleClick(lineNumber) {
+            showToast('info', `正在載入第 ${lineNumber} 行的上下文...`);
+            
+            const url = new URL(window.location);
+            url.searchParams.set('line', lineNumber);
+            url.searchParams.set('start', Math.max(1, lineNumber - 200));
+            url.searchParams.set('end', Math.min(totalLines, lineNumber + 200));
+            url.searchParams.set('context', 200);
+            window.location.href = url.toString();
+        }
+
         // 跳轉模式切換
         function toggleJumpMode() {
             jumpModeEnabled = !jumpModeEnabled;
@@ -923,12 +1235,23 @@
                 btn.removeClass('btn-outline-secondary').addClass('btn-gradient-warning');
                 btn.html('<i class="fas fa-crosshairs me-1"></i>退出跳轉');
                 navigation.show();
-                showAlert('跳轉模式已啟用', 'info');
+                
+                // 1秒後自動隱藏提示
+                setTimeout(() => {
+                    navigation.addClass('animate__animated');
+                    navigation.css('animation', 'slideOutDown 0.3s ease-out');
+                    setTimeout(() => {
+                        navigation.hide();
+                        navigation.css('animation', '');
+                    }, 300);
+                }, 1000);
+                
+                showToast('info', '跳轉模式已啟用');
             } else {
                 btn.removeClass('btn-gradient-warning').addClass('btn-outline-secondary');
                 btn.html('<i class="fas fa-crosshairs me-1"></i>跳轉模式');
                 navigation.hide();
-                showAlert('跳轉模式已關閉', 'info');
+                showToast('info', '跳轉模式已關閉');
             }
         }
 
@@ -950,7 +1273,7 @@
         // 下一個跳轉點
         function gotoNextJump() {
             if (jumpPoints.size === 0) {
-                showAlert('沒有設定跳轉點，請先設定跳轉點', 'warning');
+                showToast('warning', '沒有設定跳轉點，請先設定跳轉點');
                 return;
             }
             
@@ -964,13 +1287,13 @@
             
             scrollToLine(nextJump);
             updateJumpStatus();
-            showAlert(`跳轉到第 ${nextJump} 行`, 'success');
+            showToast('success', `跳轉到第 ${nextJump} 行`);
         }
 
         // 上一個跳轉點
         function gotoPreviousJump() {
             if (jumpPoints.size === 0) {
-                showAlert('沒有設定跳轉點，請先設定跳轉點', 'warning');
+                showToast('warning', '沒有設定跳轉點，請先設定跳轉點');
                 return;
             }
             
@@ -984,7 +1307,26 @@
             
             scrollToLine(prevJump);
             updateJumpStatus();
-            showAlert(`跳轉到第 ${prevJump} 行`, 'success');
+            showToast('success', `跳轉到第 ${prevJump} 行`);
+        }
+
+        // 切換正規表達式
+        function toggleRegex() {
+            useRegex = !useRegex;
+            const btn = $('#regex-toggle');
+            
+            if (useRegex) {
+                btn.addClass('active');
+                showToast('info', '已啟用正規表達式搜尋');
+            } else {
+                btn.removeClass('active');
+                showToast('info', '已關閉正規表達式搜尋');
+            }
+            
+            // 重新執行搜尋
+            if ($('#search-input').val()) {
+                performSearch();
+            }
         }
 
         // 搜尋功能
@@ -999,31 +1341,46 @@
             }
             
             searchResults = [];
-            const regex = new RegExp(searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            let regex;
+            
+            try {
+                if (useRegex) {
+                    regex = new RegExp(searchText, 'gi');
+                } else {
+                    // 轉義特殊字符
+                    const escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    regex = new RegExp(escapedText, 'gi');
+                }
+            } catch (e) {
+                showToast('danger', '無效的正規表達式');
+                return;
+            }
             
             $('.line-content').each(function(index) {
                 const content = $(this).text();
-                const matches = [...content.matchAll(regex)];
+                const lineNumber = parseInt($(this).parent().data('line'));
+                let newContent = content;
+                let hasMatch = false;
                 
-                if (matches.length > 0) {
-                    const lineNumber = parseInt($(this).siblings('.line-number').text());
-                    matches.forEach(match => {
-                        searchResults.push({
-                            line: lineNumber,
-                            element: this,
-                            index: match.index,
-                            text: match[0]
-                        });
+                // 替換匹配的文字
+                newContent = content.replace(regex, function(match) {
+                    hasMatch = true;
+                    searchResults.push({
+                        line: lineNumber,
+                        element: this,
+                        text: match
                     });
-                    
-                    // 高亮顯示
-                    const highlightedContent = content.replace(regex, '<span class="search-highlight">$&</span>');
-                    $(this).html(highlightedContent);
+                    return '<span class="search-highlight">' + match + '</span>';
+                });
+                
+                if (hasMatch) {
+                    $(this).html(newContent);
                 }
             });
             
             currentSearchIndex = 0;
             updateSearchStatus(`找到 ${searchResults.length} 個結果`);
+            $('#search-info').text(`${searchResults.length > 0 ? currentSearchIndex + 1 : 0} / ${searchResults.length}`);
             
             if (searchResults.length > 0) {
                 highlightCurrentResult();
@@ -1053,6 +1410,7 @@
                 }
                 
                 updateSearchStatus(`${currentSearchIndex + 1} / ${searchResults.length}`);
+                $('#search-info').text(`${currentSearchIndex + 1} / ${searchResults.length}`);
             }
         }
 
@@ -1075,6 +1433,7 @@
             currentSearchIndex = 0;
             lastSearchText = '';
             updateSearchStatus('搜尋: 無');
+            $('#search-info').text('0 / 0');
         }
 
         // 書籤功能
@@ -1084,11 +1443,11 @@
             if (bookmarks.has(lineNumber)) {
                 bookmarks.delete(lineNumber);
                 lineElement.removeClass('bookmark');
-                showAlert(`已移除第 ${lineNumber} 行的書籤`, 'info');
+                showToast('info', `已移除第 ${lineNumber} 行的書籤`);
             } else {
                 bookmarks.add(lineNumber);
                 lineElement.addClass('bookmark');
-                showAlert(`已設定第 ${lineNumber} 行為書籤`, 'success');
+                showToast('success', `已設定第 ${lineNumber} 行為書籤`);
             }
             
             updateBookmarkStatus();
@@ -1096,7 +1455,7 @@
 
         function gotoNextBookmark() {
             if (bookmarks.size === 0) {
-                showAlert('沒有設定書籤', 'warning');
+                showToast('warning', '沒有設定書籤');
                 return;
             }
             
@@ -1110,12 +1469,12 @@
             
             scrollToLine(nextBookmark);
             updateStatus();
-            showAlert(`跳轉到書籤：第 ${nextBookmark} 行`, 'success');
+            showToast('success', `跳轉到書籤：第 ${nextBookmark} 行`);
         }
 
         function gotoPreviousBookmark() {
             if (bookmarks.size === 0) {
-                showAlert('沒有設定書籤', 'warning');
+                showToast('warning', '沒有設定書籤');
                 return;
             }
             
@@ -1129,7 +1488,7 @@
             
             scrollToLine(prevBookmark);
             updateStatus();
-            showAlert(`跳轉到書籤：第 ${prevBookmark} 行`, 'success');
+            showToast('success', `跳轉到書籤：第 ${prevBookmark} 行`);
         }
 
         // 右鍵選單
@@ -1139,10 +1498,10 @@
             showContextMenu(event, 'line', lineNumber);
         }
 
-        function showContentContextMenu(event) {
+        function showContentContextMenu(event, lineNumber) {
             event.preventDefault();
             selectedText = window.getSelection().toString().trim();
-            showContextMenu(event, 'content');
+            showContextMenu(event, 'content', lineNumber);
         }
 
         function showContextMenu(event, type, lineNumber = null) {
@@ -1198,21 +1557,24 @@
             }
             
             // 生成選單HTML
-            const menuHtml = menuItems.map(item => {
+            let menuHtml = '';
+            menuItems.forEach(item => {
                 if (item.separator) {
-                    return '<div class="context-menu-separator"></div>';
+                    menuHtml += '<div class="context-menu-separator"></div>';
                 } else {
                     const disabledClass = item.disabled ? 'disabled' : '';
                     const colorPreview = item.color ? 
                         `<div class="color-preview highlight-color-${item.color}"></div>` : 
                         `<i class="fas fa-${item.icon}"></i>`;
                     
-                    return `<div class="context-menu-item ${disabledClass}" data-action="${JSON.stringify(item).replace(/"/g, '&quot;')}">
-                        ${colorPreview}
-                        <span>${item.text}</span>
-                    </div>`;
+                    menuHtml += `
+                        <div class="context-menu-item ${disabledClass}" data-index="${menuItems.indexOf(item)}">
+                            ${colorPreview}
+                            <span>${item.text}</span>
+                        </div>
+                    `;
                 }
-            }).join('');
+            });
             
             menu.html(menuHtml);
             
@@ -1220,9 +1582,10 @@
             menu.find('.context-menu-item').on('click', function() {
                 if ($(this).hasClass('disabled')) return;
                 
-                const actionData = JSON.parse($(this).attr('data-action'));
-                if (actionData.action) {
-                    actionData.action();
+                const index = $(this).data('index');
+                const item = menuItems[index];
+                if (item && item.action) {
+                    item.action();
                 }
                 hideContextMenu();
             });
@@ -1268,29 +1631,69 @@
         function highlightWithColor(text, color) {
             if (!text) return;
             
+            // 儲存高亮資訊
+            if (!highlightColors[text]) {
+                highlightColors[text] = [];
+            }
+            highlightColors[text].push(color);
+            
             const escapedText = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(escapedText, 'gi');
+            const regex = new RegExp(`(${escapedText})`, 'gi');
             
             $('.line-content').each(function() {
-                const content = $(this).html();
-                const highlightedContent = content.replace(regex, `<span class="highlight-color-${color}">$&</span>`);
-                $(this).html(highlightedContent);
+                const $this = $(this);
+                let html = $this.html();
+                
+                // 暫時移除現有的高亮標籤
+                const tempMarkers = [];
+                html = html.replace(/<span class="[^"]*"[^>]*>(.*?)<\/span>/gi, function(match, content, offset) {
+                    const marker = `__MARKER_${tempMarkers.length}__`;
+                    tempMarkers.push({ marker, content, match });
+                    return marker + content + marker;
+                });
+                
+                // 應用新的高亮
+                html = html.replace(regex, function(match) {
+                    // 檢查是否已經在標記中
+                    for (let temp of tempMarkers) {
+                        if (html.indexOf(temp.marker + match + temp.marker) !== -1) {
+                            return match;
+                        }
+                    }
+                    return `<span class="highlight-color-${color}">${match}</span>`;
+                });
+                
+                // 還原其他高亮標籤
+                tempMarkers.forEach(temp => {
+                    const markerRegex = new RegExp(temp.marker + '(.*?)' + temp.marker, 'g');
+                    html = html.replace(markerRegex, temp.match);
+                });
+                
+                $this.html(html);
             });
             
-            highlightColors[text] = color;
-            showAlert(`已用顏色 ${color} 高亮文字: ${text}`, 'success');
+            showToast('success', `已用顏色 ${color} 高亮文字: ${text}`);
         }
 
         function clearAllHighlights() {
             for (let i = 1; i <= 10; i++) {
                 $(`.highlight-color-${i}`).each(function() {
-                    const parent = $(this).parent();
-                    const text = parent.text();
-                    parent.text(text);
+                    const $this = $(this);
+                    const text = $this.text();
+                    $this.replaceWith(text);
                 });
             }
             highlightColors = {};
-            showAlert('已清除所有高亮', 'info');
+            showToast('info', '已清除所有高亮');
+        }
+
+        function reapplyHighlights() {
+            // 重新應用所有高亮
+            Object.entries(highlightColors).forEach(([text, colors]) => {
+                colors.forEach(color => {
+                    highlightWithColor(text, color);
+                });
+            });
         }
 
         // 工具函數
@@ -1350,12 +1753,12 @@
 
         function jumpToLine() {
             const lineNumber = parseInt($('#jump-line').val());
-            if (lineNumber && lineNumber >= 1 && lineNumber <= {{ result.total_lines }}) {
+            if (lineNumber && lineNumber >= 1 && lineNumber <= totalLines) {
                 const url = new URL(window.location);
                 url.searchParams.set('line', lineNumber);
                 window.location.href = url.toString();
             } else {
-                showAlert('請輸入有效的行號 (1-{{ result.total_lines }})', 'warning');
+                showToast('warning', `請輸入有效的行號 (1-${totalLines})`);
             }
         }
 
@@ -1374,7 +1777,7 @@
             const end = parseInt($('#range-end').val());
             const context = parseInt($('#range-context').val()) || 200;
             
-            if (start && end && start <= end && start >= 1 && end <= {{ result.total_lines }}) {
+            if (start && end && start <= end && start >= 1 && end <= totalLines) {
                 const url = new URL(window.location);
                 url.searchParams.set('line', Math.floor((start + end) / 2));
                 url.searchParams.set('start', start);
@@ -1382,29 +1785,65 @@
                 url.searchParams.set('context', context);
                 window.location.href = url.toString();
             } else {
-                showAlert('請輸入有效的範圍', 'warning');
+                showToast('warning', '請輸入有效的範圍');
             }
         }
 
         // 匯出功能
         function exportFile() {
-            const url = `/api/export_file?path=${encodeURIComponent('{{ file_path }}')}`;
-            window.open(url, '_blank');
-            showAlert('正在準備下載檔案...', 'info');
+            showToast('info', '正在準備下載檔案...');
+            
+            // 使用 window.open 下載檔案
+            const downloadUrl = `/api/export_file?path=${encodeURIComponent('{{ file_path }}')}`;
+            
+            // 創建一個隱藏的 iframe 來下載檔案
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = downloadUrl;
+            document.body.appendChild(iframe);
+            
+            // 5秒後移除 iframe
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 5000);
+            
+            showToast('success', '檔案下載已開始');
         }
 
         // 複製功能
         function copySelectedText() {
             if (selectedText) {
                 navigator.clipboard.writeText(selectedText).then(() => {
-                    showAlert(`已複製到剪貼簿: ${selectedText.substring(0, 20)}...`, 'success');
+                    showToast('success', `已複製到剪貼簿: ${selectedText.substring(0, 20)}...`);
+                }).catch(() => {
+                    // Fallback
+                    const textArea = document.createElement('textarea');
+                    textArea.value = selectedText;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showToast('success', `已複製到剪貼簿: ${selectedText.substring(0, 20)}...`);
                 });
             }
         }
 
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                showAlert(`已複製到剪貼簿: ${text}`, 'success');
+                showToast('success', `已複製到剪貼簿: ${text}`);
+            }).catch(() => {
+                // Fallback
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast('success', `已複製到剪貼簿: ${text}`);
             });
         }
 
@@ -1425,6 +1864,7 @@
             updateCurrentLineStatus();
             updateBookmarkStatus();
             updateJumpStatus();
+            $('#status-position').text(`${currentStartLine}-${currentEndLine} / ${totalLines}`);
         }
 
         function updateBookmarkStatus() {
@@ -1439,34 +1879,42 @@
             $('#status-search').text(text);
         }
 
-        // 提示訊息
-        function showAlert(message, type) {
-            // 移除舊的提示
-            $('.floating-alert').remove();
+        // Toast 提示系統
+        function showToast(type, message) {
+            const toastId = 'toast-' + Date.now();
+            const iconMap = {
+                'success': 'fa-check',
+                'info': 'fa-info',
+                'warning': 'fa-exclamation-triangle',
+                'danger': 'fa-times'
+            };
             
-            const alertClass = {
-                'success': 'alert-success',
-                'info': 'alert-info',
-                'warning': 'alert-warning',
-                'danger': 'alert-danger'
-            }[type] || 'alert-info';
-            
-            const alertHtml = `
-                <div class="alert ${alertClass} floating-alert position-fixed animate__animated animate__fadeInDown" 
-                     style="top: 20px; right: 20px; z-index: 9999; max-width: 300px; box-shadow: var(--shadow-medium);">
-                    ${message}
-                    <button type="button" class="btn-close" onclick="$(this).parent().remove()"></button>
+            const toast = $(`
+                <div id="${toastId}" class="custom-toast ${type}">
+                    <div class="toast-icon">
+                        <i class="fas ${iconMap[type]}"></i>
+                    </div>
+                    <div class="toast-message">${message}</div>
+                    <button class="toast-close" onclick="removeToast('${toastId}')">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-            `;
+            `);
             
-            $('body').append(alertHtml);
+            $('#toast-container').append(toast);
             
+            // 自動移除
             setTimeout(() => {
-                $('.floating-alert').addClass('animate__fadeOutUp');
-                setTimeout(() => {
-                    $('.floating-alert').remove();
-                }, 500);
+                removeToast(toastId);
             }, 3000);
+        }
+
+        function removeToast(toastId) {
+            const toast = $('#' + toastId);
+            toast.addClass('hiding');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
         }
 
         // 監聽滾動更新狀態

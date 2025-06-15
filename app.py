@@ -1492,6 +1492,28 @@ def serve_chat_file(filename):
     """提供聊天室上傳檔案"""
     return send_from_directory(uploads_dir, filename)
 
+@app.route('/api/export_file')
+def export_file():
+    """匯出檔案"""
+    file_path = request.args.get('path')
+    
+    if not file_path or not os.path.exists(file_path):
+        abort(404, '檔案不存在')
+    
+    try:
+        # 取得檔案名稱
+        filename = os.path.basename(file_path)
+        
+        # 使用 send_file 直接下載檔案
+        return send_from_directory(
+            os.path.dirname(file_path),
+            filename,
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        abort(500, f'下載檔案失敗: {str(e)}')
+	
 # 工具函數
 def read_file_lines(file_path, target_line, context=200, start_line=None, end_line=None):
     """讀取檔案指定行數及其上下文"""

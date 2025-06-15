@@ -15,7 +15,7 @@
     <!-- 自定義 CSS -->
     <link href="/static/css/file_viewer.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_marks.css" rel="stylesheet">
-	
+	<link href="/static/css/file_viewer_enhanced.css" rel="stylesheet">
 </head>
 <body>
     <!-- 設備切換器 -->
@@ -119,21 +119,21 @@
                     <button class="btn btn-outline-warning btn-modern" onclick="clearAllHighlights()">
                         <i class="fas fa-eraser me-1"></i>清除高亮
                     </button>
-                    <button class="btn btn-outline-secondary btn-modern" onclick="toggleJumpMode()" id="jump-mode-btn">
-                        <i class="fas fa-crosshairs me-1"></i>跳轉模式
-                    </button>
+					<button class="btn btn-outline-secondary btn-modern" onclick="toggleJumpModeFixed()" id="jump-mode-btn">
+						<i class="fas fa-crosshairs me-1"></i>跳轉模式
+					</button>
                     
                     <!-- 快速導航按鈕 -->
-                    <div class="quick-nav-buttons">
-                        <button class="btn-quick-nav" onclick="gotoNextBookmark()" title="下一個書籤 (F3)">
-                            <i class="fas fa-bookmark"></i>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                        <button class="btn-quick-nav warning" onclick="gotoNextJump()" title="下一個跳轉點 (F2)">
-                            <i class="fas fa-crosshairs"></i>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
+					<div class="quick-nav-buttons">
+						<button class="btn-quick-nav" onclick="gotoNextBookmarkSilent()" title="下一個書籤 (F3)">
+							<i class="fas fa-bookmark"></i>
+							<i class="fas fa-arrow-right"></i>
+						</button>
+						<button class="btn-quick-nav warning" onclick="gotoNextJumpSilent()" title="下一個跳轉點 (F2)">
+							<i class="fas fa-crosshairs"></i>
+							<i class="fas fa-arrow-right"></i>
+						</button>
+					</div>
                 </div>
                 
                 <div class="toolbar-group">
@@ -274,13 +274,12 @@
                 {% for line in result.lines %}
                 <div class="code-line {% if line.is_target %}line-target{% endif %}" 
                      id="line-{{ line.line_number }}" data-line="{{ line.line_number }}">
-                    <div class="line-number" 
-                         onclick="handleLineClick({{ line.line_number }})"
-                         ondblclick="handleLineDoubleClick({{ line.line_number }})"
-                         oncontextmenu="showLineContextMenu(event, {{ line.line_number }})"
-                         title="點擊設定書籤，F2設定跳轉點，F3設定書籤，雙擊顯示上下文，右鍵更多選項">
-                        {{ line.line_number }}
-                    </div>
+						<div class="line-number" 
+							 ondblclick="handleLineDoubleClick({{ line.line_number }})"
+							 oncontextmenu="showLineContextMenu(event, {{ line.line_number }})"
+							 title="雙擊顯示上下文，右鍵更多選項">
+							{{ line.line_number }}
+						</div>
                     <div class="line-content" oncontextmenu="showContentContextMenu(event, {{ line.line_number }})">{{ line.content if line.content else ' ' }}</div>
                 </div>
                 {% endfor %}
@@ -337,10 +336,10 @@
     <div class="toast-container" id="toast-container"></div>
     
     <!-- 搜尋結果浮動按鈕 -->
-    <button class="search-results-fab" onclick="toggleSearchResultsPanel()">
-        <i class="fas fa-list"></i>
-        <span class="badge">0</span>
-    </button>
+	<button class="search-results-fab" onclick="toggleSearchResultsPanel()" style="display: none !important;">
+		<i class="fas fa-list"></i>
+		<span class="badge">0</span>
+	</button>
     
     <!-- 標記管理浮動按鈕 -->
     <button class="marks-fab" onclick="toggleMarksPanel()">
@@ -364,32 +363,32 @@
         </div>
     </div>
     
-    <!-- 標記管理面板 -->
-    <div class="marks-panel">
-        <div class="marks-panel-header">
-            <h5>標記管理</h5>
-            <button class="search-results-close" onclick="hideMarksPanel()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="marks-panel-tabs">
-            <div class="marks-panel-tab active" data-type="jumps" onclick="changeMarksTab('jumps')">
-                <i class="fas fa-crosshairs me-1"></i>跳轉點
-            </div>
-            <div class="marks-panel-tab" data-type="bookmarks" onclick="changeMarksTab('bookmarks')">
-                <i class="fas fa-bookmark me-1"></i>書籤
-            </div>
-        </div>
-        <div class="marks-panel-body"></div>
-        <div class="marks-panel-footer">
-            <button class="btn btn-outline-danger btn-sm" onclick="clearAllJumpPoints()">
-                <i class="fas fa-trash me-1"></i>清除所有跳轉點
-            </button>
-            <button class="btn btn-outline-danger btn-sm" onclick="clearAllBookmarks()">
-                <i class="fas fa-trash me-1"></i>清除所有書籤
-            </button>
-        </div>
-    </div>
+	<!-- 標記管理面板 -->
+	<div class="marks-panel">
+		<div class="marks-panel-header">
+			<h5>標記管理</h5>
+			<button class="search-results-close" onclick="hideMarksPanel()">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="marks-panel-tabs">
+			<div class="marks-panel-tab active" data-type="jumps" onclick="changeMarksTab('jumps')">
+				<i class="fas fa-crosshairs me-1"></i>跳轉點
+			</div>
+			<div class="marks-panel-tab" data-type="bookmarks" onclick="changeMarksTab('bookmarks')">
+				<i class="fas fa-bookmark me-1"></i>書籤
+			</div>
+		</div>
+		<div class="marks-panel-body"></div>
+		<div class="marks-panel-footer">
+			<button class="btn btn-outline-danger btn-sm" onclick="clearAllJumpPointsEnhanced()">
+				<i class="fas fa-trash me-1"></i>清除所有跳轉點
+			</button>
+			<button class="btn btn-outline-danger btn-sm" onclick="clearAllBookmarksEnhanced()" style="display: none;">
+				<i class="fas fa-trash me-1"></i>清除所有書籤
+			</button>
+		</div>
+	</div>
 	
 	<!-- 搜尋結果浮動按鈕 -->
 	<button class="search-results-fab" onclick="toggleSearchResultsPanel()" style="display: none;">
@@ -445,6 +444,7 @@
     <!-- 自定義 JavaScript -->
     <script src="/static/js/file_viewer.js"></script>
 	<script src="/static/js/file_viewer_marks.js"></script>
-	<script src="/static/js/file_viewer_fixes.js"></script>	
+	<script src="/static/js/file_viewer_fixes.js"></script>
+	<script src="/static/js/file_viewer_enhanced.js"></script>	
 </body>
 </html>

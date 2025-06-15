@@ -390,10 +390,7 @@ function bindLineEvents(lineElement) {
     const lineNumber = lineElement.data('line');
     
     lineElement.find('.line-number')
-        .off('click') // 先移除舊事件
-        .on('click', function() {
-            handleLineClick(lineNumber);
-        })
+        .off('click') // 移除點擊事件
         .on('dblclick', function(e) {
             e.preventDefault();
             e.stopPropagation();

@@ -1,0 +1,464 @@
+/* Enhanced File Viewer 樣式修復 */
+
+/* 修復匯出下拉選單被擋住問題 */
+.file-viewer {
+    overflow: visible !important;
+    z-index: 1;
+}
+
+.toolbar {
+    overflow: visible !important;
+    z-index: 1000;
+}
+
+.export-group {
+    position: relative;
+    display: inline-block;
+    z-index: 10001;
+}
+
+.export-dropdown {
+    position: fixed !important; /* 改為 fixed 避免被容器擋住 */
+    margin-top: 5px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    min-width: 320px;
+    z-index: 99999;
+    display: none;
+    overflow: visible;
+    border: 1px solid rgba(0,0,0,0.05);
+    animation: dropdownSlide 0.3s ease-out;
+}
+
+.export-dropdown.show {
+    display: block;
+}
+
+/* 美化匯出下拉選單 */
+.export-option {
+    padding: 14px 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+    color: #2d3748;
+    position: relative;
+}
+
+.export-option:hover {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e6edff 100%);
+    color: #667eea;
+    padding-left: 28px;
+}
+
+.export-option:hover i {
+    transform: scale(1.1);
+}
+
+.export-option i {
+    width: 24px;
+    font-size: 18px;
+    transition: transform 0.2s ease;
+}
+
+.export-option:first-child {
+    border-radius: 16px 16px 0 0;
+}
+
+.export-option:last-child {
+    border-radius: 0 0 16px 16px;
+}
+
+.export-option span {
+    font-size: 0.95rem;
+}
+
+/* 美化搜尋框 */
+.search-input {
+    padding: 12px 160px 12px 24px;
+    border-radius: 50px;
+    border: 2px solid #e8edf7;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    background: #f7faff;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.search-input:hover {
+    border-color: #d0daf0;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.08);
+}
+
+.search-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15), 0 4px 15px rgba(102, 126, 234, 0.1);
+    background: white;
+    transform: translateY(-1px);
+}
+
+.search-input.regex-mode {
+    background: #fffaf0;
+    border-color: #f0d9a6;
+}
+
+.search-input.regex-mode:hover {
+    background: #fffef8;
+    border-color: #e8c88a;
+}
+
+.search-input.regex-mode:focus {
+    border-color: #ffc107;
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}
+
+/* 美化數字輸入框 */
+.form-control-number {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.form-control-number input {
+    border-radius: 25px;
+    border: 2px solid #e8edf7;
+    transition: all 0.3s ease;
+    padding: 12px 50px 12px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    background: #f8f9fa;
+    width: 100%;
+    text-align: center;
+}
+
+.form-control-number input:hover {
+    border-color: #d0daf0;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.08);
+}
+
+.form-control-number input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    background: white;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+/* 數字控制按鈕 */
+.number-controls {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.form-control-number:hover .number-controls,
+.form-control-number input:focus ~ .number-controls {
+    opacity: 1;
+}
+
+.number-controls button {
+    width: 32px;
+    height: 20px;
+    border: none;
+    background: #667eea;
+    color: white;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    border-radius: 10px;
+}
+
+.number-controls button:first-child {
+    border-radius: 10px 10px 4px 4px;
+}
+
+.number-controls button:last-child {
+    border-radius: 4px 4px 10px 10px;
+}
+
+.number-controls button:hover {
+    background: #5a67d8;
+    transform: scale(1.05);
+}
+
+.number-controls button:active {
+    transform: scale(0.95);
+}
+
+/* 跳轉行號輸入美化 */
+#jump-line-group {
+    width: 220px;
+}
+
+#jump-line-group input {
+    padding-right: 80px;
+}
+
+#jump-line-group .btn {
+    position: absolute;
+    right: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: calc(100% - 6px);
+    border-radius: 22px;
+    padding: 0 20px;
+    font-size: 14px;
+}
+
+/* 搜尋結果浮動按鈕 - 預設隱藏 */
+.search-results-fab {
+    display: none !important;
+}
+
+.search-results-fab.has-results {
+    display: flex !important;
+}
+
+/* 快速導航按鈕美化 - 類似跳轉模式樣式 */
+.btn-quick-nav {
+    background: white;
+    color: #28a745;
+    border: 2px solid #28a745;
+    border-radius: 25px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-quick-nav:hover {
+    background: var(--success-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-quick-nav.warning {
+    color: #ff9800;
+    border-color: #ff9800;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.15);
+}
+
+.btn-quick-nav.warning:hover {
+    background: var(--warning-gradient);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+/* 跳轉模式按鈕動畫 */
+.btn-gradient-warning.jump-mode-active {
+    animation: pulseGlow 2s ease-in-out infinite;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 6px 25px rgba(255, 152, 0, 0.5);
+    }
+}
+
+/* 行號圖示區域 */
+.line-number {
+    position: relative;
+    padding-right: 15px;
+}
+
+.line-icons {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.code-line:hover .line-icons {
+    opacity: 1;
+}
+
+.line-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: all 0.2s ease;
+}
+
+.line-icon.bookmark-icon {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
+.line-icon.bookmark-icon:hover {
+    background: rgba(76, 175, 80, 0.3);
+    transform: scale(1.2);
+}
+
+.line-icon.bookmark-icon.active {
+    background: #4caf50;
+    color: white;
+}
+
+.line-icon.jump-icon {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+}
+
+.line-icon.jump-icon:hover {
+    background: rgba(255, 152, 0, 0.3);
+    transform: scale(1.2);
+}
+
+.line-icon.jump-icon.active {
+    background: #ff9800;
+    color: white;
+}
+
+/* 確認對話框美化 */
+.confirm-dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    min-width: 400px;
+    animation: dialogSlideIn 0.3s ease-out;
+}
+
+@keyframes dialogSlideIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.confirm-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.confirm-dialog-header {
+    margin-bottom: 1.5rem;
+}
+
+.confirm-dialog-header h5 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.confirm-dialog-body {
+    margin-bottom: 1.5rem;
+    color: #4a5568;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.confirm-dialog-footer {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.confirm-dialog-footer .btn {
+    padding: 10px 24px;
+    border-radius: 25px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.confirm-dialog-footer .btn-danger {
+    background: var(--danger-gradient);
+    border: none;
+    color: white;
+}
+
+.confirm-dialog-footer .btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+/* 跳轉導航提示隱藏 */
+#jump-navigation {
+    display: none !important;
+}
+
+/* 修復範圍選擇器樣式 */
+.range-selector .form-control {
+    display: none;
+}
+
+.range-selector .form-control-number input {
+    border-radius: 20px;
+    padding: 14px 50px 14px 24px;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .export-dropdown {
+        width: calc(100vw - 20px);
+        left: 10px !important;
+        right: 10px !important;
+    }
+    
+    .confirm-dialog {
+        min-width: 90%;
+        max-width: 400px;
+    }
+    
+    .form-control-number input {
+        font-size: 16px; /* 防止 iOS 自動縮放 */
+    }
+}

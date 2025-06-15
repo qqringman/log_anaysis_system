@@ -16,6 +16,16 @@
     <link href="/static/css/file_viewer.css" rel="stylesheet">
 </head>
 <body>
+    <!-- 設備切換器 -->
+    <div class="device-switcher">
+        <button class="device-btn" data-device="desktop" title="電腦版">
+            <i class="fas fa-desktop"></i>
+        </button>
+        <button class="device-btn" data-device="mobile" title="手機版">
+            <i class="fas fa-mobile-alt"></i>
+        </button>
+    </div>
+    
     <!-- 隱藏的初始資料 -->
     <input type="hidden" id="initial-start-line" value="{{ result.start_line }}">
     <input type="hidden" id="initial-end-line" value="{{ result.end_line }}">
@@ -204,6 +214,14 @@
                         <i class="fas fa-map-marker-alt"></i>
                         <span id="status-line">第 {{ result.target_line }} 行</span>
                     </div>
+                    <div class="status-item hover-info">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <span id="status-hover">滑鼠: --</span>
+                    </div>
+                    <div class="status-item target-info">
+                        <i class="fas fa-bullseye"></i>
+                        <span id="status-target">目標: 第 {{ result.target_line }} 行</span>
+                    </div>
                     <div class="status-item">
                         <i class="fas fa-bookmark"></i>
                         <span id="status-bookmarks">書籤: 0</span>
@@ -238,6 +256,22 @@
 
     <!-- Toast 容器 -->
     <div class="toast-container" id="toast-container"></div>
+    
+    <!-- 搜尋結果面板 -->
+    <div class="search-results-panel">
+        <div class="search-results-header">
+            <h5>搜尋結果</h5>
+            <button class="search-results-close" onclick="hideSearchResultsPanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="search-results-body"></div>
+        <div class="search-results-footer">
+            <button class="btn-scroll-top" onclick="scrollToSearchTop()">
+                <i class="fas fa-arrow-up me-2"></i>回到頂部
+            </button>
+        </div>
+    </div>
 
     <!-- 版權聲明 -->
     <div class="copyright-footer">

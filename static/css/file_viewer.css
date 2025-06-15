@@ -119,8 +119,8 @@ body {
 /* 搜尋框設計 - 加長且更美觀 */
 .search-container {
     position: relative;
-    min-width: 500px; /* 從 400px 增加到 500px */
-    max-width: 600px; /* 從 500px 增加到 600px */
+    min-width: 600px; /* 從 500px 增加到 600px */
+    max-width: 700px; /* 從 600px 增加到 700px */
 }
 
 .search-input {
@@ -317,7 +317,7 @@ body {
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     min-width: 180px;
-    z-index: 1000;
+    z-index: 10000; /* 增加 z-index 避免被擋住 */
     display: none;
     overflow: hidden;
 }
@@ -429,8 +429,8 @@ body {
 
 /* 滑鼠hover效果 */
 .code-line:hover {
-    background: var(--line-hover);
-    box-shadow: inset 3px 0 0 rgba(52, 152, 219, 0.4);
+    background: rgba(255, 255, 0, 0.1); /* 淡黃色背景 */
+    box-shadow: inset 3px 0 0 rgba(255, 193, 7, 0.5);
 }
 
 .line-number {
@@ -963,4 +963,217 @@ body {
 
 .line-container::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* 新增樣式 */
+
+/* 載入新行動畫效果 */
+@keyframes newLineHighlight {
+    0% { background-color: rgba(255, 152, 0, 0.3); }
+    100% { background-color: transparent; }
+}
+
+.new-line-highlight {
+    animation: newLineHighlight 0.5s ease-out;
+}
+
+/* 搜尋結果面板 */
+.search-results-panel {
+    position: fixed;
+    top: 50%;
+    right: -400px;
+    transform: translateY(-50%);
+    width: 380px;
+    max-height: 70vh;
+    background: white;
+    border-radius: 20px 0 0 20px;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.15);
+    z-index: 1000;
+    transition: right 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-results-panel.show {
+    right: 0;
+}
+
+.search-results-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 20px 0 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.search-results-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.search-results-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.search-results-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.search-results-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.search-result-item {
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.search-result-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.search-result-item.active {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.search-result-line {
+    display: flex;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.search-result-line-number {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    min-width: 80px;
+    text-align: right;
+    color: #6c757d;
+    font-weight: 600;
+    border-right: 2px solid #e9ecef;
+}
+
+.search-result-line-content {
+    flex: 1;
+    padding: 8px 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.search-result-line-content .search-match {
+    background: var(--search-highlight);
+    font-weight: bold;
+    padding: 1px 3px;
+    border-radius: 3px;
+}
+
+.search-results-footer {
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.btn-scroll-top {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-scroll-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 設備切換按鈕 */
+.device-switcher {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 10000;
+    background: white;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 5px;
+    display: flex;
+    gap: 5px;
+}
+
+.device-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.device-btn:hover {
+    background: #f8f9fa;
+}
+
+.device-btn.active {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+/* 狀態列額外資訊 */
+.status-item.hover-info {
+    color: #ffc107;
+    font-weight: 600;
+}
+
+.status-item.target-info {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* 響應式調整 - 平板和手機 */
+@media (max-width: 768px) {
+    .search-container {
+        min-width: 100%;
+        max-width: 100%;
+    }
+    
+    .search-results-panel {
+        width: 100%;
+        right: -100%;
+        border-radius: 0;
+    }
+    
+    .search-results-panel.show {
+        right: 0;
+    }
+    
+    .device-switcher {
+        top: 5px;
+        right: 5px;
+    }
 }

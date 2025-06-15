@@ -20,6 +20,8 @@ let currentFilePath = '';
 let currentTargetLine = 1;
 let forwardHistory = [];
 let activeHighlightColors = new Set();
+let currentHoverLine = null;
+let navigationHistory = [];
 
 // 頁面初始化
 $(document).ready(function() {
@@ -32,10 +34,13 @@ $(document).ready(function() {
     
     setupKeyboardShortcuts();
     setupScrollHandler();
+    setupMouseTracking();
     scrollToTarget();
     updateStatus();
     initializeTooltips();
     setupExportDropdown();
+    setupNavigationHistory();
+    setupDeviceSwitcher();
     checkForwardHistory();
 });
 
@@ -58,19 +63,22 @@ function checkForwardHistory() {
     const fromLine = urlParams.get('from');
     
     if (fromLine) {
-        // 儲存前進資訊
-        const forwardUrl = window.location.href.replace(/[?&]from=\d+/, '');
-        sessionStorage.setItem('forwardUrl', forwardUrl);
+        // 儲存當前頁面到導航歷史
+        const currentUrl = window.location.href;
+        navigationHistory.push(currentUrl);
         
         // 顯示前進按鈕
         showForwardButton();
     } else {
-        // 檢查是否有前進記錄
-        const forwardUrl = sessionStorage.getItem('forwardUrl');
-        if (forwardUrl && document.referrer && document.referrer.includes('file_viewer')) {
+        // 檢查 sessionStorage 中的歷史
+        const savedHistory = sessionStorage.getItem('navigationHistory');
+        if (savedHistory) {
+            navigationHistory = JSON.parse(savedHistory);
+            if (navigationHistory.length > 0) {
             showForwardButton();
         }
     }
+}
 }
 
 // 顯示前進按鈕
@@ -84,9 +92,10 @@ function showForwardButton() {
 
 // 前進功能
 function goForward() {
-    const forwardUrl = sessionStorage.getItem('forwardUrl');
-    if (forwardUrl) {
-        window.location.href = forwardUrl;
+    if (navigationHistory.length > 0) {
+        const nextUrl = navigationHistory.shift();
+        sessionStorage.setItem('navigationHistory', JSON.stringify(navigationHistory));
+        window.location.href = nextUrl;
     }
 }
 
@@ -1262,6 +1271,342 @@ window.removeToast = function(toastId) {
 // 監聽滾動更新狀態
 $('#line-container').on('scroll', debounce(updateStatus, 100));
 
+// 設置導航歷史
+function setupNavigationHistory() {
+    // 儲存返回時的 URL
+    $(window).on('beforeunload', function() {
+        if (navigationHistory.length > 0) {
+            sessionStorage.setItem('navigationHistory', JSON.stringify(navigationHistory));
+        }
+    });
+}
+
+// 設置滑鼠追蹤
+function setupMouseTracking() {
+    $('#line-container').on('mousemove', '.code-line', function(e) {
+        const lineNumber = $(this).data('line');
+        if (currentHoverLine !== lineNumber) {
+            currentHoverLine = lineNumber;
+            updateHoverStatus(lineNumber);
+        }
+    });
+    
+    $('#line-container').on('mouseleave', function() {
+        currentHoverLine = null;
+        updateHoverStatus(null);
+    });
+}
+
+// 更新滑鼠所在行狀態
+function updateHoverStatus(lineNumber) {
+    if (lineNumber) {
+        $('#status-hover').text(`滑鼠: 第 ${lineNumber} 行`);
+    } else {
+        $('#status-hover').text('滑鼠: --');
+    }
+}
+
+// 設置設備切換器
+function setupDeviceSwitcher() {
+    // 檢測當前設備
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        $('.device-btn[data-device="mobile"]').addClass('active');
+        loadMobileStyles();
+    } else {
+        $('.device-btn[data-device="desktop"]').addClass('active');
+    }
+    
+    // 綁定切換事件
+    $('.device-btn').click(function() {
+        $('.device-btn').removeClass('active');
+        $(this).addClass('active');
+        
+        const device = $(this).data('device');
+        if (device === 'mobile') {
+            loadMobileStyles();
+        } else {
+            removeMobileStyles();
+        }
+    });
+}
+
+// 載入手機版樣式
+function loadMobileStyles() {
+    if (!$('#mobile-styles').length) {
+        $('head').append('<link id="mobile-styles" rel="stylesheet" href="/static/css/file_viewer_mobile.css">');
+        if (!$('#mobile-scripts').length) {
+            $.getScript('/static/js/file_viewer_mobile.js');
+        }
+    }
+}
+
+// 移除手機版樣式
+function removeMobileStyles() {
+    $('#mobile-styles').remove();
+}
+
+// 顯示搜尋結果面板
+function showSearchResultsPanel() {
+    if (searchResults.length === 0) return;
+    
+    const panel = $('.search-results-panel');
+    const body = panel.find('.search-results-body');
+    body.empty();
+    
+    // 添加搜尋結果
+    searchResults.forEach((result, index) => {
+        const lineElement = $(`#line-${result.line}`);
+        const lineContent = lineElement.find('.line-content').text();
+        
+        // 高亮匹配文字
+        let highlightedContent = lineContent;
+        const regex = new RegExp(`(${result.text})`, 'gi');
+        highlightedContent = highlightedContent.replace(regex, '<span class="search-match">$1</span>');
+        
+        const resultItem = $(`
+            <div class="search-result-item ${index === currentSearchIndex ? 'active' : ''}" 
+                 data-index="${index}" data-line="${result.line}">
+                <div class="search-result-line">
+                    <div class="search-result-line-number">${result.line}</div>
+                    <div class="search-result-line-content">${highlightedContent}</div>
+                </div>
+            </div>
+        `);
+        
+        body.append(resultItem);
+    });
+    
+    // 綁定點擊事件
+    $('.search-result-item').click(function() {
+        const index = $(this).data('index');
+        const line = $(this).data('line');
+        
+        currentSearchIndex = index;
+        scrollToLine(line);
+        highlightCurrentResult();
+        
+        // 更新活躍狀態
+        $('.search-result-item').removeClass('active');
+        $(this).addClass('active');
+    });
+    
+    panel.addClass('show');
+}
+
+// 隱藏搜尋結果面板
+function hideSearchResultsPanel() {
+    $('.search-results-panel').removeClass('show');
+}
+
+// 滾動到搜尋結果頂部
+window.scrollToSearchTop = function() {
+    const panel = $('.search-results-panel');
+    panel.find('.search-results-body').scrollTop(0);
+};
+
+// 更新狀態 - 修改版
+function updateStatus() {
+    updateCurrentLineStatus();
+    updateBookmarkStatus();
+    updateJumpStatus();
+    updateTargetStatus();
+    $('#status-position').text(`${currentStartLine}-${currentEndLine} / ${totalLines}`);
+}
+
+// 更新目標行狀態
+function updateTargetStatus() {
+    $('#status-target').text(`目標: 第 ${currentTargetLine} 行`);
+}
+
+// 處理行雙擊 - 修改版
+function handleLineDoubleClick(lineNumber) {
+    showToast('info', `正在載入第 ${lineNumber} 行的上下文...`);
+    
+    // 儲存當前頁面到歷史
+    const currentUrl = window.location.href;
+    navigationHistory.push(currentUrl);
+    sessionStorage.setItem('navigationHistory', JSON.stringify(navigationHistory));
+    
+    const url = new URL(window.location);
+    url.searchParams.set('line', lineNumber);
+    url.searchParams.set('start', Math.max(1, lineNumber - 200));
+    url.searchParams.set('end', Math.min(totalLines, lineNumber + 200));
+    url.searchParams.set('context', 200);
+    url.searchParams.set('from', currentTargetLine);
+    window.location.href = url.toString();
+}
+
+// 載入更多內容 - 修改版
+function loadMoreContent(direction) {
+    if (isLoadingMore) return;
+    isLoadingMore = true;
+    
+    const loadingOverlay = direction === 'before' ? $('#loading-overlay-top') : $('#loading-overlay-bottom');
+    loadingOverlay.show();
+    
+    // 添加載入文字
+    if (!loadingOverlay.find('.loading-text').length) {
+        loadingOverlay.append('<div class="loading-text">載入中...</div>');
+    }
+    
+    let newStart, newEnd;
+    
+    if (direction === 'before') {
+        newStart = Math.max(1, currentStartLine - 200);
+        newEnd = currentStartLine - 1;
+    } else {
+        newStart = currentEndLine + 1;
+        newEnd = Math.min(totalLines, currentEndLine + 200);
+    }
+    
+    $.get('/file_viewer', {
+        path: currentFilePath,
+        line: direction === 'before' ? newStart : newEnd,
+        context: 100,
+        start: newStart,
+        end: newEnd
+    }).done(function(data) {
+        // 解析返回的HTML並提取新行
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data, 'text/html');
+        const newLines = doc.querySelectorAll('.code-line');
+        
+        const container = $('#line-container');
+        const scrollBefore = container[0].scrollHeight;
+        const scrollTop = container.scrollTop();
+        
+        if (direction === 'before') {
+            // 在前面插入
+            const firstLine = container.find('.code-line').first();
+            newLines.forEach(line => {
+                const newElement = $(line.outerHTML);
+                firstLine.before(newElement);
+                
+                // 添加載入動畫
+                newElement.addClass('new-line-highlight');
+                
+                // 重新綁定事件
+                bindLineEvents(newElement);
+            });
+            
+            // 保持滾動位置
+            const scrollAfter = container[0].scrollHeight;
+            container.scrollTop(scrollTop + (scrollAfter - scrollBefore));
+            
+            currentStartLine = newStart;
+        } else {
+            // 在後面添加
+            newLines.forEach(line => {
+                const newElement = $(line.outerHTML);
+                container.append(newElement);
+                
+                // 添加載入動畫
+                newElement.addClass('new-line-highlight');
+                
+                // 重新綁定事件
+                bindLineEvents(newElement);
+            });
+            
+            currentEndLine = newEnd;
+        }
+        
+        updateStatus();
+        
+        // 重新應用搜尋高亮
+        if (lastSearchText) {
+            performSearch();
+        }
+        
+        // 重新應用顏色高亮
+        reapplyHighlights();
+        
+    }).fail(function() {
+        showToast('danger', '載入內容失敗，請稍後再試');
+    }).always(function() {
+        loadingOverlay.fadeOut(300);
+        isLoadingMore = false;
+    });
+}
+
+// 搜尋功能 - 修改版
+function performSearch() {
+    const searchText = $('#search-input').val().trim();
+    lastSearchText = searchText;
+    clearSearchHighlights();
+    
+    if (!searchText) {
+        updateSearchStatus('搜尋: 無');
+        hideSearchResultsPanel();
+        return;
+    }
+    
+    searchResults = [];
+    let regex;
+
+    try {
+        if (useRegex) {
+            regex = new RegExp(searchText, 'gi');
+        } else {
+            // 轉義特殊字符
+            const escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\//'); 監聽滾動更新狀態
+            $('#line-container').on('scroll', debounce(updateStatus, 100));
+            regex = new RegExp(escapedText, 'gi');
+        }
+    } catch (e) {
+        showToast('danger', '無效的正規表達式');
+        return;
+    }
+    
+    $('.line-content').each(function(index) {
+        const content = $(this).text();
+        const lineNumber = parseInt($(this).parent().data('line'));
+        let newContent = content;
+        let hasMatch = false;
+        
+        // 收集所有匹配
+        const matches = [];
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+            matches.push({
+                text: match[0],
+                index: match.index
+            });
+        }
+        
+        // 從後往前替換，避免索引變化
+        for (let i = matches.length - 1; i >= 0; i--) {
+            const m = matches[i];
+            hasMatch = true;
+            searchResults.push({
+                line: lineNumber,
+                element: this,
+                text: m.text
+            });
+            
+            newContent = newContent.substring(0, m.index) + 
+                        '<span class="search-highlight">' + m.text + '</span>' + 
+                        newContent.substring(m.index + m.text.length);
+        }
+        
+        if (hasMatch) {
+            $(this).html(newContent);
+        }
+    });
+    
+    currentSearchIndex = 0;
+    updateSearchStatus(`找到 ${searchResults.length} 個結果`);
+    $('#search-info').text(`${searchResults.length > 0 ? currentSearchIndex + 1 : 0} / ${searchResults.length}`);
+    
+    if (searchResults.length > 0) {
+        highlightCurrentResult();
+        showSearchResultsPanel();
+    } else {
+        hideSearchResultsPanel();
+    }
+}
+
 // 全域函數 - 供 HTML 使用
 window.toggleJumpMode = toggleJumpMode;
 window.showRangeSelector = showRangeSelector;
@@ -1275,4 +1620,4 @@ window.clearAllHighlights = clearAllHighlights;
 window.toggleRegex = toggleRegex;
 window.findPrevious = findPrevious;
 window.findNext = findNext;
-window.goForward = goForward;
+window.goForward = goForward;window.hideSearchResultsPanel = hideSearchResultsPanel;

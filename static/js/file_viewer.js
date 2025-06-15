@@ -22,6 +22,7 @@ let forwardHistory = [];
 let activeHighlightColors = new Set();
 let currentHoverLine = null;
 let navigationHistory = [];
+let historyIndex = -1; // 用於導航歷史的索引
 
 // 頁面初始化
 $(document).ready(function() {
@@ -109,13 +110,29 @@ function showForwardButton() {
     }
 }
 
+// 返回功能
+function goBack() {
+    if (historyIndex > 0) {
+        forwardHistory.push(currentTargetLine); // 將當前行加入前進歷史
+        historyIndex--;
+        jumpToLine(navigationHistory[historyIndex], false); // 不再添加到歷史，避免循環
+    } else {
+        showToast('沒有更早的歷史記錄了。', 'info');
+    }
+    checkForwardHistory();
+}
+
 // 前進功能
 function goForward() {
-    if (navigationHistory.length > 0) {
-        const nextUrl = navigationHistory.shift();
-        sessionStorage.setItem('navigationHistory', JSON.stringify(navigationHistory));
-        window.location.href = nextUrl;
+    if (forwardHistory.length > 0) {
+        const nextLine = forwardHistory.pop(); // 從前進歷史中取出最新的項目
+        navigationHistory.push(currentTargetLine); // 將當前行加入後退歷史
+        historyIndex++;
+        jumpToLine(nextLine, false); // 不再添加到歷史
+    } else {
+        showToast('沒有更晚的歷史記錄了。', 'info');
     }
+    checkForwardHistory();
 }
 
 // 設置匯出下拉選單
@@ -1766,6 +1783,60 @@ function performSearch() {
     } else {
         hideSearchResultsPanel();
     }
+}
+
+// 切換標記面板
+function toggleMarksPanel() {
+    const panel = $('.marks-panel');
+    
+    if (panel.hasClass('show')) {
+        hideMarksPanel();
+    } else {
+        showMarksPanel();
+    }
+}
+
+// 清除所有書籤
+function clearAllBookmarks() {
+    if (bookmarks.size === 0) {
+        showToast('info', '沒有書籤需要清除');
+        return;
+    }
+    
+    if (confirm(`確定要清除所有 ${bookmarks.size} 個書籤嗎？`)) {
+        bookmarks.forEach(lineNumber => {
+            $(`#line-${lineNumber} .line-number`).removeClass('bookmark');
+        });
+        bookmarks.clear();
+        updateBookmarkStatus();
+        updateMarksList();
+        updateMarksStatus();
+        showToast('success', '已清除所有書籤');
+    }
+}
+
+// 清除所有跳轉點
+function clearAllJumpPoints() {
+    if (jumpPoints.size === 0) {
+        showToast('info', '沒有跳轉點需要清除');
+        return;
+    }
+    
+    if (confirm(`確定要清除所有 ${jumpPoints.size} 個跳轉點嗎？`)) {
+        jumpPoints.forEach(lineNumber => {
+            $(`#line-${lineNumber} .line-number`).removeClass('jump-point');
+        });
+        jumpPoints.clear();
+        updateJumpStatus();
+        updateMarksList();
+        updateMarksStatus();
+        showToast('success', '已清除所有跳轉點');
+    }
+}
+
+// 隱藏標記面板
+function hideMarksPanel() {
+    $('.marks-panel').removeClass('show');
 }
 
 // 全域函數 - 供 HTML 使用

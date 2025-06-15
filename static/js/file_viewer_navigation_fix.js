@@ -117,19 +117,46 @@
         // 更新導航按鈕狀態
         updateNavigationButtons: function() {
             const backBtn = $('.btn-back');
+            const historyBtn = $('.btn-history');
             const forwardBtn = $('#forward-btn');
+            
+            // 檢查是否有歷史記錄
+            const hasHistory = window.navigationHistory.length > 1;
             
             // 返回按鈕
             const canGoBack = window.historyIndex > 0;
-            if (canGoBack) {
-                backBtn.prop('disabled', false);
+            if (hasHistory && canGoBack) {
+                if (backBtn.length === 0) {
+                    // 創建返回按鈕
+                    const btn = $('<button class="btn btn-back btn-nav-gradient" onclick="NavigationManager.goBack()"><i class="fas fa-arrow-left me-1"></i>返回</button>');
+                    $('.btn-group-aligned').prepend(btn);
+                }
+                $('.btn-back').show().prop('disabled', false);
                 const prevPage = window.navigationHistory[window.historyIndex - 1];
                 if (prevPage) {
-                    backBtn.attr('title', `返回到第 ${prevPage.line} 行`);
+                    $('.btn-back').attr('title', `返回到第 ${prevPage.line} 行`);
                 }
+            } else if (hasHistory && !canGoBack) {
+                $('.btn-back').show().prop('disabled', true).attr('title', '沒有上一頁');
             } else {
-                backBtn.prop('disabled', true);
-                backBtn.attr('title', '沒有上一頁');
+                $('.btn-back').hide();
+            }
+            
+            // 歷史按鈕
+            if (hasHistory) {
+                if (historyBtn.length === 0) {
+                    // 創建歷史按鈕
+                    const btn = $('<button class="btn btn-history btn-nav-gradient-alt" onclick="showHistoryPanel()" title="瀏覽歷史 (Ctrl+H)"><i class="fas fa-history me-1"></i>歷史</button>');
+                    if ($('.btn-back').length > 0) {
+                        $('.btn-back').after(btn);
+                    } else {
+                        $('.btn-group-aligned').prepend(btn);
+                    }
+                }
+                $('.btn-history').show();
+                $('.btn-history').attr('title', `瀏覽歷史 (${window.navigationHistory.length} 項)`);
+            } else {
+                $('.btn-history').hide();
             }
             
             // 前進按鈕
@@ -137,8 +164,14 @@
             if (canGoForward) {
                 if (forwardBtn.length === 0) {
                     // 創建前進按鈕
-                    const btn = $('<button id="forward-btn" class="btn btn-forward" onclick="NavigationManager.goForward()" title="前進到下一頁"><i class="fas fa-arrow-right me-1"></i>前進</button>');
-                    backBtn.after(btn);
+                    const btn = $('<button id="forward-btn" class="btn btn-forward btn-nav-gradient" onclick="NavigationManager.goForward()" title="前進到下一頁"><i class="fas fa-arrow-right me-1"></i>前進</button>');
+                    if ($('.btn-history').length > 0) {
+                        $('.btn-history').after(btn);
+                    } else if ($('.btn-back').length > 0) {
+                        $('.btn-back').after(btn);
+                    } else {
+                        $('.btn-group-aligned').prepend(btn);
+                    }
                 }
                 const nextPage = window.navigationHistory[window.historyIndex + 1];
                 if (nextPage) {
@@ -409,8 +442,18 @@
     $(document).ready(function() {
         // 延遲初始化，確保其他腳本已載入
         setTimeout(() => {
+            // 先隱藏可能存在的靜態按鈕
+            $('.btn-back').hide();
+            $('.btn-history').hide();
+            
             NavigationManager.init();
             createHistoryPanel();
+            
+            // 添加提示標籤
+            if ($('.nav-buttons-hint').length === 0) {
+                $('.btn-group-aligned').css('position', 'relative');
+                $('.btn-group-aligned').prepend('<div class="nav-buttons-hint">使用 Alt+← / Alt+→ 快速導航</div>');
+            }
             
             // 添加鍵盤快捷鍵
             $(document).on('keydown', function(e) {

@@ -1,14 +1,9 @@
 /* Enhanced File Viewer Navigation History Styles */
 
 /* 導航按鈕增強 */
-.btn-back:disabled,
-.btn-forward:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.btn-forward {
-    background: linear-gradient(45deg, #764ba2, #667eea);
+/* 統一的導航按鈕基礎樣式 */
+.btn-nav-gradient,
+.btn-nav-gradient-alt {
     color: white;
     border: none;
     padding: 8px 16px;
@@ -19,15 +14,83 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    position: relative;
+    overflow: hidden;
 }
 
-.btn-forward:hover:not(:disabled) {
+/* 返回和前進按鈕 - 紫色漸變 */
+.btn-nav-gradient {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+}
+
+.btn-nav-gradient:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
 }
 
-.btn-forward:active:not(:disabled) {
+.btn-nav-gradient:active:not(:disabled) {
     transform: translateY(0);
+}
+
+.btn-nav-gradient:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 歷史按鈕 - 綠色漸變 */
+.btn-nav-gradient-alt {
+    background: linear-gradient(45deg, #56ab2f, #a8e063);
+}
+
+.btn-nav-gradient-alt:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(86, 171, 47, 0.4);
+}
+
+.btn-nav-gradient-alt:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* 返回按鈕特定樣式 */
+.btn-back {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+}
+
+/* 前進按鈕特定樣式 */
+.btn-forward {
+    background: linear-gradient(45deg, #764ba2, #667eea);
+}
+
+/* 歷史按鈕特定樣式 */
+.btn-history {
+    background: linear-gradient(45deg, #56ab2f, #a8e063);
+}
+
+/* 按鈕動畫效果 */
+.btn-nav-gradient::before,
+.btn-nav-gradient-alt::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    transition: left 0.5s ease;
+}
+
+.btn-nav-gradient:hover::before,
+.btn-nav-gradient-alt:hover::before {
+    left: 100%;
+}
+
+/* 按鈕組對齊 */
+.btn-group-aligned {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 /* 歷史面板樣式 */
@@ -214,27 +277,6 @@
     opacity: 1;
 }
 
-/* 歷史按鈕（可選） */
-.btn-history {
-    background: transparent;
-    border: 1px solid #dee2e6;
-    color: #495057;
-    padding: 8px 16px;
-    border-radius: 25px;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.btn-history:hover {
-    background: #f8f9fa;
-    border-color: #667eea;
-    color: #667eea;
-}
-
 /* 手機版適配 */
 @media (max-width: 768px) {
     .history-panel {
@@ -245,18 +287,77 @@
         transform: translateY(-50%);
     }
     
-    .btn-forward {
+    .btn-nav-gradient,
+    .btn-nav-gradient-alt {
         padding: 6px 12px;
         font-size: 12px;
     }
     
-    .btn-forward .fas {
+    .btn-nav-gradient .fas,
+    .btn-nav-gradient-alt .fas {
         font-size: 12px;
     }
     
-    .btn-forward span {
-        display: none;
+    /* 手機版隱藏按鈕文字，只顯示圖標 */
+    @media (max-width: 480px) {
+        .btn-nav-gradient span,
+        .btn-nav-gradient-alt span {
+            display: none;
+        }
+        
+        .btn-nav-gradient,
+        .btn-nav-gradient-alt {
+            padding: 8px 12px;
+        }
     }
+}
+
+/* 按鈕出現/消失動畫 */
+.btn-nav-gradient,
+.btn-nav-gradient-alt {
+    animation: fadeInScale 0.3s ease-out;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 按鈕圖標旋轉效果 */
+.btn-history:hover .fa-history {
+    animation: rotate360 0.5s ease-in-out;
+}
+
+@keyframes rotate360 {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 導航按鈕提示標籤 */
+.nav-buttons-hint {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.btn-group-aligned:hover .nav-buttons-hint {
+    opacity: 1;
 }
 
 /* 導航動畫效果 */
@@ -293,6 +394,58 @@
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 20px;
+}
+
+/* 其他可選的按鈕顏色方案 */
+/* 藍色漸變 - 可用於返回/前進 */
+.btn-nav-gradient.blue {
+    background: linear-gradient(45deg, #4facfe, #00f2fe);
+}
+
+.btn-nav-gradient.blue:hover:not(:disabled) {
+    box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+}
+
+/* 橙色漸變 - 可用於歷史 */
+.btn-nav-gradient-alt.orange {
+    background: linear-gradient(45deg, #fa709a, #fee140);
+}
+
+.btn-nav-gradient-alt.orange:hover:not(:disabled) {
+    box-shadow: 0 5px 15px rgba(250, 112, 154, 0.4);
+}
+
+/* 粉色漸變 */
+.btn-nav-gradient.pink {
+    background: linear-gradient(45deg, #f093fb, #f5576c);
+}
+
+/* 青色漸變 */
+.btn-nav-gradient-alt.cyan {
+    background: linear-gradient(45deg, #4fd1c5, #234e52);
+}
+
+/* 按鈕載入狀態 */
+.btn-nav-gradient.loading,
+.btn-nav-gradient-alt.loading {
+    pointer-events: none;
+    position: relative;
+}
+
+.btn-nav-gradient.loading::after,
+.btn-nav-gradient-alt.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 2px solid white;
+    animation: spin 1s linear infinite;
 }
 
 @keyframes spin {

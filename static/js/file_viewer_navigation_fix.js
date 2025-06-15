@@ -426,7 +426,6 @@
     
 	// 清除歷史 - 使用美化的確認對話框
 	NavigationManager.clearHistory = function() {
-		// 檢查是否有 showConfirmDialog 函數
 		if (typeof showConfirmDialog === 'function') {
 			showConfirmDialog(
 				'清除瀏覽歷史',
@@ -438,19 +437,24 @@
 					window.historyIndex = 0;
 					NavigationManager.saveToStorage();
 					NavigationManager.updateNavigationButtons();
-					NavigationManager.updateHistoryPanel();
+					
+					// 關閉歷史視窗
+					$('.history-panel').fadeOut(300);
+					
 					showToast('success', '已清除瀏覽歷史');
 				}
 			);
 		} else {
-			// 如果美化對話框不可用，使用原生 confirm
 			if (confirm(`確定要清除所有 ${window.navigationHistory.length} 筆瀏覽歷史嗎？`)) {
 				const currentPage = window.navigationHistory[window.historyIndex];
 				window.navigationHistory = currentPage ? [currentPage] : [];
 				window.historyIndex = 0;
 				this.saveToStorage();
 				this.updateNavigationButtons();
-				this.updateHistoryPanel();
+				
+				// 關閉歷史視窗
+				$('.history-panel').fadeOut(300);
+				
 				showToast('success', '已清除瀏覽歷史');
 			}
 		}

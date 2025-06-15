@@ -326,13 +326,13 @@ function updateLineIconsState(lineNumber) {
 }
 
 // 點擊書籤圖示
-window.toggleBookmarkIcon = function(lineNumber) {
+function toggleBookmarkIcon(lineNumber) {
     toggleBookmark(lineNumber);
     updateLineIconsState(lineNumber);
 };
 
 // 點擊跳轉點圖示
-window.toggleJumpIcon = function(lineNumber) {
+function toggleJumpIcon(lineNumber) {
     toggleJumpPoint(lineNumber);
     updateLineIconsState(lineNumber);
 };
@@ -532,7 +532,9 @@ function initializeEnhancements() {
     window.gotoPreviousJump = gotoPreviousJumpSilent;
     window.gotoNextBookmark = gotoNextBookmarkSilent;
     window.gotoPreviousBookmark = gotoPreviousBookmarkSilent;
-    
+    window.toggleBookmarkIcon = toggleBookmarkIcon;
+	window.toggleJumpIcon = toggleJumpIcon;
+	
     // 確保載入更多內容時添加圖示
     const originalBindLineEvents = window.bindLineEvents;
     window.bindLineEvents = function(lineElement) {

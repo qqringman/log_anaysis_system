@@ -59,7 +59,7 @@ ${inlineStyles}
 /* 匯出頁面額外樣式 */
 .exported-watermark {
     position: fixed;
-    bottom: 60px;
+    top: 30px;
     right: 20px;
     background: rgba(255, 193, 7, 0.9);
     color: #856404;
@@ -111,7 +111,7 @@ ${inlineScripts}
     
     function initializeExportedPage() {
         // 添加匯出標記
-        $('body').append('<div class="exported-watermark"><i class="fas fa-download me-1"></i>匯出的靜態頁面</div>');
+        $('body').append('<div class="exported-watermark"><i class="fas fa-download me-1"></i>此頁為靜態頁面</div>');
         
         // 恢復書籤和跳轉點
         if (window.bookmarks) {

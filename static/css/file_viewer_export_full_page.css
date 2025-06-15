@@ -1,0 +1,47 @@
+/* 匯出頁面提示 - 置頂懸浮 */
+.exported-notice {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    color: white;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.exported-notice i {
+    font-size: 16px;
+}
+
+.exported-time {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* 調整 body 的上邊距，避免內容被提示遮擋 */
+body.exported-page {
+    padding-top: 50px;
+}
+
+/* 手機版調整 */
+@media (max-width: 768px) {
+    .exported-notice {
+        padding: 10px 15px;
+        font-size: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .exported-time {
+        width: 100%;
+        margin-top: 5px;
+    }
+}

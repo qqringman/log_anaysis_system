@@ -1346,22 +1346,27 @@ option:hover {
 /* 搜尋結果面板 */
 .search-results-panel {
     position: fixed;
+    right: 50px;  /* 從右邊距離 50px */
     top: 50%;
-    right: -400px;
     transform: translateY(-50%);
-    width: 380px;
-    max-height: 70vh;
+    width: 400px;
+    max-width: calc(100vw - 100px);
+    max-height: 80vh;
     background: white;
-    border-radius: 20px 0 0 20px;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.15);
+    border-radius: 20px;  /* 全圓角 */
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
     z-index: 9000;
-    transition: right 0.3s ease-out;
     display: flex;
     flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-results-panel.show {
-    right: 0;
+    opacity: 1;
+    visibility: visible;
 }
 
 /* 搜尋結果浮動按鈕 */
@@ -1442,7 +1447,7 @@ option:hover {
     background: var(--primary-gradient);
     color: white;
     padding: 1rem 1.5rem;
-    border-radius: 20px 0 0 0;
+    border-radius: 20px 20px 0 0;  /* 上圓角 */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1603,9 +1608,10 @@ option:hover {
     }
     
     .search-results-panel {
-        width: 100%;
-        right: -100%;
-        border-radius: 0;
+        right: 20px;
+        left: 20px;
+        width: auto;
+        max-width: none;
     }
     
     .search-results-panel.show {

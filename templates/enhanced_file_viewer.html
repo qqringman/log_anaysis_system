@@ -17,6 +17,7 @@
 	<link href="/static/css/file_viewer_marks.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_enhanced.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_final.css" rel="stylesheet">
+	<link href="/static/css/file_viewer_navigation_fix.css" rel="stylesheet">
 </head>
 <body>
     <!-- 設備切換器 -->
@@ -76,7 +77,9 @@
                         <button class="btn btn-back" onclick="goBack()">
                             <i class="fas fa-arrow-left me-1"></i>返回
                         </button>
-                        <!-- 前進按鈕將由 JS 動態添加 -->
+						<button class="btn btn-history" onclick="showHistoryPanel()" title="瀏覽歷史 (Ctrl+H)">
+							<i class="fas fa-history me-1"></i>歷史
+						</button>
                         
                         <div class="export-group d-inline-block position-relative">
                             <button class="btn btn-export">
@@ -336,6 +339,17 @@
     <!-- Toast 容器 -->
     <div class="toast-container" id="toast-container"></div>
     
+	<!-- 返回/歷史 容器 -->
+	<div class="nav-hint" id="nav-hint"></div>
+
+	<!-- 導航動畫效果： -->
+	<div class="navigating" id="navigating">
+		<div class="navigating-content">
+			<div class="navigating-spinner"></div>
+			<div class="navigating-text">正在導航...</div>
+		</div>
+	</div>
+	
     <!-- 搜尋結果浮動按鈕 -->
 	<button class="search-results-fab" onclick="toggleSearchResultsPanel()" style="display: none !important;">
 		<i class="fas fa-list"></i>
@@ -448,5 +462,6 @@
 	<script src="/static/js/file_viewer_fixes.js"></script>
 	<script src="/static/js/file_viewer_enhanced.js"></script>
 	<script src="/static/js/file_viewer_final.js"></script>
+	<script src="/static/js/file_viewer_navigation_fix.js"></script>
 </body>
 </html>

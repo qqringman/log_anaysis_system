@@ -1,0 +1,344 @@
+/* Enhanced File Viewer 最終樣式修復 */
+
+/* 行號圖示區域改進 - 不與行號重疊 */
+.line-number {
+    position: relative;
+    padding-right: 5px; /* 增加右側空間給圖示 */
+    min-width: 100px; /* 增加最小寬度 */
+}
+
+.line-icons {
+    position: absolute;
+    left: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 3px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10; /* 確保圖示在上層 */
+}
+
+.code-line:hover .line-icons {
+    opacity: 1;
+}
+
+.line-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: all 0.2s ease;
+    background: white;
+    border: 1px solid transparent;
+}
+
+.line-icon.bookmark-icon {
+    border-color: rgba(76, 175, 80, 0.3);
+    color: #4caf50;
+}
+
+.line-icon.bookmark-icon:hover {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: #4caf50;
+    transform: scale(1.15);
+}
+
+.line-icon.bookmark-icon.active {
+    background: #4caf50;
+    color: white;
+    border-color: #4caf50;
+}
+
+.line-icon.jump-icon {
+    border-color: rgba(255, 152, 0, 0.3);
+    color: #ff9800;
+}
+
+.line-icon.jump-icon:hover {
+    background: rgba(255, 152, 0, 0.1);
+    border-color: #ff9800;
+    transform: scale(1.15);
+}
+
+.line-icon.jump-icon.active {
+    background: #ff9800;
+    color: white;
+    border-color: #ff9800;
+}
+
+/* 行號本身的標記樣式 */
+
+/* 快速導航按鈕條件顯示 */
+.quick-nav-buttons {
+    display: none;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.quick-nav-buttons.show {
+    display: flex;
+}
+
+/* 搜尋輸入框加長 */
+.search-container {
+    min-width: 700px !important; /* 從 600px 增加到 700px */
+    max-width: 800px !important; /* 從 700px 增加到 800px */
+}
+
+.search-input {
+    padding: 12px 180px 12px 24px; /* 增加右側 padding */
+}
+
+/* 跳轉行號輸入框美化 */
+#jump-line-wrapper {
+    position: relative;
+    width: 240px;
+}
+
+#jump-line-wrapper input {
+    border-radius: 30px;
+    border: 2px solid #e8edf7;
+    transition: all 0.3s ease;
+    padding: 10px 90px 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    width: 100%;
+    text-align: center;
+    height: 40px;
+}
+
+#jump-line-wrapper input:hover {
+    border-color: #b8c5f8;
+    background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+#jump-line-wrapper input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    background: white;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+#jump-line-wrapper .btn {
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 36px;
+    border-radius: 28px;
+    padding: 0 20px;
+    font-size: 14px;
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+#jump-line-wrapper .btn:hover {
+    transform: translateY(-50%) scale(1.02);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 選擇顯示範圍輸入框美化 */
+.range-selector .form-control-number input {
+    border-radius: 25px;
+    border: 2px solid #e8edf7;
+    transition: all 0.3s ease;
+    padding: 14px 55px 14px 24px;
+    font-size: 1rem;
+    font-weight: 500;
+    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    width: 100%;
+    text-align: center;
+}
+
+.range-selector .form-control-number input:hover {
+    border-color: #b8c5f8;
+    background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.range-selector .form-control-number input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    background: white;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+/* 數字控制按鈕改進 */
+.range-selector .number-controls {
+    opacity: 0.7;
+}
+
+.range-selector .form-control-number:hover .number-controls,
+.range-selector .form-control-number input:focus ~ .number-controls {
+    opacity: 1;
+}
+
+.range-selector .number-controls button {
+    width: 36px;
+    height: 22px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+}
+
+.range-selector .number-controls button:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* 標記管理面板內容換行 */
+.marks-item-preview {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #6c757d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px; /* 限制最大寬度 */
+}
+
+.marks-item {
+    flex-wrap: wrap; /* 允許換行 */
+    gap: 0.5rem;
+}
+
+.marks-item-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0; /* 允許收縮 */
+}
+
+.marks-item-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto; /* 推到右側 */
+}
+
+/* 將操作按鈕移到行號前面 */
+.marks-item-line {
+    order: 2; /* 行號在後 */
+    margin-left: 0.5rem;
+}
+
+.marks-item-actions {
+    order: 1; /* 操作按鈕在前 */
+    margin-left: 0;
+    margin-right: 0.5rem;
+}
+
+/* Toast 提示完全隱藏 */
+.custom-toast {
+    display: none !important;
+}
+
+/* 匯出下拉選單確保可點擊 */
+.export-dropdown {
+    pointer-events: auto !important;
+    cursor: pointer;
+}
+
+.export-option {
+    pointer-events: auto !important;
+}
+
+/* 右鍵選單智能高亮選項 */
+.context-menu-item.highlight-item {
+    font-weight: 600;
+    background: linear-gradient(135deg, #fffaf0 0%, #fff5e6 100%);
+}
+
+.context-menu-item.highlight-item:hover {
+    background: linear-gradient(135deg, #fff5e6 0%, #ffeccc 100%);
+}
+
+/* 高亮顏色選項改進 */
+.context-menu-item .color-preview {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid #dee2e6;
+    margin-right: 8px;
+}
+
+.context-menu-item:hover .color-preview {
+    border-color: #667eea;
+    transform: scale(1.1);
+}
+
+/* 清除高亮按鈕樣式 */
+.btn-clear-highlights {
+    background: white;
+    color: #ff9800;
+    border: 2px solid #ff9800;
+    border-radius: 25px;
+    padding: 8px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-clear-highlights:hover {
+    background: var(--warning-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+}
+
+/* 確保範圍選擇器的快速選擇下拉框美觀 */
+.range-selector select.form-select {
+    border-radius: 25px;
+    border: 2px solid #e8edf7;
+    padding: 12px 40px 12px 20px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23667eea'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.range-selector select.form-select:hover {
+    border-color: #b8c5f8;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.range-selector select.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    background-color: white;
+}
+
+/* 修復行號寬度在有標記時的對齊 */
+.line-number.bookmark.jump-point {
+    padding-left: 28px; /* 為兩個標記留出空間 */
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .search-container {
+        min-width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    #jump-line-wrapper {
+        width: 100%;
+    }
+    
+    .marks-item-preview {
+        max-width: 150px;
+    }
+}

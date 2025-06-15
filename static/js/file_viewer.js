@@ -169,38 +169,42 @@ function setupKeyboardShortcuts() {
         if (e.which === 113) { // F2
             e.preventDefault();
             
-            // 如果焦點在行號上，添加跳轉點
-            const hoveredLine = $('.code-line:hover');
-            if (hoveredLine.length > 0) {
-                const lineNumber = hoveredLine.data('line');
-                toggleJumpPoint(lineNumber);
-            } else if (jumpModeEnabled) {
+            if (jumpModeEnabled) {
                 // 否則執行跳轉導航
                 if (e.shiftKey) {
                     gotoPreviousJump();
                 } else {
                     gotoNextJump();
                 }
-            }
+            } else {
+				// 如果焦點在行號上，添加跳轉點
+				const hoveredLine = $('.code-line:hover');
+				if (hoveredLine.length > 0) {
+					const lineNumber = hoveredLine.data('line');
+					toggleJumpPoint(lineNumber);
+				}
+			}
         }
         
         // F3 書籤功能 - 根據焦點位置決定行為
         if (e.which === 114) { // F3
             e.preventDefault();
             
-            // 如果焦點在行號上，添加書籤
-            const hoveredLine = $('.code-line:hover');
-            if (hoveredLine.length > 0) {
-                const lineNumber = hoveredLine.data('line');
-                toggleBookmark(lineNumber);
-            } else {
+            if (jumpModeEnabled) {
                 // 否則執行書籤導航
                 if (e.shiftKey) {
                     gotoPreviousBookmark();
                 } else {
                     gotoNextBookmark();
                 }
-            }
+            } else {
+				// 如果焦點在行號上，添加書籤
+				const hoveredLine = $('.code-line:hover');
+				if (hoveredLine.length > 0) {
+					const lineNumber = hoveredLine.data('line');
+					toggleBookmark(lineNumber);
+				}
+			}
         }
         
         // ESC 清除搜尋或關閉選單

@@ -74,91 +74,6 @@ window.clearSearch = function() {
     }
 };
 
-// 修復鍵盤快捷鍵
-function setupKeyboardShortcutsFixed() {
-    $(document).off('keydown.fileviewer').on('keydown.fileviewer', function(e) {
-        // Ctrl+F 搜尋
-        if (e.ctrlKey && e.which === 70) {
-            e.preventDefault();
-            $('#search-input').focus().select();
-        }
-        
-        // F2 功能
-        if (e.which === 113) { // F2
-            e.preventDefault();
-            
-            if (jumpModeEnabled) {
-                // 跳轉模式下跳到下一個跳轉點
-                if (e.shiftKey) {
-                    gotoPreviousJump();
-                } else {
-                    gotoNextJump();
-                }
-            } else {
-                // 非跳轉模式下，檢查滑鼠位置
-                const hoveredLine = $('.code-line:hover');
-                if (hoveredLine.length > 0) {
-                    const lineNumber = hoveredLine.data('line');
-                    toggleJumpPoint(lineNumber);
-                }
-            }
-        }
-        
-        // F3 功能
-        if (e.which === 114) { // F3
-            e.preventDefault();
-            
-            if (jumpModeEnabled) {
-                // 跳轉模式下跳到下一個書籤
-                if (e.shiftKey) {
-                    gotoPreviousBookmark();
-                } else {
-                    gotoNextBookmark();
-                }
-            } else {
-                // 非跳轉模式下，檢查滑鼠位置
-                const hoveredLine = $('.code-line:hover');
-                if (hoveredLine.length > 0) {
-                    const lineNumber = hoveredLine.data('line');
-                    toggleBookmark(lineNumber);
-                }
-            }
-        }
-        
-        // ESC 清除搜尋或關閉選單
-        if (e.which === 27) {
-            if ($('#search-input').is(':focus')) {
-                clearSearch();
-            }
-            hideContextMenu();
-            hideSearchResultsPanel();
-            hideMarksPanel();
-        }
-        
-        // Ctrl+G 跳轉行號
-        if (e.ctrlKey && e.which === 71) {
-            e.preventDefault();
-            $('#jump-line').focus().select();
-        }
-        
-        // Enter 在搜尋框中
-        if (e.which === 13 && $('#search-input').is(':focus')) {
-            e.preventDefault();
-            if (e.shiftKey) {
-                findPrevious();
-            } else {
-                findNext();
-            }
-        }
-        
-        // Enter 在跳轉行號輸入框中
-        if (e.which === 13 && $('#jump-line').is(':focus')) {
-            e.preventDefault();
-            jumpToLine();
-        }
-    });
-}
-
 // 修復跳轉模式切換
 window.toggleJumpMode = function() {
     jumpModeEnabled = !jumpModeEnabled;
@@ -241,9 +156,6 @@ function initializeFixes() {
     
     // 修復搜尋功能
     setupSearchWithDelay();
-    
-    // 修復鍵盤快捷鍵
-    setupKeyboardShortcutsFixed();
     
     // 載入範圍設定
     loadRangeSettings();

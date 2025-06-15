@@ -16,6 +16,7 @@
     <link href="/static/css/file_viewer.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_marks.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_enhanced.css" rel="stylesheet">
+	<link href="/static/css/file_viewer_final.css" rel="stylesheet">
 </head>
 <body>
     <!-- 設備切換器 -->
@@ -116,15 +117,15 @@
                     <button class="btn btn-outline-info btn-modern" onclick="showRangeSelector()">
                         <i class="fas fa-edit me-1"></i>選擇範圍
                     </button>
-                    <button class="btn btn-outline-warning btn-modern" onclick="clearAllHighlights()">
-                        <i class="fas fa-eraser me-1"></i>清除高亮
-                    </button>
+					<button class="btn btn-clear-highlights btn-modern" onclick="clearAllHighlights()">
+						<i class="fas fa-eraser me-1"></i>清除高亮
+					</button>
 					<button class="btn btn-outline-secondary btn-modern" onclick="toggleJumpModeFixed()" id="jump-mode-btn">
 						<i class="fas fa-crosshairs me-1"></i>跳轉模式
 					</button>
                     
                     <!-- 快速導航按鈕 -->
-					<div class="quick-nav-buttons">
+					<div class="quick-nav-buttons" style="display: none;">
 						<button class="btn-quick-nav" onclick="gotoNextBookmarkSilent()" title="下一個書籤 (F3)">
 							<i class="fas fa-bookmark"></i>
 							<i class="fas fa-arrow-right"></i>
@@ -155,15 +156,15 @@
                     </div>
                 </div>
                 
-                <div class="toolbar-group">
-                    <div class="input-group" style="width: 200px;">
-                        <input type="number" class="form-control" id="jump-line" 
-                               placeholder="跳轉行號" min="1" max="{{ result.total_lines }}">
-                        <button class="btn btn-gradient-primary" onclick="jumpToLine()">
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
+				<div class="toolbar-group">
+					<div id="jump-line-wrapper" style="width: 240px;">
+						<input type="number" class="form-control" id="jump-line" 
+							   placeholder="跳轉行號" min="1" max="{{ result.total_lines }}">
+						<button class="btn btn-gradient-primary" onclick="jumpToLine()">
+							<i class="fas fa-arrow-right"></i>
+						</button>
+					</div>
+				</div>
             </div>
 
             <!-- 範圍選擇器 -->
@@ -445,6 +446,7 @@
     <script src="/static/js/file_viewer.js"></script>
 	<script src="/static/js/file_viewer_marks.js"></script>
 	<script src="/static/js/file_viewer_fixes.js"></script>
-	<script src="/static/js/file_viewer_enhanced.js"></script>	
+	<script src="/static/js/file_viewer_enhanced.js"></script>
+	<script src="/static/js/file_viewer_final.js"></script>
 </body>
 </html>

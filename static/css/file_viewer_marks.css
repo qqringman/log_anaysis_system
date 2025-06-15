@@ -1,0 +1,437 @@
+/* 檔案標題區域按鈕組 */
+.file-header .btn-group-aligned {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+}
+
+.file-header .btn-group-aligned > * {
+    margin: 0 !important;
+}
+
+/* 調整設備切換器位置避免重疊 */
+.device-switcher {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 10000;
+    background: white;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    padding: 5px;
+    display: flex;
+    gap: 5px;
+}
+
+/* 修復匯出下拉選單 */
+.export-group {
+    position: relative;
+    display: inline-block;
+    z-index: 10000;
+}
+
+.export-dropdown {
+    position: absolute;
+    margin-top: 5px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    min-width: 280px;
+    z-index: 20000;
+    display: none;
+    overflow: visible;
+    top: 100%;
+    left: 0;
+}
+
+/* 搜尋框美化 */
+.search-input {
+    padding: 12px 160px 12px 24px;
+    border-radius: 50px;
+    border: 2px solid #e0e7ff;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    background: #f8faff;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 10px rgba(102, 126, 234, 0.08);
+}
+
+.search-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15), 0 4px 15px rgba(102, 126, 234, 0.1);
+    background: white;
+    transform: translateY(-1px);
+}
+
+.search-input.regex-mode {
+    background: #fffbf0;
+    border-color: #ffd93d;
+}
+
+/* 範圍選擇器美化 */
+.range-selector {
+    background: white;
+    border: none;
+    border-radius: 25px;
+    padding: 2rem;
+    margin: 1.5rem;
+    box-shadow: 0 20px 50px rgba(102, 126, 234, 0.2);
+    position: relative;
+    overflow: visible;
+}
+
+.range-selector .form-control {
+    border-radius: 20px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+    padding: 14px 24px;
+    font-size: 1rem;
+    font-weight: 500;
+    background: #f8f9fa;
+}
+
+.range-selector .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    background: white;
+    transform: translateY(-1px);
+}
+
+/* 搜尋結果浮動按鈕 */
+.search-results-fab {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    cursor: pointer;
+    z-index: 8999;
+    transition: all 0.3s ease;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+.search-results-fab.show {
+    display: flex;
+}
+
+.search-results-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.search-results-fab .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--danger-gradient);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* 搜尋結果浮動按鈕脈動效果 */
+.search-results-fab.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.6);
+    }
+    100% {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+}
+
+/* 跳轉點和書籤管理浮動按鈕 */
+.marks-fab {
+    position: fixed;
+    bottom: 170px; /* 在搜尋結果按鈕上方 */
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--success-gradient);
+    color: white;
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    cursor: pointer;
+    z-index: 8998;
+    transition: all 0.3s ease;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+.marks-fab.show {
+    display: flex;
+}
+
+.marks-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.marks-fab .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--warning-gradient);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+/* 跳轉點和書籤管理面板 */
+.marks-panel {
+    position: fixed;
+    top: 50%;
+    right: -450px;
+    transform: translateY(-50%);
+    width: 430px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 20px 0 0 20px;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.15);
+    z-index: 9000;
+    transition: right 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.marks-panel.show {
+    right: 0;
+}
+
+.marks-panel-header {
+    background: var(--success-gradient);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 20px 0 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.marks-panel-tabs {
+    display: flex;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.marks-panel-tab {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    background: white;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.marks-panel-tab.active {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+.marks-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.marks-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.marks-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.marks-item-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.marks-item-line {
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.marks-item-preview {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #6c757d;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.marks-item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.marks-item-actions button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.marks-item-actions button:hover {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+.marks-panel-footer {
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* 快速跳轉按鈕 */
+.quick-nav-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.btn-quick-nav {
+    background: white;
+    color: #28a745;
+    border: 2px solid #28a745;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-quick-nav:hover {
+    background: var(--success-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-1px);
+}
+
+.btn-quick-nav.warning {
+    color: #ff9800;
+    border-color: #ff9800;
+}
+
+.btn-quick-nav.warning:hover {
+    background: var(--warning-gradient);
+}
+
+/* 標記項目類型區分 */
+.marks-item.bookmark .marks-item-line {
+    background: var(--bookmark-color);
+}
+
+.marks-item.jump-point .marks-item-line {
+    background: var(--warning-gradient);
+}
+
+/* 空狀態提示 */
+.marks-empty {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #6c757d;
+}
+
+.marks-empty i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    opacity: 0.3;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .marks-panel {
+        width: 100%;
+        right: -100%;
+        border-radius: 0;
+    }
+    
+    .marks-panel.show {
+        right: 0;
+    }
+    
+    .marks-fab {
+        bottom: 150px;
+        right: 15px;
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* 跳轉模式啟用時的特殊樣式 */
+.btn-gradient-warning.jump-mode-active {
+    animation: jumpModeGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes jumpModeGlow {
+    0%, 100% {
+        box-shadow: 0 5px 15px rgba(255, 152, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 5px 25px rgba(255, 152, 0, 0.5);
+    }
+}

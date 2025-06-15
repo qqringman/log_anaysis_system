@@ -14,17 +14,19 @@
     
     <!-- 自定義 CSS -->
     <link href="/static/css/file_viewer.css" rel="stylesheet">
+	<link href="/static/css/file_viewer_marks.css" rel="stylesheet">
+	
 </head>
 <body>
     <!-- 設備切換器 -->
-    <div class="device-switcher">
-        <button class="device-btn" data-device="desktop" title="電腦版">
-            <i class="fas fa-desktop"></i>
-        </button>
-        <button class="device-btn" data-device="mobile" title="手機版">
-            <i class="fas fa-mobile-alt"></i>
-        </button>
-    </div>
+	<div class="device-switcher" style="z-index: 10000;">
+		<button class="device-btn" data-device="desktop" title="電腦版">
+			<i class="fas fa-desktop"></i>
+		</button>
+		<button class="device-btn" data-device="mobile" title="手機版">
+			<i class="fas fa-mobile-alt"></i>
+		</button>
+	</div>
     
     <!-- 隱藏的初始資料 -->
     <input type="hidden" id="initial-start-line" value="{{ result.start_line }}">
@@ -81,16 +83,16 @@
                                 <span>匯出檔案</span>
                                 <i class="fas fa-caret-down ms-2"></i>
                             </button>
-                            <div class="export-dropdown">
-                                <div class="export-option" onclick="exportFile('all')">
-                                    <i class="fas fa-file-download"></i>
-                                    <span>匯出全部</span>
-                                </div>
-                                <div class="export-option" onclick="exportFile('partial')">
-                                    <i class="fas fa-file-alt"></i>
-                                    <span>匯出部份 (第 <span id="export-start">{{ result.start_line }}</span>-<span id="export-end">{{ result.end_line }}</span> 行)</span>
-                                </div>
-                            </div>
+							<div class="export-dropdown" style="min-width: 280px;">
+								<div class="export-option" onclick="exportFile('all')">
+									<i class="fas fa-file-download"></i>
+									<span>匯出全部</span>
+								</div>
+								<div class="export-option" onclick="exportFile('partial')">
+									<i class="fas fa-file-alt"></i>
+									<span>匯出部份 (第 <span id="export-start">{{ result.start_line }}</span>-<span id="export-end">{{ result.end_line }}</span> 行)</span>
+								</div>
+							</div>
                         </div>
                         
                         <button class="btn btn-export-html" onclick="exportHTML()">
@@ -241,14 +243,14 @@
                             <i class="fas fa-tachometer-alt"></i>
                             快速選擇範圍
                         </label>
-                        <select class="form-select" onchange="quickRangeSelect(this.value)">
-                            <option value="">-- 選擇預設範圍 --</option>
-                            <option value="100">前後 100 行</option>
-                            <option value="200">前後 200 行</option>
-                            <option value="500">前後 500 行</option>
-                            <option value="1000">前後 1000 行</option>
-                            <option value="all">顯示全部</option>
-                        </select>
+						<select class="form-select" onchange="quickRangeSelect(this.value)">
+							<option value="">-- 選擇預設範圍 --</option>
+							<option value="100">前後 100 行</option>
+							<option value="200">前後 200 行</option>
+							<option value="500">前後 500 行</option>
+							<option value="1000">前後 1000 行</option>
+							<option value="all">顯示全部</option>
+						</select>
                     </div>
                     <div class="col-md-6">
                         <small class="text-muted d-block mt-4">
@@ -388,13 +390,52 @@
             </button>
         </div>
     </div>
+	
+	<!-- 搜尋結果浮動按鈕 -->
+	<button class="search-results-fab" onclick="toggleSearchResultsPanel()" style="display: none;">
+		<i class="fas fa-list"></i>
+		<span class="badge">0</span>
+	</button>
+
+	<!-- 標記管理浮動按鈕 -->
+	<button class="marks-fab" onclick="toggleMarksPanel()" style="display: none;">
+		<i class="fas fa-map-marker-alt"></i>
+		<span class="badge">0</span>
+	</button>
+
+	<!-- 標記管理面板 -->
+	<div class="marks-panel">
+		<div class="marks-panel-header">
+			<h5>標記管理</h5>
+			<button class="search-results-close" onclick="hideMarksPanel()">
+				<i class="fas fa-times"></i>
+			</button>
+		</div>
+		<div class="marks-panel-tabs">
+			<div class="marks-panel-tab active" data-type="jumps" onclick="changeMarksTab('jumps')">
+				<i class="fas fa-crosshairs me-1"></i>跳轉點
+			</div>
+			<div class="marks-panel-tab" data-type="bookmarks" onclick="changeMarksTab('bookmarks')">
+				<i class="fas fa-bookmark me-1"></i>書籤
+			</div>
+		</div>
+		<div class="marks-panel-body"></div>
+		<div class="marks-panel-footer">
+			<button class="btn btn-outline-danger btn-sm" onclick="clearAllJumpPoints()">
+				<i class="fas fa-trash me-1"></i>清除所有跳轉點
+			</button>
+			<button class="btn btn-outline-danger btn-sm" onclick="clearAllBookmarks()" style="display: none;">
+				<i class="fas fa-trash me-1"></i>清除所有書籤
+			</button>
+		</div>
+	</div>
 
     <!-- 版權聲明 -->
     <div class="copyright-footer">
         <i class="fas fa-heart"></i>
         © 2025 Vince. All rights reserved.
         <i class="fas fa-code"></i>
-        Enhanced File Viewer v6
+        Enhanced File Viewer v7
     </div>
 
     <!-- Scripts -->
@@ -403,5 +444,7 @@
     
     <!-- 自定義 JavaScript -->
     <script src="/static/js/file_viewer.js"></script>
+	<script src="/static/js/file_viewer_marks.js"></script>
+	<script src="/static/js/file_viewer_fixes.js"></script>	
 </body>
 </html>

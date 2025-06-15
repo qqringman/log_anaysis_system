@@ -709,14 +709,16 @@ function showLineContextMenu(event, lineNumber) {
 
 function showContentContextMenu(event, lineNumber) {
     event.preventDefault();
-    selectedText = window.getSelection().toString().trim();
+    selectedText = window.getSelection().toString().trim();	
     showContextMenu(event, 'content', lineNumber);
 }
 
 function showContextMenu(event, type, lineNumber = null) {
     const menu = $('#context-menu');
     let menuItems = [];
-    
+
+	selectedText = window.getSelection().toString().trim();	
+	
     if (type === 'line') {
         const isBookmarked = bookmarks.has(lineNumber);
         const isJumpPoint = jumpPoints.has(lineNumber);

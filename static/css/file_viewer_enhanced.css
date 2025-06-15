@@ -149,23 +149,6 @@
     outline: none;
 }
 
-/* 數字控制按鈕 */
-.number-controls {
-    position: absolute;
-    right: 3px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.form-control-number:hover .number-controls,
-.form-control-number input:focus ~ .number-controls {
-    opacity: 1;
-}
 
 .number-controls button {
     width: 32px;

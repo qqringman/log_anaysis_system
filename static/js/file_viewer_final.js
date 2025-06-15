@@ -266,16 +266,6 @@ function performSearchEnhancedFixed() {
     }
 }
 
-// 修復智能高亮功能
-window.highlightSelected = function() {
-    const selectedText = window.getSelection().toString().trim();
-    if (!selectedText) return;
-    
-    // 使用下一個顏色
-    const colorIndex = (Object.keys(highlightColors).length % 10) + 1;
-    highlightWithColor(selectedText, colorIndex);
-};
-
 window.highlightWithColor = function(text, color) {
     if (!text) return;
     

@@ -560,17 +560,6 @@ body {
     }
 }
 
-/* 匯出按鈕設計改進 - 支援下拉選單 */
-.export-group {
-    position: relative;
-    display: inline-block;
-    z-index: 10000; /* 提高 z-index */
-}
-
-.export-group.dropdown-open {
-    z-index: 20001; /* 下拉開啟時更高的 z-index */
-}
-
 .btn-export {
     background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
     color: white;
@@ -618,49 +607,6 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
     color: white;
-}
-
-/* 下拉選單樣式 */
-.export-dropdown {
-    position: fixed; /* 改為 fixed 定位 */
-    margin-top: 5px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    min-width: 220px;
-    z-index: 99999; /* 極高的 z-index 確保不被擋住 */
-    display: none;
-    overflow: visible;
-}
-
-.export-dropdown.show {
-    display: block;
-    animation: dropdownSlide 0.3s ease-out;
-}
-
-@keyframes dropdownSlide {
-    0% { opacity: 0; transform: translateY(-10px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-
-.export-option {
-    padding: 12px 20px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 500;
-    color: #2d3748;
-}
-
-.export-option:hover {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    color: #667eea;
-}
-
-.export-option i {
-    width: 20px;
 }
 
 /* 高亮顏色快速跳轉區 */

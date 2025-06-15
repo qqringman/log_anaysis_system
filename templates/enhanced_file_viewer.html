@@ -18,6 +18,7 @@
 	<link href="/static/css/file_viewer_enhanced.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_final.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_navigation_fix.css" rel="stylesheet">
+	<link href="/static/css/file_viewer_export_fix.css" rel="stylesheet">
 </head>
 <body>
     <!-- 設備切換器 -->
@@ -80,14 +81,29 @@
                                 <span>匯出檔案</span>
                                 <i class="fas fa-caret-down ms-2"></i>
                             </button>
-							<div class="export-dropdown" style="min-width: 280px;">
+							<div class="export-dropdown" style="display: none;">
 								<div class="export-option" onclick="exportFile('all')">
-									<i class="fas fa-file-download"></i>
-									<span>匯出全部</span>
+									<i class="fas fa-cloud-download-alt"></i>
+									<div class="export-option-content">
+										<div class="export-option-title">匯出完整檔案</div>
+										<div class="export-option-desc">下載原始檔案的完整內容</div>
+									</div>
+									<span class="export-option-badge">全部</span>
 								</div>
+								
+								<div class="export-dropdown-divider"></div>
+								
 								<div class="export-option" onclick="exportFile('partial')">
-									<i class="fas fa-file-alt"></i>
-									<span>匯出部份 (第 <span id="export-start">{{ result.start_line }}</span>-<span id="export-end">{{ result.end_line }}</span> 行)</span>
+									<i class="fas fa-file-export"></i>
+									<div class="export-option-content">
+										<div class="export-option-title">
+											匯出當前範圍
+										</div>
+										<div class="export-option-desc">
+											第 <span id="export-start">{{ result.start_line }}</span> - <span id="export-end">{{ result.end_line }}</span> 行
+										</div>
+									</div>
+									<span class="export-option-badge">部分</span>
 								</div>
 							</div>
                         </div>
@@ -456,5 +472,6 @@
 	<script src="/static/js/file_viewer_enhanced.js"></script>
 	<script src="/static/js/file_viewer_final.js"></script>
 	<script src="/static/js/file_viewer_navigation_fix.js"></script>
+	<script src="/static/js/file_viewer_export_fix.js"></script>
 </body>
 </html>

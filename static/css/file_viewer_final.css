@@ -244,15 +244,7 @@
     display: none !important;
 }
 
-/* 匯出下拉選單確保可點擊 */
-.export-dropdown {
-    pointer-events: auto !important;
-    cursor: pointer;
-}
 
-.export-option {
-    pointer-events: auto !important;
-}
 
 /* 右鍵選單智能高亮選項 */
 .context-menu-item.highlight-item {

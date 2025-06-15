@@ -1,81 +1,5 @@
 /* Enhanced File Viewer 樣式修復 */
 
-/* 修復匯出下拉選單被擋住問題 */
-.file-viewer {
-    overflow: visible !important;
-    z-index: 1;
-}
-
-.toolbar {
-    overflow: visible !important;
-    z-index: 1000;
-}
-
-.export-group {
-    position: relative;
-    display: inline-block;
-    z-index: 10001;
-}
-
-.export-dropdown {
-    position: fixed !important; /* 改為 fixed 避免被容器擋住 */
-    margin-top: 5px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-    min-width: 320px;
-    z-index: 99999;
-    display: none;
-    overflow: visible;
-    border: 1px solid rgba(0,0,0,0.05);
-    animation: dropdownSlide 0.3s ease-out;
-}
-
-.export-dropdown.show {
-    display: block;
-}
-
-/* 美化匯出下拉選單 */
-.export-option {
-    padding: 14px 24px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 500;
-    color: #2d3748;
-    position: relative;
-}
-
-.export-option:hover {
-    background: linear-gradient(135deg, #f0f4ff 0%, #e6edff 100%);
-    color: #667eea;
-    padding-left: 28px;
-}
-
-.export-option:hover i {
-    transform: scale(1.1);
-}
-
-.export-option i {
-    width: 24px;
-    font-size: 18px;
-    transition: transform 0.2s ease;
-}
-
-.export-option:first-child {
-    border-radius: 16px 16px 0 0;
-}
-
-.export-option:last-child {
-    border-radius: 0 0 16px 16px;
-}
-
-.export-option span {
-    font-size: 0.95rem;
-}
-
 /* 美化搜尋框 */
 .search-input {
     padding: 12px 160px 12px 24px;
@@ -363,11 +287,6 @@
 
 /* 響應式調整 */
 @media (max-width: 768px) {
-    .export-dropdown {
-        width: calc(100vw - 20px);
-        left: 10px !important;
-        right: 10px !important;
-    }
     
     .confirm-dialog {
         min-width: 90%;

@@ -1,48 +1,5 @@
 // Enhanced File Viewer 修復和新增功能
 
-// 修復匯出功能
-function setupExportDropdown() {
-    // 點擊匯出按鈕顯示/隱藏下拉選單
-    $('.btn-export').off('click').on('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        const dropdown = $('.export-dropdown');
-        const isOpen = dropdown.hasClass('show');
-        
-        if (!isOpen) {
-            dropdown.addClass('show');
-            $('.export-group').addClass('dropdown-open');
-        } else {
-            dropdown.removeClass('show');
-            $('.export-group').removeClass('dropdown-open');
-        }
-    });
-    
-    // 點擊其他地方關閉下拉選單
-    $(document).off('click.export').on('click.export', function() {
-        $('.export-dropdown').removeClass('show');
-        $('.export-group').removeClass('dropdown-open');
-    });
-    
-    // 防止下拉選單點擊事件冒泡
-    $('.export-dropdown').off('click').on('click', function(e) {
-        e.stopPropagation();
-    });
-}
-
-// 修復匯出檔案功能
-window.exportFile = function(type) {
-    if (type === 'all') {
-        exportAllFile();
-    } else {
-        exportPartialFile();
-    }
-    
-    // 關閉下拉選單
-    $('.export-dropdown').removeClass('show');
-    $('.export-group').removeClass('dropdown-open');
-};
-
 // 修復搜尋功能 - 支援 Regex 延遲
 function setupSearchWithDelay() {
     $('#search-input').off('input').on('input', function() {
@@ -151,8 +108,6 @@ function reapplyMarks() {
 
 // 初始化所有修復
 function initializeFixes() {
-    // 修復匯出功能
-    setupExportDropdown();
     
     // 修復搜尋功能
     setupSearchWithDelay();

@@ -1,41 +1,5 @@
 // Enhanced File Viewer 功能修復和增強
 
-// 修復匯出下拉選單位置
-function fixExportDropdownPosition() {
-    $('.btn-export').off('click').on('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        const dropdown = $('.export-dropdown');
-        const isOpen = dropdown.hasClass('show');
-        
-        if (!isOpen) {
-            // 使用 fixed 定位來避免被容器擋住
-            const btnOffset = $(this).offset();
-            const btnHeight = $(this).outerHeight();
-            const btnWidth = $(this).outerWidth();
-            
-            // 計算下拉選單位置
-            const dropdownWidth = 320;
-            let left = btnOffset.left;
-            
-            // 確保不超出視窗右邊
-            if (left + dropdownWidth > $(window).width()) {
-                left = btnOffset.left + btnWidth - dropdownWidth;
-            }
-            
-            dropdown.css({
-                position: 'fixed',
-                top: btnOffset.top + btnHeight + 5,
-                left: left
-            });
-            
-            dropdown.addClass('show');
-        } else {
-            dropdown.removeClass('show');
-        }
-    });
-}
-
 // 美化數字輸入框
 function beautifyNumberInputs() {
     // 範圍選擇器的數字輸入
@@ -516,8 +480,6 @@ function setupKeyboardShortcutsEnhanced() {
 
 // 初始化增強功能
 function initializeEnhancements() {
-    // 修復匯出下拉選單
-    fixExportDropdownPosition();
     
     // 美化數字輸入框
     beautifyNumberInputs();
@@ -540,13 +502,6 @@ function initializeEnhancements() {
     window.gotoPreviousJump = gotoPreviousJumpSilent;
     window.gotoNextBookmark = gotoNextBookmarkSilent;
     window.gotoPreviousBookmark = gotoPreviousBookmarkSilent;
-    
-    // 監聽視窗大小變化，調整下拉選單位置
-    $(window).resize(() => {
-        if ($('.export-dropdown').hasClass('show')) {
-            $('.export-dropdown').removeClass('show');
-        }
-    });
     
     // 確保載入更多內容時添加圖示
     const originalBindLineEvents = window.bindLineEvents;

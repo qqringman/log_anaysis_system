@@ -1,0 +1,289 @@
+/* 高級匯出下拉選單 UI */
+
+/* 匯出按鈕 - 玻璃擬態風格 */
+.btn-export {
+	background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 12px 28px !important;
+    border-radius: 35px !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* 光澤效果 */
+.btn-export::after {
+    content: '' !important;
+    position: absolute !important;
+    top: -50% !important;
+    left: -50% !important;
+    width: 200% !important;
+    height: 200% !important;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%
+    ) !important;
+    transform: rotate(45deg) !important;
+    transition: all 0.6s !important;
+    opacity: 0 !important;
+}
+
+.btn-export:hover::after {
+    animation: shine 0.6s ease-in-out !important;
+}
+
+@keyframes shine {
+    0% {
+        transform: rotate(45deg) translateY(0) !important;
+        opacity: 0 !important;
+    }
+    50% {
+        opacity: 1 !important;
+    }
+    100% {
+        transform: rotate(45deg) translateY(200%) !important;
+        opacity: 0 !important;
+    }
+}
+
+.btn-export:hover {
+    transform: translateY(-3px) scale(1.02) !important;
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+.btn-export:active {
+    transform: translateY(-1px) scale(0.98) !important;
+}
+
+/* 下拉選單 - 現代卡片風格 */
+.export-dropdown {
+    position: fixed !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.12),
+                0 15px 40px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.9),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+    padding: 12px !important;
+    min-width: 360px !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    animation: dropdownFadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    overflow: hidden !important;
+}
+
+/* 高級動畫 */
+@keyframes dropdownFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+        filter: blur(5px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+/* 選項卡片設計 */
+.export-option {
+    display: flex !important;
+    align-items: center !important;
+    gap: 18px !important;
+    padding: 16px 20px !important;
+    margin: 6px 0 !important;
+    border-radius: 16px !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%) !important;
+    border: 2px solid transparent !important;
+    overflow: hidden !important;
+}
+
+/* 懸停效果 */
+.export-option::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.export-option:hover::before {
+    opacity: 1 !important;
+}
+
+.export-option:hover {
+    transform: translateY(-2px) translateX(8px) !important;
+    background: linear-gradient(135deg, #ffffff 0%, #f7faff 100%) !important;
+    border-color: rgba(102, 126, 234, 0.2) !important;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15),
+                0 0 0 1px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* 圖標容器 */
+.export-option i {
+    width: 48px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 14px !important;
+    font-size: 20px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+/* 全部匯出 - 綠色主題 */
+.export-option:nth-child(1) i {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+    color: white !important;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25) !important;
+}
+
+.export-option:nth-child(1):hover i {
+    transform: rotate(-10deg) scale(1.1) !important;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* 部分匯出 - 紫色主題 */
+.export-option:nth-child(3) i {
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%) !important;
+    color: white !important;
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25) !important;
+}
+
+.export-option:nth-child(3):hover i {
+    transform: rotate(10deg) scale(1.1) !important;
+    box-shadow: 0 8px 25px rgba(139, 92, 246, 0.35) !important;
+}
+
+/* 文字區域 */
+.export-option-content {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+}
+
+.export-option-title {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #1a202c !important;
+    letter-spacing: 0.3px !important;
+}
+
+.export-option-desc {
+    font-size: 13px !important;
+    color: #64748b !important;
+    line-height: 1.4 !important;
+}
+
+/* 標籤 */
+.export-option-badge {
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+    color: white !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 4px 10px !important;
+    border-radius: 20px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+}
+
+/* 分隔線 */
+.export-dropdown-divider {
+    height: 1px !important;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(148, 163, 184, 0.2),
+        transparent
+    ) !important;
+    margin: 12px 20px !important;
+    position: relative !important;
+}
+
+/* 載入狀態 */
+.export-option.exporting {
+    pointer-events: none !important;
+    opacity: 0.7 !important;
+}
+
+.export-option.exporting i::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin: -10px 0 0 -10px !important;
+    border: 2px solid white !important;
+    border-radius: 50% !important;
+    border-top-color: transparent !important;
+    animation: spin 0.8s linear infinite !important;
+}
+
+/* 成功動畫 */
+@keyframes successBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.export-option.success i {
+    animation: successBounce 0.6s ease !important;
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+}
+
+/* 手機版優化 */
+@media (max-width: 768px) {
+    .export-dropdown {
+        min-width: 320px !important;
+        max-width: calc(100vw - 30px) !important;
+        padding: 10px !important;
+    }
+    
+    .export-option {
+        padding: 14px 16px !important;
+    }
+    
+    .export-option i {
+        width: 42px !important;
+        height: 42px !important;
+        font-size: 18px !important;
+    }
+    
+    .export-option-title {
+        font-size: 15px !important;
+    }
+    
+    .export-option-desc {
+        font-size: 12px !important;
+    }
+}

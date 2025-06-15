@@ -39,7 +39,6 @@ $(document).ready(function() {
     scrollToTarget();
     updateStatus();
     initializeTooltips();
-    setupExportDropdown();
     setupNavigationHistory();
     setupDeviceSwitcher();
     setupMarksManager();
@@ -133,44 +132,6 @@ function goForward() {
         showToast('沒有更晚的歷史記錄了。', 'info');
     }
     checkForwardHistory();
-}
-
-// 設置匯出下拉選單
-function setupExportDropdown() {
-    // 點擊匯出按鈕顯示/隱藏下拉選單
-    $('.btn-export').click(function(e) {
-        e.stopPropagation();
-        const dropdown = $('.export-dropdown');
-        const isOpen = dropdown.hasClass('show');
-        
-        if (!isOpen) {
-            // 計算位置
-            const btnOffset = $(this).offset();
-            const btnHeight = $(this).outerHeight();
-            
-            dropdown.css({
-                top: btnOffset.top + btnHeight + 5,
-                left: btnOffset.left
-            });
-            
-            dropdown.addClass('show');
-            $('.export-group').addClass('dropdown-open');
-        } else {
-            dropdown.removeClass('show');
-            $('.export-group').removeClass('dropdown-open');
-        }
-    });
-    
-    // 點擊其他地方關閉下拉選單
-    $(document).click(function() {
-        $('.export-dropdown').removeClass('show');
-        $('.export-group').removeClass('dropdown-open');
-    });
-    
-    // 防止下拉選單點擊事件冒泡
-    $('.export-dropdown').click(function(e) {
-        e.stopPropagation();
-    });
 }
 
 // 鍵盤快捷鍵
@@ -1122,64 +1083,6 @@ function applyRange() {
     }
 }
 
-// 匯出功能
-function exportFile(type) {
-    if (type === 'all') {
-        exportAllFile();
-    } else {
-        exportPartialFile();
-    }
-    
-    // 關閉下拉選單
-    $('.export-dropdown').removeClass('show');
-}
-
-function exportAllFile() {
-    showToast('info', '正在準備下載完整檔案...');
-    
-    const downloadUrl = `/api/export_file?path=${encodeURIComponent(currentFilePath)}`;
-    
-    // 創建一個隱藏的 iframe 來下載檔案
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = downloadUrl;
-    document.body.appendChild(iframe);
-    
-    // 5秒後移除 iframe
-    setTimeout(() => {
-        document.body.removeChild(iframe);
-    }, 5000);
-    
-    showToast('success', '檔案下載已開始');
-}
-
-function exportPartialFile() {
-    showToast('info', '正在準備匯出當前顯示的內容...');
-    
-    // 收集當前顯示的所有行
-    const lines = [];
-    $('.code-line').each(function() {
-        const lineNumber = $(this).data('line');
-        const content = $(this).find('.line-content').text();
-        lines.push(`${lineNumber}: ${content}`);
-    });
-    
-    // 創建 Blob 並下載
-    const content = lines.join('\n');
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentFilePath.split('/').pop()}_lines_${currentStartLine}-${currentEndLine}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast('success', `已匯出第 ${currentStartLine} 到 ${currentEndLine} 行`);
-}
-
 // 匯出 HTML
 function exportHTML() {
     showToast('info', '正在準備匯出 HTML...');
@@ -1845,7 +1748,6 @@ window.showRangeSelector = showRangeSelector;
 window.closeRangeSelector = closeRangeSelector;
 window.applyRange = applyRange;
 window.jumpToLine = jumpToLine;
-window.exportFile = exportFile;
 window.exportHTML = exportHTML;
 window.scrollToTarget = scrollToTarget;
 window.clearAllHighlights = clearAllHighlights;

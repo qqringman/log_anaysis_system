@@ -98,52 +98,6 @@ function updateMarksListFixed() {
     });
 }
 
-// 修復匯出功能
-function fixExportFunctionality() {
-    // 確保匯出按鈕可點擊
-    $('.btn-export').off('click').on('click', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        
-        const dropdown = $('.export-dropdown');
-        const isOpen = dropdown.hasClass('show');
-        
-        if (!isOpen) {
-            const btnOffset = $(this).offset();
-            const btnHeight = $(this).outerHeight();
-            const btnWidth = $(this).outerWidth();
-            
-            const dropdownWidth = 320;
-            let left = btnOffset.left;
-            
-            if (left + dropdownWidth > $(window).width()) {
-                left = btnOffset.left + btnWidth - dropdownWidth;
-            }
-            
-            dropdown.css({
-                position: 'fixed',
-                top: btnOffset.top + btnHeight + 5,
-                left: left,
-                'pointer-events': 'auto',
-                'z-index': 99999
-            });
-            
-            dropdown.addClass('show');
-        } else {
-            dropdown.removeClass('show');
-        }
-    });
-    
-    // 確保選項可點擊
-    $('.export-option').off('click').on('click', function(e) {
-        e.stopPropagation();
-        const onclick = $(this).attr('onclick');
-        if (onclick) {
-            eval(onclick);
-        }
-    });
-}
-
 // 修復 Regex 搜尋功能
 function setupRegexSearchFixed() {
     let searchTimeout;
@@ -366,8 +320,6 @@ window.updateMarksList = updateMarksListFixed;
 
 // 初始化最終修復
 function initializeFinalFixes() {
-    // 修復匯出功能
-    fixExportFunctionality();
     
     // 修復 Regex 搜尋
     setupRegexSearchFixed();

@@ -69,7 +69,7 @@
                     </div>
                 </div>
                 <div class="col-lg-4 text-end">
-                    <div class="animate__animated animate__fadeInRight">
+                    <div class="animate__animated animate__fadeInRight btn-group-aligned">
                         <button class="btn btn-back" onclick="window.history.back()">
                             <i class="fas fa-arrow-left me-1"></i>返回
                         </button>
@@ -120,6 +120,18 @@
                     <button class="btn btn-outline-secondary btn-modern" onclick="toggleJumpMode()" id="jump-mode-btn">
                         <i class="fas fa-crosshairs me-1"></i>跳轉模式
                     </button>
+                    
+                    <!-- 快速導航按鈕 -->
+                    <div class="quick-nav-buttons">
+                        <button class="btn-quick-nav" onclick="gotoNextBookmark()" title="下一個書籤 (F3)">
+                            <i class="fas fa-bookmark"></i>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button class="btn-quick-nav warning" onclick="gotoNextJump()" title="下一個跳轉點 (F2)">
+                            <i class="fas fa-crosshairs"></i>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="toolbar-group">
@@ -127,13 +139,13 @@
                         <input type="text" class="form-control search-input" 
                                id="search-input" placeholder="搜尋文字 (支援正規表達式) - 按 Ctrl+F 快速搜尋">
                         <div class="search-controls">
-                            <button class="regex-toggle" id="regex-toggle" onclick="toggleRegex()">
+                            <button class="regex-toggle" id="regex-toggle" onclick="toggleRegex()" title="切換正規表達式模式">
                                 <i class="fas fa-code"></i> Regex
                             </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="findPrevious()" title="上一個">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="findPrevious()" title="上一個 (Shift+Enter)">
                                 <i class="fas fa-chevron-up"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-secondary" onclick="findNext()" title="下一個">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="findNext()" title="下一個 (Enter)">
                                 <i class="fas fa-chevron-down"></i>
                             </button>
                             <div class="search-info" id="search-info">0 / 0</div>
@@ -161,11 +173,18 @@
                             <i class="fas fa-arrow-up"></i>
                             起始行
                         </label>
-                        <div class="range-input-group">
+                        <div class="number-input-group">
                             <input type="number" class="form-control" id="range-start" 
                                    min="1" max="{{ result.total_lines }}" value="{{ result.start_line }}"
                                    placeholder="1">
-                            <i class="fas fa-hashtag"></i>
+                            <div class="number-input-controls">
+                                <button type="button" onclick="changeNumber('range-start', 1)">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button type="button" onclick="changeNumber('range-start', -1)">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -173,11 +192,18 @@
                             <i class="fas fa-arrow-down"></i>
                             結束行
                         </label>
-                        <div class="range-input-group">
+                        <div class="number-input-group">
                             <input type="number" class="form-control" id="range-end" 
                                    min="1" max="{{ result.total_lines }}" value="{{ result.end_line }}"
                                    placeholder="{{ result.total_lines }}">
-                            <i class="fas fa-hashtag"></i>
+                            <div class="number-input-controls">
+                                <button type="button" onclick="changeNumber('range-end', 1)">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button type="button" onclick="changeNumber('range-end', -1)">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -185,16 +211,23 @@
                             <i class="fas fa-expand-arrows-alt"></i>
                             上下文行數
                         </label>
-                        <div class="range-input-group">
+                        <div class="number-input-group">
                             <input type="number" class="form-control" id="range-context" 
                                    min="0" max="500" value="200"
                                    placeholder="200"
                                    title="設定後將以範圍中心為基準，前後各顯示指定行數">
-                            <i class="fas fa-arrows-alt-v"></i>
+                            <div class="number-input-controls">
+                                <button type="button" onclick="changeNumber('range-context', 10)">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button type="button" onclick="changeNumber('range-context', -10)">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <button class="btn btn-gradient-primary me-2" onclick="applyRange()">
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button class="btn btn-gradient-primary" onclick="applyRange()">
                             <i class="fas fa-check me-1"></i>套用
                         </button>
                         <button class="btn btn-outline-secondary" onclick="closeRangeSelector()">
@@ -203,8 +236,22 @@
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-12">
-                        <small class="text-muted">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            <i class="fas fa-tachometer-alt"></i>
+                            快速選擇範圍
+                        </label>
+                        <select class="form-select" onchange="quickRangeSelect(this.value)">
+                            <option value="">-- 選擇預設範圍 --</option>
+                            <option value="100">前後 100 行</option>
+                            <option value="200">前後 200 行</option>
+                            <option value="500">前後 500 行</option>
+                            <option value="1000">前後 1000 行</option>
+                            <option value="all">顯示全部</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted d-block mt-4">
                             <i class="fas fa-info-circle me-1"></i>
                             提示：若設定上下文行數，將以範圍中心為基準，前後各顯示指定行數
                         </small>
@@ -229,7 +276,7 @@
                          onclick="handleLineClick({{ line.line_number }})"
                          ondblclick="handleLineDoubleClick({{ line.line_number }})"
                          oncontextmenu="showLineContextMenu(event, {{ line.line_number }})"
-                         title="點擊設定書籤/跳轉點，雙擊顯示上下文，右鍵更多選項">
+                         title="點擊設定書籤，F2設定跳轉點，F3設定書籤，雙擊顯示上下文，右鍵更多選項">
                         {{ line.line_number }}
                     </div>
                     <div class="line-content" oncontextmenu="showContentContextMenu(event, {{ line.line_number }})">{{ line.content if line.content else ' ' }}</div>
@@ -293,6 +340,12 @@
         <span class="badge">0</span>
     </button>
     
+    <!-- 標記管理浮動按鈕 -->
+    <button class="marks-fab" onclick="toggleMarksPanel()">
+        <i class="fas fa-map-marker-alt"></i>
+        <span class="badge">0</span>
+    </button>
+    
     <!-- 搜尋結果面板 -->
     <div class="search-results-panel">
         <div class="search-results-header">
@@ -305,6 +358,33 @@
         <div class="search-results-footer">
             <button class="btn-scroll-top" onclick="scrollToSearchTop()">
                 <i class="fas fa-arrow-up me-2"></i>回到頂部
+            </button>
+        </div>
+    </div>
+    
+    <!-- 標記管理面板 -->
+    <div class="marks-panel">
+        <div class="marks-panel-header">
+            <h5>標記管理</h5>
+            <button class="search-results-close" onclick="hideMarksPanel()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="marks-panel-tabs">
+            <div class="marks-panel-tab active" data-type="jumps" onclick="changeMarksTab('jumps')">
+                <i class="fas fa-crosshairs me-1"></i>跳轉點
+            </div>
+            <div class="marks-panel-tab" data-type="bookmarks" onclick="changeMarksTab('bookmarks')">
+                <i class="fas fa-bookmark me-1"></i>書籤
+            </div>
+        </div>
+        <div class="marks-panel-body"></div>
+        <div class="marks-panel-footer">
+            <button class="btn btn-outline-danger btn-sm" onclick="clearAllJumpPoints()">
+                <i class="fas fa-trash me-1"></i>清除所有跳轉點
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="clearAllBookmarks()">
+                <i class="fas fa-trash me-1"></i>清除所有書籤
             </button>
         </div>
     </div>

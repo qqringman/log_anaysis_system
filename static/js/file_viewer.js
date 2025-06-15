@@ -41,8 +41,27 @@ $(document).ready(function() {
     setupExportDropdown();
     setupNavigationHistory();
     setupDeviceSwitcher();
+    setupMarksManager();
     checkForwardHistory();
+    
+    // 初始化時檢查跳轉點
+    setTimeout(() => {
+        if (jumpPoints.size > 0) {
+            jumpModeEnabled = true;
+            updateJumpModeButton();
+        }
+        updateMarksStatus();
+    }, 500);
 });
+
+// 設置標記管理器
+function setupMarksManager() {
+    // 初始化標記管理面板
+    updateMarksStatus();
+    
+    // 設置初始按鈕顯示狀態
+    $('.marks-panel-footer button:last').hide();
+}
 
 function initializeTooltips() {
     // 為工具列按鈕添加工具提示
@@ -85,7 +104,7 @@ function checkForwardHistory() {
 function showForwardButton() {
     const forwardBtn = $('#forward-btn');
     if (forwardBtn.length === 0) {
-        const btn = $('<button class="btn btn-forward" onclick="goForward()" title="前進到下一頁"><i class="fas fa-arrow-right me-1"></i>前進</button>');
+        const btn = $('<button id="forward-btn" class="btn btn-forward" onclick="goForward()" title="前進到下一頁"><i class="fas fa-arrow-right me-1"></i>前進</button>');
         $('.btn-back').after(btn);
     }
 }
@@ -104,12 +123,31 @@ function setupExportDropdown() {
     // 點擊匯出按鈕顯示/隱藏下拉選單
     $('.btn-export').click(function(e) {
         e.stopPropagation();
-        $('.export-dropdown').toggleClass('show');
+        const dropdown = $('.export-dropdown');
+        const isOpen = dropdown.hasClass('show');
+        
+        if (!isOpen) {
+            // 計算位置
+            const btnOffset = $(this).offset();
+            const btnHeight = $(this).outerHeight();
+            
+            dropdown.css({
+                top: btnOffset.top + btnHeight + 5,
+                left: btnOffset.left
+            });
+            
+            dropdown.addClass('show');
+            $('.export-group').addClass('dropdown-open');
+        } else {
+            dropdown.removeClass('show');
+            $('.export-group').removeClass('dropdown-open');
+        }
     });
     
     // 點擊其他地方關閉下拉選單
     $(document).click(function() {
         $('.export-dropdown').removeClass('show');
+        $('.export-group').removeClass('dropdown-open');
     });
     
     // 防止下拉選單點擊事件冒泡
@@ -127,23 +165,41 @@ function setupKeyboardShortcuts() {
             $('#search-input').focus().select();
         }
         
-        // F2 跳轉功能 - 只在跳轉模式啟用時有效
-        if (e.which === 113 && jumpModeEnabled) { // F2
+        // F2 跳轉功能 - 根據焦點位置決定行為
+        if (e.which === 113) { // F2
             e.preventDefault();
-            if (e.shiftKey) {
-                gotoPreviousJump();
-            } else {
-                gotoNextJump();
+            
+            // 如果焦點在行號上，添加跳轉點
+            const hoveredLine = $('.code-line:hover');
+            if (hoveredLine.length > 0) {
+                const lineNumber = hoveredLine.data('line');
+                toggleJumpPoint(lineNumber);
+            } else if (jumpModeEnabled) {
+                // 否則執行跳轉導航
+                if (e.shiftKey) {
+                    gotoPreviousJump();
+                } else {
+                    gotoNextJump();
+                }
             }
         }
         
-        // F3 書籤跳轉
+        // F3 書籤功能 - 根據焦點位置決定行為
         if (e.which === 114) { // F3
             e.preventDefault();
-            if (e.shiftKey) {
-                gotoPreviousBookmark();
+            
+            // 如果焦點在行號上，添加書籤
+            const hoveredLine = $('.code-line:hover');
+            if (hoveredLine.length > 0) {
+                const lineNumber = hoveredLine.data('line');
+                toggleBookmark(lineNumber);
             } else {
-                gotoNextBookmark();
+                // 否則執行書籤導航
+                if (e.shiftKey) {
+                    gotoPreviousBookmark();
+                } else {
+                    gotoNextBookmark();
+                }
             }
         }
         
@@ -181,7 +237,7 @@ function setupKeyboardShortcuts() {
         }
     });
     
-    // 搜尋輸入框事件
+    // 搜尋輸入框事件 - 已經有 0.3 秒延遲
     $('#search-input').on('input', debounce(performSearch, 300));
 }
 
@@ -400,6 +456,11 @@ function toggleJumpPoint(lineNumber) {
 
 // 下一個跳轉點
 function gotoNextJump() {
+    if (!jumpModeEnabled) {
+        showToast('warning', '請先開啟跳轉模式');
+        return;
+    }
+    
     if (jumpPoints.size === 0) {
         showToast('warning', '沒有設定跳轉點，請先設定跳轉點');
         return;
@@ -420,6 +481,11 @@ function gotoNextJump() {
 
 // 上一個跳轉點
 function gotoPreviousJump() {
+    if (!jumpModeEnabled) {
+        showToast('warning', '請先開啟跳轉模式');
+        return;
+    }
+    
     if (jumpPoints.size === 0) {
         showToast('warning', '沒有設定跳轉點，請先設定跳轉點');
         return;
@@ -442,17 +508,20 @@ function gotoPreviousJump() {
 function toggleRegex() {
     useRegex = !useRegex;
     const btn = $('#regex-toggle');
+    const searchInput = $('#search-input');
     
     if (useRegex) {
         btn.addClass('active');
+        searchInput.addClass('regex-mode');
         showToast('info', '已啟用正規表達式搜尋');
     } else {
         btn.removeClass('active');
-        showToast('info', '已關閉正規表達式搜尋');
+        searchInput.removeClass('regex-mode');
+        showToast('info', '已切換到一般搜尋模式');
     }
     
     // 重新執行搜尋
-    if ($('#search-input').val()) {
+    if (searchInput.val()) {
         performSearch();
     }
 }
@@ -518,8 +587,10 @@ function performSearch() {
 function clearSearchHighlights() {
     $('.search-highlight').each(function() {
         const parent = $(this).parent();
-        const text = parent.text();
-        parent.text(text);
+        const html = parent.html();
+        // 只移除搜尋高亮，保留其他高亮
+        const newHtml = html.replace(/<span class="search-highlight[^"]*">(.*?)<\/span>/gi, '$1');
+        parent.html(newHtml);
     });
 }
 
@@ -563,6 +634,11 @@ function clearSearch() {
     updateSearchStatus('搜尋: 無');
     $('#search-info').text('0 / 0');
     hideSearchResultsFab();
+    
+    // 清除regex模式的視覺狀態（但保留設定）
+    if (!useRegex) {
+        $('#search-input').removeClass('regex-mode');
+    }
 }
 
 // 書籤功能
@@ -644,6 +720,14 @@ function showContextMenu(event, type, lineNumber = null) {
         menuItems = [
             { icon: 'bookmark', text: isBookmarked ? '移除書籤' : '設定書籤', action: () => toggleBookmark(lineNumber) },
             { icon: 'crosshairs', text: isJumpPoint ? '移除跳轉點' : '設定跳轉點', action: () => toggleJumpPoint(lineNumber) },
+            { separator: true },
+            { icon: 'arrow-right', text: '下一個書籤', action: () => gotoNextBookmark() },
+            { icon: 'arrow-left', text: '上一個書籤', action: () => gotoPreviousBookmark() },
+            { icon: 'arrow-right', text: '下一個跳轉點', action: () => gotoNextJump(), disabled: !jumpModeEnabled },
+            { icon: 'arrow-left', text: '上一個跳轉點', action: () => gotoPreviousJump(), disabled: !jumpModeEnabled },
+            { separator: true },
+            { icon: 'eraser', text: '清除所有書籤', action: () => clearAllBookmarks() },
+            { icon: 'eraser', text: '清除所有跳轉點', action: () => clearAllJumpPoints() },
             { separator: true },
             { icon: 'copy', text: '複製行號', action: () => copyToClipboard(lineNumber.toString()) },
             { icon: 'link', text: '複製連結', action: () => copyLineLink(lineNumber) },
@@ -1401,8 +1485,24 @@ function showSearchResultsPanel() {
         
         // 高亮匹配文字
         let highlightedContent = lineContent;
-        const regex = new RegExp(`(${result.text})`, 'gi');
-        highlightedContent = highlightedContent.replace(regex, '<span class="search-match">$1</span>');
+        if (useRegex) {
+            const regex = new RegExp(`(${result.text})`, 'gi');
+            highlightedContent = highlightedContent.replace(regex, '<span class="search-match">$1</span>');
+        } else {
+            // 一般搜尋 - 簡單替換
+            const searchText = lastSearchText;
+            const lowerContent = lineContent.toLowerCase();
+            const lowerSearchText = searchText.toLowerCase();
+            const index = lowerContent.indexOf(lowerSearchText);
+            
+            if (index !== -1) {
+                highlightedContent = lineContent.substring(0, index) + 
+                                   '<span class="search-match">' + 
+                                   lineContent.substring(index, index + searchText.length) + 
+                                   '</span>' + 
+                                   lineContent.substring(index + searchText.length);
+            }
+        }
         
         const resultItem = $(`
             <div class="search-result-item ${index === currentSearchIndex ? 'active' : ''}" 
@@ -1417,7 +1517,7 @@ function showSearchResultsPanel() {
         body.append(resultItem);
     });
     
-    // 綁定點擊事件
+    // 綁定點擊事件 - 連動效果
     $('.search-result-item').click(function() {
         const index = $(this).data('index');
         const line = $(this).data('line');
@@ -1429,6 +1529,13 @@ function showSearchResultsPanel() {
         // 更新活躍狀態
         $('.search-result-item').removeClass('active');
         $(this).addClass('active');
+        
+        // 高亮主畫面的那一行
+        const targetLine = $(`#line-${line}`);
+        targetLine.addClass('animate__animated animate__flash');
+        setTimeout(() => {
+            targetLine.removeClass('animate__animated animate__flash');
+        }, 1000);
     });
     
     panel.addClass('show');
@@ -1672,3 +1779,50 @@ window.toggleSearchResultsPanel = function() {
         showSearchResultsPanel();
     }
 };
+window.quickRangeSelect = function(value) {
+    if (!value) return;
+    
+    if (value === 'all') {
+        $('#range-start').val(1);
+        $('#range-end').val(totalLines);
+        $('#range-context').val(0);
+    } else {
+        const context = parseInt(value);
+        $('#range-context').val(context);
+        // 更新起始和結束行的建議值
+        const center = Math.floor((currentStartLine + currentEndLine) / 2);
+        $('#range-start').val(Math.max(1, center - context));
+        $('#range-end').val(Math.min(totalLines, center + context));
+    }
+};
+window.toggleMarksPanel = toggleMarksPanel;
+window.gotoNextBookmark = gotoNextBookmark;
+window.gotoPreviousBookmark = gotoPreviousBookmark;
+window.gotoNextJump = gotoNextJump;
+window.gotoPreviousJump = gotoPreviousJump;
+window.clearAllBookmarks = clearAllBookmarks;
+window.clearAllJumpPoints = clearAllJumpPoints;
+window.changeMarksTab = function(type) {
+    $('.marks-panel-tab').removeClass('active');
+    $(`.marks-panel-tab[data-type="${type}"]`).addClass('active');
+    
+    // 切換清除按鈕的顯示
+    if (type === 'jumps') {
+        $('.marks-panel-footer button:first').show();
+        $('.marks-panel-footer button:last').hide();
+    } else {
+        $('.marks-panel-footer button:first').hide();
+        $('.marks-panel-footer button:last').show();
+    }
+    
+    updateMarksList();
+};
+window.changeNumber = function(inputId, delta) {
+    const input = $(`#${inputId}`);
+    const currentValue = parseInt(input.val()) || 0;
+    const min = parseInt(input.attr('min')) || 0;
+    const max = parseInt(input.attr('max')) || Infinity;
+    const newValue = Math.max(min, Math.min(max, currentValue + delta));
+    input.val(newValue);
+};
+window.hideMarksPanel = hideMarksPanel;

@@ -93,12 +93,13 @@ body {
     background: white;
     border-radius: 20px;
     box-shadow: var(--shadow-medium);
-    overflow: hidden;
+    overflow: visible; /* 改為 visible 讓下拉選單可以超出 */
     margin-top: 1.5rem;
     position: relative;
     margin-bottom: 60px; /* 確保不會被版權聲明擋住 */
 }
 
+/* 工具列調整 */
 .toolbar {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     padding: 1rem;
@@ -108,6 +109,8 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 0.75rem;
+    position: relative;
+    z-index: 1000; /* 確保工具列有適當的 z-index */
 }
 
 .toolbar-group {
@@ -185,10 +188,13 @@ body {
     color: #667eea;
     border: 2px solid rgba(255, 255, 255, 0.5);
     border-radius: 50px;
-    padding: 10px 24px;
+    padding: 8px 20px;
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
 }
 
 .btn-back:hover {
@@ -205,10 +211,13 @@ body {
     color: #667eea;
     border: 2px solid rgba(255, 255, 255, 0.5);
     border-radius: 50px;
-    padding: 10px 24px;
+    padding: 8px 20px;
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
     margin-left: 8px;
 }
 
@@ -222,10 +231,15 @@ body {
 
 .btn-modern {
     border-radius: 25px;
-    padding: 8px 16px;
+    padding: 8px 20px;
     font-weight: 500;
     transition: all 0.3s ease;
     border: 2px solid transparent;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .btn-modern:hover {
@@ -254,17 +268,55 @@ body {
     color: white;
 }
 
+/* 統一的按鈕樣式 */
+.btn-outline-info {
+    background: white;
+    color: #17a2b8;
+    border: 2px solid #17a2b8;
+}
+
+.btn-outline-info:hover {
+    background: var(--info-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-outline-warning {
+    background: white;
+    color: #ff9800;
+    border: 2px solid #ff9800;
+}
+
+.btn-outline-warning:hover {
+    background: var(--warning-gradient);
+    color: white;
+    border-color: transparent;
+}
+
+.btn-outline-secondary {
+    background: white;
+    color: #6c757d;
+    border: 2px solid #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    border-color: transparent;
+}
+
 /* 匯出按鈕設計改進 - 支援下拉選單 */
 .export-group {
     position: relative;
     display: inline-block;
+    z-index: 9999; /* 提高 z-index */
 }
 
 .btn-export {
     background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
     color: white;
     border: none;
-    padding: 10px 24px;
+    padding: 8px 20px;
     border-radius: 50px;
     font-weight: 500;
     transition: all 0.3s ease;
@@ -273,6 +325,7 @@ body {
     gap: 8px;
     box-shadow: 0 5px 15px rgba(58, 123, 213, 0.3);
     cursor: pointer;
+    height: 38px;
 }
 
 .btn-export:hover {
@@ -290,7 +343,7 @@ body {
     background: linear-gradient(135deg, #e91e63 0%, #f06292 100%);
     color: white;
     border: none;
-    padding: 10px 24px;
+    padding: 8px 20px;
     border-radius: 50px;
     font-weight: 500;
     transition: all 0.3s ease;
@@ -299,6 +352,7 @@ body {
     gap: 8px;
     box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
     margin-left: 8px;
+    height: 38px;
 }
 
 .btn-export-html:hover {
@@ -417,6 +471,8 @@ body {
     background: #fafafa;
     position: relative;
     scroll-behavior: smooth;
+    z-index: 1; /* 低於工具列的 z-index */
+    border-radius: 0 0 20px 20px; /* 保持底部圓角 */
 }
 
 .code-line {
@@ -571,6 +627,7 @@ body {
     position: sticky;
     bottom: 0;
     z-index: 100;
+    border-radius: 0 0 20px 20px; /* 添加底部圓角 */
 }
 
 .status-item {
@@ -639,67 +696,117 @@ body {
 /* 範圍選擇器設計改進 */
 .range-selector {
     background: white;
-    border: 2px solid #667eea;
-    border-radius: 20px;
-    padding: 2.5rem;
+    border: none;
+    border-radius: 25px;
+    padding: 2rem;
     margin: 1.5rem;
-    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 20px 50px rgba(102, 126, 234, 0.2);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .range-selector::before {
     content: '';
     position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    background: var(--primary-gradient);
+    border-radius: 25px;
+    z-index: -1;
+    opacity: 0.8;
+}
+
+.range-selector::after {
+    content: '';
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 5px;
-    background: var(--primary-gradient);
+    bottom: 0;
+    background: white;
+    border-radius: 22px;
+    z-index: -1;
 }
 
 .range-selector h6 {
     color: #667eea;
     font-weight: 700;
     margin-bottom: 2rem;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .range-selector h6 i {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .range-selector .form-control {
-    border-radius: 15px;
+    border-radius: 20px;
     border: 2px solid #e9ecef;
     transition: all 0.3s ease;
-    padding: 12px 20px;
+    padding: 14px 24px;
     font-size: 1rem;
     font-weight: 500;
+    background: #f8f9fa;
 }
 
 .range-selector .form-control:focus {
     border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    background: white;
+    transform: translateY(-1px);
 }
 
 .range-selector .form-label {
     font-weight: 600;
     color: #495057;
     margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.range-selector .form-label i {
+    color: #667eea;
+    font-size: 1rem;
 }
 
 .range-selector .btn {
-    padding: 12px 24px;
+    padding: 12px 28px;
     border-radius: 25px;
     font-weight: 600;
     transition: all 0.3s ease;
+    height: 45px;
+}
+
+/* 輸入框圖標 */
+.range-input-group {
+    position: relative;
+}
+
+.range-input-group i {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+
+/* 美化數字輸入 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 40px;
 }
 
 /* 載入動畫 */
@@ -988,7 +1095,7 @@ body {
     background: white;
     border-radius: 20px 0 0 20px;
     box-shadow: -10px 0 30px rgba(0,0,0,0.15);
-    z-index: 1000;
+    z-index: 9000;
     transition: right 0.3s ease-out;
     display: flex;
     flex-direction: column;
@@ -996,6 +1103,50 @@ body {
 
 .search-results-panel.show {
     right: 0;
+}
+
+/* 搜尋結果浮動按鈕 */
+.search-results-fab {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    cursor: pointer;
+    z-index: 8999;
+    transition: all 0.3s ease;
+}
+
+.search-results-fab.show {
+    display: flex;
+}
+
+.search-results-fab:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.search-results-fab .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--danger-gradient);
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 24px;
+    text-align: center;
 }
 
 .search-results-header {

@@ -75,10 +75,10 @@ function checkForwardHistory() {
         if (savedHistory) {
             navigationHistory = JSON.parse(savedHistory);
             if (navigationHistory.length > 0) {
-            showForwardButton();
+                showForwardButton();
+            }
         }
     }
-}
 }
 
 // 顯示前進按鈕
@@ -127,8 +127,8 @@ function setupKeyboardShortcuts() {
             $('#search-input').focus().select();
         }
         
-        // F2 跳轉功能
-        if (e.which === 113) { // F2
+        // F2 跳轉功能 - 只在跳轉模式啟用時有效
+        if (e.which === 113 && jumpModeEnabled) { // F2
             e.preventDefault();
             if (e.shiftKey) {
                 gotoPreviousJump();
@@ -562,6 +562,7 @@ function clearSearch() {
     lastSearchText = '';
     updateSearchStatus('搜尋: 無');
     $('#search-info').text('0 / 0');
+    hideSearchResultsFab();
 }
 
 // 書籤功能
@@ -990,10 +991,24 @@ function applyRange() {
     
     if (start && end && start <= end && start >= 1 && end <= totalLines) {
         const url = new URL(window.location);
-        url.searchParams.set('line', Math.floor((start + end) / 2));
-        url.searchParams.set('start', start);
-        url.searchParams.set('end', end);
-        url.searchParams.set('context', context);
+        
+        // 如果指定了上下文行數，則基於中間行計算範圍
+        if (context > 0) {
+            const centerLine = Math.floor((start + end) / 2);
+            const newStart = Math.max(1, centerLine - context);
+            const newEnd = Math.min(totalLines, centerLine + context);
+            
+            url.searchParams.set('line', centerLine);
+            url.searchParams.set('start', newStart);
+            url.searchParams.set('end', newEnd);
+            url.searchParams.set('context', context);
+        } else {
+            // 直接使用指定的範圍
+            url.searchParams.set('line', Math.floor((start + end) / 2));
+            url.searchParams.set('start', start);
+            url.searchParams.set('end', end);
+        }
+        
         window.location.href = url.toString();
     } else {
         showToast('warning', '請輸入有效的範圍');
@@ -1329,7 +1344,31 @@ function setupDeviceSwitcher() {
         } else {
             removeMobileStyles();
         }
+        
+        // 儲存選擇
+        localStorage.setItem('preferredDevice', device);
+        
+        // 重新調整界面
+        setTimeout(() => {
+            updateStatus();
+            if (searchResults.length > 0) {
+                showSearchResultsFab();
+            }
+        }, 300);
     });
+    
+    // 檢查用戶偏好
+    const preferredDevice = localStorage.getItem('preferredDevice');
+    if (preferredDevice) {
+        $('.device-btn').removeClass('active');
+        $(`.device-btn[data-device="${preferredDevice}"]`).addClass('active');
+        
+        if (preferredDevice === 'mobile') {
+            loadMobileStyles();
+        } else {
+            removeMobileStyles();
+        }
+    }
 }
 
 // 載入手機版樣式
@@ -1413,6 +1452,10 @@ function updateStatus() {
     updateJumpStatus();
     updateTargetStatus();
     $('#status-position').text(`${currentStartLine}-${currentEndLine} / ${totalLines}`);
+    
+    // 更新匯出部份的行數顯示
+    $('#export-start').text(currentStartLine);
+    $('#export-end').text(currentEndLine);
 }
 
 // 更新目標行狀態
@@ -1544,14 +1587,14 @@ function performSearch() {
     
     searchResults = [];
     let regex;
-
+    
     try {
         if (useRegex) {
             regex = new RegExp(searchText, 'gi');
         } else {
             // 轉義特殊字符
             const escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\//'); 監聽滾動更新狀態
-            $('#line-container').on('scroll', debounce(updateStatus, 100));
+$('#line-container').on('scroll', debounce(updateStatus, 100));
             regex = new RegExp(escapedText, 'gi');
         }
     } catch (e) {
@@ -1620,4 +1663,12 @@ window.clearAllHighlights = clearAllHighlights;
 window.toggleRegex = toggleRegex;
 window.findPrevious = findPrevious;
 window.findNext = findNext;
-window.goForward = goForward;window.hideSearchResultsPanel = hideSearchResultsPanel;
+window.goForward = goForward;
+window.hideSearchResultsPanel = hideSearchResultsPanel;
+window.toggleSearchResultsPanel = function() {
+    if ($('.search-results-panel').hasClass('show')) {
+        hideSearchResultsPanel();
+    } else {
+        showSearchResultsPanel();
+    }
+};

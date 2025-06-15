@@ -88,7 +88,7 @@
                                 </div>
                                 <div class="export-option" onclick="exportFile('partial')">
                                     <i class="fas fa-file-alt"></i>
-                                    <span>匯出部份 (第 {{ result.start_line }}-{{ result.end_line }} 行)</span>
+                                    <span>匯出部份 (第 <span id="export-start">{{ result.start_line }}</span>-<span id="export-end">{{ result.end_line }}</span> 行)</span>
                                 </div>
                             </div>
                         </div>
@@ -157,19 +157,41 @@
                 <h6><i class="fas fa-sliders-h"></i>選擇顯示範圍</h6>
                 <div class="row">
                     <div class="col-md-3">
-                        <label class="form-label">起始行</label>
-                        <input type="number" class="form-control" id="range-start" 
-                               min="1" max="{{ result.total_lines }}" value="{{ result.start_line }}">
+                        <label class="form-label">
+                            <i class="fas fa-arrow-up"></i>
+                            起始行
+                        </label>
+                        <div class="range-input-group">
+                            <input type="number" class="form-control" id="range-start" 
+                                   min="1" max="{{ result.total_lines }}" value="{{ result.start_line }}"
+                                   placeholder="1">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">結束行</label>
-                        <input type="number" class="form-control" id="range-end" 
-                               min="1" max="{{ result.total_lines }}" value="{{ result.end_line }}">
+                        <label class="form-label">
+                            <i class="fas fa-arrow-down"></i>
+                            結束行
+                        </label>
+                        <div class="range-input-group">
+                            <input type="number" class="form-control" id="range-end" 
+                                   min="1" max="{{ result.total_lines }}" value="{{ result.end_line }}"
+                                   placeholder="{{ result.total_lines }}">
+                            <i class="fas fa-hashtag"></i>
+                        </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">上下文行數</label>
-                        <input type="number" class="form-control" id="range-context" 
-                               min="0" max="500" value="200">
+                        <label class="form-label">
+                            <i class="fas fa-expand-arrows-alt"></i>
+                            上下文行數
+                        </label>
+                        <div class="range-input-group">
+                            <input type="number" class="form-control" id="range-context" 
+                                   min="0" max="500" value="200"
+                                   placeholder="200"
+                                   title="設定後將以範圍中心為基準，前後各顯示指定行數">
+                            <i class="fas fa-arrows-alt-v"></i>
+                        </div>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <button class="btn btn-gradient-primary me-2" onclick="applyRange()">
@@ -178,6 +200,14 @@
                         <button class="btn btn-outline-secondary" onclick="closeRangeSelector()">
                             <i class="fas fa-times me-1"></i>取消
                         </button>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            提示：若設定上下文行數，將以範圍中心為基準，前後各顯示指定行數
+                        </small>
                     </div>
                 </div>
             </div>
@@ -256,6 +286,12 @@
 
     <!-- Toast 容器 -->
     <div class="toast-container" id="toast-container"></div>
+    
+    <!-- 搜尋結果浮動按鈕 -->
+    <button class="search-results-fab" onclick="toggleSearchResultsPanel()">
+        <i class="fas fa-list"></i>
+        <span class="badge">0</span>
+    </button>
     
     <!-- 搜尋結果面板 -->
     <div class="search-results-panel">

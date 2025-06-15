@@ -337,8 +337,10 @@ window.toggleJumpIcon = function(lineNumber) {
     updateLineIconsState(lineNumber);
 };
 
-// 美化確認對話框
-function showConfirmDialog(title, message, onConfirm) {
+window.showConfirmDialog = function(title, message, onConfirm) {
+    // 先移除任何現有的對話框
+    $('.confirm-dialog-overlay, .confirm-dialog').remove();
+    
     const dialog = $(`
         <div class="confirm-dialog-overlay" onclick="closeConfirmDialog()"></div>
         <div class="confirm-dialog">
@@ -361,14 +363,42 @@ function showConfirmDialog(title, message, onConfirm) {
     
     $('body').append(dialog);
     
+    // 添加淡入動畫
+    setTimeout(() => {
+        $('.confirm-dialog-overlay').css('opacity', '1');
+        $('.confirm-dialog').css({
+            'opacity': '1',
+            'transform': 'translate(-50%, -50%) scale(1)'
+        });
+    }, 10);
+    
     $('#confirm-dialog-ok').click(function() {
         closeConfirmDialog();
         if (onConfirm) onConfirm();
     });
-}
+    
+    // ESC 鍵關閉
+    $(document).on('keydown.confirm', function(e) {
+        if (e.which === 27) {
+            closeConfirmDialog();
+        }
+    });
+};
 
 window.closeConfirmDialog = function() {
-    $('.confirm-dialog-overlay, .confirm-dialog').remove();
+    // 添加淡出動畫
+    $('.confirm-dialog-overlay').css('opacity', '0');
+    $('.confirm-dialog').css({
+        'opacity': '0',
+        'transform': 'translate(-50%, -50%) scale(0.9)'
+    });
+    
+    setTimeout(() => {
+        $('.confirm-dialog-overlay, .confirm-dialog').remove();
+    }, 300);
+    
+    // 移除 ESC 鍵監聽
+    $(document).off('keydown.confirm');
 };
 
 // 重寫清除函數使用美化對話框

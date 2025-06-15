@@ -1492,8 +1492,13 @@ function showSearchResultsPanel() {
         // 高亮匹配文字
         let highlightedContent = lineContent;
         if (useRegex) {
-            const regex = new RegExp(`(${result.text})`, 'gi');
-            highlightedContent = highlightedContent.replace(regex, '<span class="search-match">$1</span>');
+            try {
+                const regex = new RegExp(`(${result.text})`, 'gi');
+                highlightedContent = highlightedContent.replace(regex, '<span class="search-match">$1</span>');
+            } catch (e) {
+                // If regex fails, fall back to simple highlighting
+                highlightedContent = lineContent.replace(result.text, '<span class="search-match">' + result.text + '</span>');
+            }
         } else {
             // 一般搜尋 - 簡單替換
             const searchText = lastSearchText;
@@ -1706,8 +1711,8 @@ function performSearch() {
             regex = new RegExp(searchText, 'gi');
         } else {
             // 轉義特殊字符
-            const escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\//'); 監聽滾動更新狀態
-$('#line-container').on('scroll', debounce(updateStatus, 100));
+            const escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			$('#line-container').on('scroll', debounce(updateStatus, 100));
             regex = new RegExp(escapedText, 'gi');
         }
     } catch (e) {

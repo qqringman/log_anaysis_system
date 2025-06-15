@@ -62,7 +62,7 @@ function beautifyNumberInputs() {
             </div>
         `);
         
-        input.after(controls);
+        //input.after(controls);
         
         // 移除原有的 form-control class
         input.removeClass('form-control');
@@ -70,10 +70,10 @@ function beautifyNumberInputs() {
     
     // 跳轉行號輸入
     const jumpLineGroup = $('#jump-line').parent();
-    jumpLineGroup.attr('id', 'jump-line-group');
-    jumpLineGroup.addClass('form-control-number');
+    //jumpLineGroup.attr('id', 'jump-line-group');
+    //jumpLineGroup.addClass('form-control-number');
     
-    $('#jump-line').removeClass('form-control');
+    //$('#jump-line').removeClass('form-control');
     
     // 添加數字控制
     const jumpControls = $(`
@@ -87,7 +87,7 @@ function beautifyNumberInputs() {
         </div>
     `);
     
-    $('#jump-line').after(jumpControls);
+    //$('#jump-line').after(jumpControls);
 }
 
 // 數字輸入框增減

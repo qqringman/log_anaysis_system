@@ -1083,91 +1083,6 @@ function applyRange() {
     }
 }
 
-// 匯出 HTML
-function exportHTML() {
-    showToast('info', '正在準備匯出 HTML...');
-    
-    // 創建 HTML 內容
-    let htmlContent = `
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${currentFilePath.split('/').pop()} - 檔案檢視器匯出</title>
-    <style>
-        body { font-family: monospace; background: #f5f5f5; margin: 20px; }
-        .header { background: #667eea; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        .line { display: flex; border-bottom: 1px solid #eee; }
-        .line-number { background: #f0f0f0; padding: 5px 10px; min-width: 80px; text-align: right; color: #666; }
-        .line-content { flex: 1; padding: 5px 10px; background: white; white-space: pre-wrap; }
-        .line-target { background: #ffebee; }
-        .line-target .line-number { background: #ef5350; color: white; }
-        .highlight-color-1 { background: #ffcdd2; }
-        .highlight-color-2 { background: #c8e6c9; }
-        .highlight-color-3 { background: #bbdefb; }
-        .highlight-color-4 { background: #ffe0b2; }
-        .highlight-color-5 { background: #e1bee7; }
-        .highlight-color-6 { background: #fff9c4; }
-        .highlight-color-7 { background: #b2ebf2; }
-        .highlight-color-8 { background: #f0f4c3; }
-        .highlight-color-9 { background: #dcedc8; }
-        .highlight-color-10 { background: #ffccbc; }
-        .bookmark { background: #4caf50; color: white; font-weight: bold; }
-        .jump-point { background: #ff9800; color: white; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>${currentFilePath.split('/').pop()}</h1>
-        <p>匯出時間：${new Date().toLocaleString('zh-TW')}</p>
-        <p>顯示範圍：第 ${currentStartLine} 到 ${currentEndLine} 行（共 ${totalLines} 行）</p>
-    </div>
-    <div class="content">
-`;
-    
-    // 添加每一行的內容
-    $('.code-line').each(function() {
-        const lineNumber = $(this).data('line');
-        const isTarget = $(this).hasClass('line-target');
-        const lineNumberElement = $(this).find('.line-number');
-        const isBookmark = lineNumberElement.hasClass('bookmark');
-        const isJumpPoint = lineNumberElement.hasClass('jump-point');
-        
-        let lineNumberClass = '';
-        if (isBookmark) lineNumberClass += ' bookmark';
-        if (isJumpPoint) lineNumberClass += ' jump-point';
-        
-        const lineContent = $(this).find('.line-content').html();
-        
-        htmlContent += `
-        <div class="line ${isTarget ? 'line-target' : ''}">
-            <div class="line-number${lineNumberClass}">${lineNumber}</div>
-            <div class="line-content">${lineContent}</div>
-        </div>
-`;
-    });
-    
-    htmlContent += `
-    </div>
-</body>
-</html>`;
-    
-    // 創建 Blob 並下載
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentFilePath.split('/').pop()}_viewer_export.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast('success', 'HTML 檔案已匯出');
-}
-
 // 複製功能 - 修復版本
 function copySelectedText() {
     if (selectedText) {
@@ -1748,7 +1663,6 @@ window.showRangeSelector = showRangeSelector;
 window.closeRangeSelector = closeRangeSelector;
 window.applyRange = applyRange;
 window.jumpToLine = jumpToLine;
-window.exportHTML = exportHTML;
 window.scrollToTarget = scrollToTarget;
 window.clearAllHighlights = clearAllHighlights;
 window.toggleRegex = toggleRegex;

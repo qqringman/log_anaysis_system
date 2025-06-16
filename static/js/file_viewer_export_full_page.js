@@ -97,7 +97,8 @@ ${bodyContent}
     // 匯出頁面標記
     window.isExportedHTML = true;
     window.exportedDate = "${new Date().toISOString()}";
-    
+    window.exportedTimeString = "${new Date().toLocaleString('zh-TW')}";
+
     // 初始化全域變數
 ${getGlobalVariables()}
 
@@ -170,12 +171,13 @@ ${inlineScripts}
         // 1. 獲取所有 <link> 標籤的樣式表
         const cssFiles = [
             '/static/css/file_viewer.css',
-            '/static/css/file_viewer_marks.css',
             '/static/css/file_viewer_enhanced.css',
             '/static/css/file_viewer_final.css',
             '/static/css/file_viewer_navigation_fix.css',
             '/static/css/file_viewer_export_fix.css',
-            '/static/css/file_viewer_mobile.css'
+            '/static/css/file_viewer_mobile.css',
+			'/static/css/file_viewer_export_full_page.css',
+			'/static/css/file_viewer_marks.css'
         ];
         
         // 嘗試從當前頁面獲取實際的 CSS 文件列表
@@ -347,7 +349,8 @@ ${inlineScripts}
         const url = URL.createObjectURL(blob);
         
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
-        const fileName = `${currentFilePath.split('/').pop()}_exported_${timestamp}.html`;
+        const export_date = new Date().toLocaleString('sv').replace(/[:.-]/g, '_').replace(" ", '_');
+        const fileName = `exported_${export_date}_${currentFilePath.split('/').pop()}.html`;
         
         const a = document.createElement('a');
         a.href = url;

@@ -258,8 +258,14 @@
 
 .marks-panel-tab.active {
     background: var(--primary-gradient);
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
     color: white;
-    border-color: transparent;
+    border-color: var(--primary-gradient);
 }
 
 .marks-panel-body {

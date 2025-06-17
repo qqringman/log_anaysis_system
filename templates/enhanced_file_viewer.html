@@ -20,6 +20,7 @@
 	<link href="/static/css/file_viewer_navigation_fix.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_export_fix.css" rel="stylesheet">
 	<link href="/static/css/file_viewer_export_full_page.css" rel="stylesheet">
+	<link href="/static/css/file_viewer_goto_line.css" rel="stylesheet">
 </head>
 <body>
     <!-- 設備切換器 -->
@@ -172,8 +173,9 @@
 				<div class="toolbar-group">
 					<div id="jump-line-wrapper" style="width: 240px;">
 						<input type="number" class="form-control" id="jump-line" 
-							   placeholder="跳轉行號" min="1" max="{{ result.total_lines }}">
-						<button class="btn btn-gradient-primary" onclick="jumpToLine()">
+							   placeholder="跳轉行號 (Ctrl+G)" min="1" max="{{ result.total_lines }}"
+							   title="輸入行號快速跳轉，或按 Ctrl+G 開啟增強跳轉對話框">
+						<button class="btn btn-gradient-primary" onclick="jumpToLine()" title="跳轉到指定行號">
 							<i class="fas fa-arrow-right"></i>
 						</button>
 					</div>
@@ -326,6 +328,10 @@
                         <i class="fas fa-crosshairs"></i>
                         <span id="status-jumps">跳轉點: 0</span>
                     </div>
+                    <div class="status-item shortcut-hint">
+                        <i class="fas fa-keyboard"></i>
+                        <span>Ctrl+G: 跳轉行號</span>
+                    </div>
                 </div>
                 <div class="d-flex align-items-center">
                     <div class="status-item">
@@ -459,7 +465,7 @@
         <i class="fas fa-heart"></i>
         © 2025 Vince. All rights reserved.
         <i class="fas fa-code"></i>
-        Enhanced File Viewer v7
+        Enhanced File Viewer v8
     </div>
 
     <!-- Scripts -->
@@ -475,5 +481,36 @@
 	<script src="/static/js/file_viewer_navigation_fix.js"></script>
 	<script src="/static/js/file_viewer_export_fix.js"></script>
 	<script src="/static/js/file_viewer_export_full_page.js"></script>
+	<script src="/static/js/file_viewer_goto_line.js"></script>
+	<script src="/static/js/file_viewer_goto_debug.js"></script>
+	
+	<!-- 調試模式檢查 -->
+	<script>
+		// 檢查是否啟用調試模式
+		if (window.location.search.includes('debug=true') || 
+			localStorage.getItem('gotoDebugMode') === 'true') {
+			console.log('🔧 調試模式已啟用');
+			
+			// 添加調試信息顯示
+			setTimeout(() => {
+				if (window.GotoDebugHelper) {
+					const debugDiv = document.createElement('div');
+					debugDiv.className = 'goto-debug';
+					debugDiv.innerHTML = `
+						<div><strong>Ctrl+G 調試模式</strong></div>
+						<div>按 F12 開啟控制台查看詳細信息</div>
+						<div>執行 GotoDebugHelper.runDiagnostics() 進行診斷</div>
+					`;
+					document.body.appendChild(debugDiv);
+					
+					// 5秒後自動隱藏
+					setTimeout(() => {
+						debugDiv.style.opacity = '0';
+						setTimeout(() => debugDiv.remove(), 1000);
+					}, 5000);
+				}
+			}, 1000);
+		}
+	</script>
 </body>
 </html>

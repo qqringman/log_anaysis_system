@@ -533,6 +533,58 @@
                         <i class="fas fa-strikethrough"></i>
                     </button>
                     <div class="comment-toolbar-separator"></div>
+                    <!-- 顏色選擇器 -->
+                    <div class="color-picker-wrapper">
+                        <button class="comment-toolbar-btn" data-command="foreColor" title="文字顏色">
+                            <i class="fas fa-font"></i>
+                            <span class="color-indicator"></span>
+                        </button>
+                        <div class="color-palette">
+                            <div class="color-palette-header">文字顏色</div>
+                            <div class="color-grid">
+                                <div class="color-option" style="background: #000000" onclick="applyColor('#000000', 'foreColor')"></div>
+                                <div class="color-option" style="background: #545454" onclick="applyColor('#545454', 'foreColor')"></div>
+                                <div class="color-option" style="background: #737373" onclick="applyColor('#737373', 'foreColor')"></div>
+                                <div class="color-option" style="background: #a6a6a6" onclick="applyColor('#a6a6a6', 'foreColor')"></div>
+                                <div class="color-option" style="background: #d9d9d9" onclick="applyColor('#d9d9d9', 'foreColor')"></div>
+                                <div class="color-option" style="background: #ffffff" onclick="applyColor('#ffffff', 'foreColor')"></div>
+                                <div class="color-option" style="background: #ff0000" onclick="applyColor('#ff0000', 'foreColor')"></div>
+                                <div class="color-option" style="background: #ff9900" onclick="applyColor('#ff9900', 'foreColor')"></div>
+                                <div class="color-option" style="background: #ffff00" onclick="applyColor('#ffff00', 'foreColor')"></div>
+                                <div class="color-option" style="background: #00ff00" onclick="applyColor('#00ff00', 'foreColor')"></div>
+                                <div class="color-option" style="background: #00ffff" onclick="applyColor('#00ffff', 'foreColor')"></div>
+                                <div class="color-option" style="background: #0000ff" onclick="applyColor('#0000ff', 'foreColor')"></div>
+                                <div class="color-option" style="background: #9900ff" onclick="applyColor('#9900ff', 'foreColor')"></div>
+                                <div class="color-option" style="background: #ff00ff" onclick="applyColor('#ff00ff', 'foreColor')"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="color-picker-wrapper">
+                        <button class="comment-toolbar-btn" data-command="backColor" title="背景顏色">
+                            <i class="fas fa-marker"></i>
+                            <span class="color-indicator"></span>
+                        </button>
+                        <div class="color-palette">
+                            <div class="color-palette-header">背景顏色</div>
+                            <div class="color-grid">
+                                <div class="color-option" style="background: transparent" onclick="applyColor('transparent', 'backColor')"><i class="fas fa-ban"></i></div>
+                                <div class="color-option" style="background: #fce4ec" onclick="applyColor('#fce4ec', 'backColor')"></div>
+                                <div class="color-option" style="background: #fff3e0" onclick="applyColor('#fff3e0', 'backColor')"></div>
+                                <div class="color-option" style="background: #fff9c4" onclick="applyColor('#fff9c4', 'backColor')"></div>
+                                <div class="color-option" style="background: #f1f8e9" onclick="applyColor('#f1f8e9', 'backColor')"></div>
+                                <div class="color-option" style="background: #e0f2f1" onclick="applyColor('#e0f2f1', 'backColor')"></div>
+                                <div class="color-option" style="background: #e3f2fd" onclick="applyColor('#e3f2fd', 'backColor')"></div>
+                                <div class="color-option" style="background: #f3e5f5" onclick="applyColor('#f3e5f5', 'backColor')"></div>
+                                <div class="color-option" style="background: #ffd54f" onclick="applyColor('#ffd54f', 'backColor')"></div>
+                                <div class="color-option" style="background: #aed581" onclick="applyColor('#aed581', 'backColor')"></div>
+                                <div class="color-option" style="background: #80deea" onclick="applyColor('#80deea', 'backColor')"></div>
+                                <div class="color-option" style="background: #90caf9" onclick="applyColor('#90caf9', 'backColor')"></div>
+                                <div class="color-option" style="background: #ce93d8" onclick="applyColor('#ce93d8', 'backColor')"></div>
+                                <div class="color-option" style="background: #f8bbd0" onclick="applyColor('#f8bbd0', 'backColor')"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="comment-toolbar-separator"></div>
                     <button class="comment-toolbar-btn" data-command="insertUnorderedList" title="項目符號">
                         <i class="fas fa-list-ul"></i>
                     </button>

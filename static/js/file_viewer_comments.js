@@ -78,6 +78,9 @@ function bindCommentEvents() {
         editor.addEventListener('dragover', handleDragOver);
         editor.addEventListener('drop', handleDrop);
         editor.addEventListener('dragleave', handleDragLeave);
+        
+        // 輸入事件監聽即時預覽
+        editor.addEventListener('input', updateEditorPreview);
     }
     
     // 送出按鈕
@@ -92,8 +95,29 @@ function bindCommentEvents() {
         cancelBtn.addEventListener('click', closeCommentDialog);
     }
     
+    // 程式碼輸入框事件
+    const codeTextarea = document.getElementById('code-textarea');
+    if (codeTextarea) {
+        codeTextarea.addEventListener('input', updateCodePreview);
+    }
+    
+    // 程式碼語言選擇
+    const codeLang = document.getElementById('code-language');
+    if (codeLang) {
+        codeLang.addEventListener('change', updateCodePreview);
+    }
+    
     // 綁定編輯器右鍵選單
     bindEditorContextMenu();
+    
+    // 點擊其他地方關閉顏色選擇器
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.color-picker-wrapper')) {
+            document.querySelectorAll('.color-palette.show').forEach(palette => {
+                palette.classList.remove('show');
+            });
+        }
+    });
 }
 
 // 開啟評論對話框 - 全域函數
@@ -112,8 +136,9 @@ window.openCommentDialog = function(editId = null) {
             document.getElementById('comment-editor').innerHTML = comment.content;
             document.getElementById('comment-topic').value = comment.topic || '一般討論';
             document.querySelector('.comment-dialog-header h5').innerHTML = 
-                '<i class="fas fa-edit"></i> 編輯評論';
-            document.getElementById('submit-comment').textContent = '更新';
+                '<i class="fas fa-edit" style="margin-right: 10px;"></i>編輯評論';
+            document.getElementById('submit-comment').innerHTML = 
+                '<i class="fas fa-save"></i> 更新';
         }
     } else {
         // 新增模式
@@ -121,8 +146,9 @@ window.openCommentDialog = function(editId = null) {
         document.getElementById('comment-editor').innerHTML = '';
         document.getElementById('comment-topic').value = '';
         document.querySelector('.comment-dialog-header h5').innerHTML = 
-            '<i class="fas fa-comment-plus"></i> 新增評論';
-        document.getElementById('submit-comment').textContent = '送出';
+            '<i class="fas fa-comment-plus" style="margin-right: 10px;"></i>新增評論';
+        document.getElementById('submit-comment').innerHTML = 
+            '<i class="fas fa-paper-plane"></i> 送出';
     }
     
     // 清空附件
@@ -209,7 +235,8 @@ function showColorPicker(command) {
     }
     
     const btn = document.querySelector(`[data-command="${command}"]`);
-    const picker = btn.parentElement.querySelector('.color-palette');
+    const wrapper = btn.closest('.color-picker-wrapper');
+    const picker = wrapper.querySelector('.color-palette');
     if (picker) {
         picker.classList.add('show');
     }
@@ -236,7 +263,84 @@ function openCodeDialog() {
     if (dialog) {
         dialog.classList.add('show');
         dialog.style.zIndex = '10100'; // 確保在最上層
-        document.getElementById('code-textarea').focus();
+        
+        const textarea = document.getElementById('code-textarea');
+        if (textarea) {
+            textarea.focus();
+            // 綁定拖放事件
+            textarea.addEventListener('dragover', handleCodeDragOver);
+            textarea.addEventListener('drop', handleCodeDrop);
+            textarea.addEventListener('dragleave', handleCodeDragLeave);
+        }
+        
+        // 初始化預覽
+        updateCodePreview();
+    }
+}
+
+// 更新程式碼預覽
+function updateCodePreview() {
+    const language = document.getElementById('code-language').value;
+    const code = document.getElementById('code-textarea').value;
+    const preview = document.querySelector('.code-preview');
+    
+    if (preview) {
+        if (code.trim()) {
+            const highlightedCode = highlightCode(code, language);
+            preview.innerHTML = `<pre><code class="language-${language}">${highlightedCode}</code></pre>`;
+        } else {
+            preview.innerHTML = '<pre><code>// 程式碼預覽將顯示在這裡</code></pre>';
+        }
+    }
+}
+
+// 處理程式碼區域拖放
+function handleCodeDragOver(e) {
+    e.preventDefault();
+    const textarea = e.currentTarget;
+    textarea.classList.add('drop-active');
+}
+
+function handleCodeDragLeave(e) {
+    const textarea = e.currentTarget;
+    textarea.classList.remove('drop-active');
+}
+
+async function handleCodeDrop(e) {
+    e.preventDefault();
+    const textarea = e.currentTarget;
+    textarea.classList.remove('drop-active');
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+        const file = files[0];
+        // 讀取檔案內容
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            textarea.value = event.target.result;
+            // 嘗試自動偵測語言
+            const ext = file.name.split('.').pop().toLowerCase();
+            const langMap = {
+                'js': 'javascript',
+                'py': 'python',
+                'java': 'java',
+                'c': 'c',
+                'cpp': 'cpp',
+                'xml': 'xml',
+                'json': 'json',
+                'html': 'html',
+                'css': 'css',
+                'sql': 'sql',
+                'sh': 'bash',
+                'kt': 'kotlin'
+            };
+            if (langMap[ext]) {
+                document.getElementById('code-language').value = langMap[ext];
+            }
+            // 更新預覽
+            updateCodePreview();
+        };
+        reader.readAsText(file);
     }
 }
 
@@ -246,6 +350,13 @@ window.closeCodeDialog = function() {
         dialog.classList.remove('show');
         document.getElementById('code-textarea').value = '';
         document.getElementById('code-language').value = 'javascript';
+        // 移除事件監聽器
+        const textarea = document.getElementById('code-textarea');
+        if (textarea) {
+            textarea.removeEventListener('dragover', handleCodeDragOver);
+            textarea.removeEventListener('drop', handleCodeDrop);
+            textarea.removeEventListener('dragleave', handleCodeDragLeave);
+        }
     }
 }
 
@@ -258,13 +369,25 @@ window.insertCodeBlock = function() {
         return;
     }
     
+    // 建立具有高亮支援的程式碼區塊
     const pre = document.createElement('pre');
     pre.className = `language-${language}`;
     pre.dataset.elementId = 'element_' + Date.now();
+    pre.style.cssText = `
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 12px 0;
+        position: relative;
+    `;
     
     const codeEl = document.createElement('code');
-    codeEl.textContent = code;
     codeEl.className = `language-${language}`;
+    
+    // 進行簡單的語法高亮
+    codeEl.innerHTML = highlightCode(code, language);
     
     // 添加語言標籤
     const langLabel = document.createElement('span');
@@ -293,6 +416,56 @@ window.insertCodeBlock = function() {
     
     closeCodeDialog();
     showToast('程式碼已插入', 'success');
+}
+
+// 簡單的語法高亮功能
+function highlightCode(code, language) {
+    // 先進行 HTML 轉義
+    code = code.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;');
+    
+    // 根據語言進行簡單高亮
+    const highlights = {
+        javascript: {
+            keywords: /\b(var|let|const|function|return|if|else|for|while|new|this|try|catch|class|extends|import|export|default|async|await)\b/g,
+            strings: /(["'`])([^"'`]*)(\1)/g,
+            comments: /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm,
+            numbers: /\b(\d+)\b/g,
+            functions: /\b(\w+)(?=\()/g
+        },
+        python: {
+            keywords: /\b(def|class|import|from|return|if|else|elif|for|while|try|except|with|as|pass|break|continue|lambda|async|await)\b/g,
+            strings: /(["'])([^"']*)(\1)/g,
+            comments: /(#.*$)/gm,
+            numbers: /\b(\d+)\b/g,
+            functions: /\b(\w+)(?=\()/g
+        },
+        java: {
+            keywords: /\b(public|private|protected|class|interface|extends|implements|static|final|void|int|long|double|float|boolean|char|String|if|else|for|while|try|catch|throw|throws|new|return|import|package)\b/g,
+            strings: /(["'])([^"']*)(\1)/g,
+            comments: /(\/\/.*$|\/\*[\s\S]*?\*\/)/gm,
+            numbers: /\b(\d+)\b/g,
+            functions: /\b(\w+)(?=\()/g
+        }
+    };
+    
+    const lang = highlights[language] || highlights.javascript;
+    
+    // 應用高亮
+    code = code.replace(lang.keywords, '<span style="color: #c792ea;">$&</span>');
+    code = code.replace(lang.strings, '<span style="color: #c3e88d;">$&</span>');
+    code = code.replace(lang.comments, '<span style="color: #5f7e97;">$&</span>');
+    code = code.replace(lang.numbers, '<span style="color: #f78c6c;">$&</span>');
+    
+    return code;
+}
+
+// 更新編輯器預覽
+function updateEditorPreview() {
+    // 此函數可用於即時預覽編輯器內容
+    const editor = document.getElementById('comment-editor');
+    // 可以在這裡添加即時預覽邏輯
 }
 
 // 處理拖放 - 加入視覺提示
@@ -381,6 +554,13 @@ function showTableContextMenu(event, table) {
             <i class="fas fa-minus"></i> 刪除列
         </div>
         <div class="table-menu-separator"></div>
+        <div class="table-menu-item" onclick="showTableColorMenu(event, 'cell')">
+            <i class="fas fa-paint-brush"></i> 設定儲存格顏色
+        </div>
+        <div class="table-menu-item" onclick="showTableColorMenu(event, 'table')">
+            <i class="fas fa-palette"></i> 設定表格顏色
+        </div>
+        <div class="table-menu-separator"></div>
         <div class="table-menu-item" onclick="copyTable(event)">
             <i class="fas fa-copy"></i> 複製表格
         </div>
@@ -400,6 +580,78 @@ function showTableContextMenu(event, table) {
     setTimeout(() => {
         document.addEventListener('click', removeExistingMenus, { once: true });
     }, 0);
+}
+
+// 顯示表格顏色選單
+window.showTableColorMenu = function(event, type) {
+    const parentMenu = event.target.closest('.table-context-menu');
+    
+    const colorMenu = document.createElement('div');
+    colorMenu.className = 'table-color-menu';
+    colorMenu.innerHTML = `
+        <div class="table-color-title">選擇${type === 'cell' ? '儲存格' : '表格'}顏色</div>
+        <div class="table-color-title" style="margin-top: 10px;">背景顏色</div>
+        <div class="table-color-grid">
+            <div class="table-color-option" style="background: transparent" onclick="applyTableColor(event, 'background', 'transparent', '${type}')"><i class="fas fa-ban"></i></div>
+            <div class="table-color-option" style="background: #f8f9fa" onclick="applyTableColor(event, 'background', '#f8f9fa', '${type}')"></div>
+            <div class="table-color-option" style="background: #e9ecef" onclick="applyTableColor(event, 'background', '#e9ecef', '${type}')"></div>
+            <div class="table-color-option" style="background: #fce4ec" onclick="applyTableColor(event, 'background', '#fce4ec', '${type}')"></div>
+            <div class="table-color-option" style="background: #fff3e0" onclick="applyTableColor(event, 'background', '#fff3e0', '${type}')"></div>
+            <div class="table-color-option" style="background: #fff9c4" onclick="applyTableColor(event, 'background', '#fff9c4', '${type}')"></div>
+            <div class="table-color-option" style="background: #f1f8e9" onclick="applyTableColor(event, 'background', '#f1f8e9', '${type}')"></div>
+            <div class="table-color-option" style="background: #e0f2f1" onclick="applyTableColor(event, 'background', '#e0f2f1', '${type}')"></div>
+            <div class="table-color-option" style="background: #e3f2fd" onclick="applyTableColor(event, 'background', '#e3f2fd', '${type}')"></div>
+            <div class="table-color-option" style="background: #f3e5f5" onclick="applyTableColor(event, 'background', '#f3e5f5', '${type}')"></div>
+        </div>
+        <div class="table-color-title" style="margin-top: 10px;">文字顏色</div>
+        <div class="table-color-grid">
+            <div class="table-color-option" style="background: #000000" onclick="applyTableColor(event, 'color', '#000000', '${type}')"></div>
+            <div class="table-color-option" style="background: #495057" onclick="applyTableColor(event, 'color', '#495057', '${type}')"></div>
+            <div class="table-color-option" style="background: #dc3545" onclick="applyTableColor(event, 'color', '#dc3545', '${type}')"></div>
+            <div class="table-color-option" style="background: #fd7e14" onclick="applyTableColor(event, 'color', '#fd7e14', '${type}')"></div>
+            <div class="table-color-option" style="background: #ffc107" onclick="applyTableColor(event, 'color', '#ffc107', '${type}')"></div>
+            <div class="table-color-option" style="background: #28a745" onclick="applyTableColor(event, 'color', '#28a745', '${type}')"></div>
+            <div class="table-color-option" style="background: #17a2b8" onclick="applyTableColor(event, 'color', '#17a2b8', '${type}')"></div>
+            <div class="table-color-option" style="background: #007bff" onclick="applyTableColor(event, 'color', '#007bff', '${type}')"></div>
+            <div class="table-color-option" style="background: #6610f2" onclick="applyTableColor(event, 'color', '#6610f2', '${type}')"></div>
+            <div class="table-color-option" style="background: #e83e8c" onclick="applyTableColor(event, 'color', '#e83e8c', '${type}')"></div>
+        </div>
+    `;
+    
+    colorMenu.style.left = (parseInt(parentMenu.style.left) + parentMenu.offsetWidth + 10) + 'px';
+    colorMenu.style.top = parentMenu.style.top;
+    colorMenu.dataset.table = parentMenu.dataset.table;
+    colorMenu.dataset.cell = parentMenu.dataset.cell;
+    
+    document.body.appendChild(colorMenu);
+}
+
+// 應用表格顏色
+window.applyTableColor = function(event, property, color, type) {
+    const colorMenu = event.target.closest('.table-color-menu');
+    const tableId = colorMenu.dataset.table;
+    const table = document.querySelector(`[data-table-id="${tableId}"]`);
+    
+    if (!table) return;
+    
+    if (type === 'table') {
+        // 應用到整個表格
+        const cells = table.querySelectorAll('td, th');
+        cells.forEach(cell => {
+            cell.style[property] = color;
+        });
+    } else if (type === 'cell') {
+        // 應用到特定儲存格
+        const cellInfo = getCellInfoFromMenu({ target: colorMenu });
+        if (cellInfo) {
+            const cell = table.rows[cellInfo.row].cells[cellInfo.col];
+            if (cell) {
+                cell.style[property] = color;
+            }
+        }
+    }
+    
+    removeExistingMenus();
 }
 
 // 顯示元素右鍵選單
@@ -453,6 +705,8 @@ window.addTableRow = function(event) {
     for (let i = 0; i < colCount; i++) {
         const cell = row.insertCell();
         cell.textContent = '新內容';
+        cell.style.border = '1px solid #dee2e6';
+        cell.style.padding = '8px';
     }
     
     removeExistingMenus();
@@ -469,6 +723,8 @@ window.addTableRowAbove = function(event) {
     for (let i = 0; i < colCount; i++) {
         const cell = row.insertCell();
         cell.textContent = '新內容';
+        cell.style.border = '1px solid #dee2e6';
+        cell.style.padding = '8px';
     }
     
     removeExistingMenus();
@@ -493,7 +749,18 @@ window.addTableColumn = function(event) {
     
     for (let i = 0; i < table.rows.length; i++) {
         const cell = table.rows[i].insertCell(cellInfo.col + 1);
-        cell.textContent = i === 0 ? '新標題' : '新內容';
+        if (i === 0) {
+            // 第一行是標題，使用 th 樣式
+            cell.textContent = '新標題';
+            cell.style.background = '#f8f9fa';
+            cell.style.border = '1px solid #dee2e6';
+            cell.style.padding = '8px';
+            cell.style.fontWeight = '600';
+        } else {
+            cell.textContent = '新內容';
+            cell.style.border = '1px solid #dee2e6';
+            cell.style.padding = '8px';
+        }
     }
     
     removeExistingMenus();
@@ -506,7 +773,18 @@ window.addTableColumnLeft = function(event) {
     
     for (let i = 0; i < table.rows.length; i++) {
         const cell = table.rows[i].insertCell(cellInfo.col);
-        cell.textContent = i === 0 ? '新標題' : '新內容';
+        if (i === 0) {
+            // 第一行是標題，使用 th 樣式
+            cell.textContent = '新標題';
+            cell.style.background = '#f8f9fa';
+            cell.style.border = '1px solid #dee2e6';
+            cell.style.padding = '8px';
+            cell.style.fontWeight = '600';
+        } else {
+            cell.textContent = '新內容';
+            cell.style.border = '1px solid #dee2e6';
+            cell.style.padding = '8px';
+        }
     }
     
     removeExistingMenus();
@@ -583,7 +861,7 @@ window.resizeImage = function(event) {
 
 // 輔助函數
 function removeExistingMenus() {
-    document.querySelectorAll('.table-context-menu, .element-context-menu').forEach(menu => {
+    document.querySelectorAll('.table-context-menu, .element-context-menu, .table-color-menu').forEach(menu => {
         menu.remove();
     });
 }
@@ -605,7 +883,7 @@ function getElementFromMenu(event) {
 }
 
 function getCellInfoFromMenu(event) {
-    const menu = event.target.closest('.table-context-menu');
+    const menu = event.target.closest('.table-context-menu, .table-color-menu');
     if (!menu || !menu.dataset.cell) return null;
     
     const [row, col] = menu.dataset.cell.split(',').map(Number);
@@ -818,11 +1096,15 @@ window.addEventListener('scroll', function() {
 
 // 創建表格
 function createTable(rows, cols) {
-    let html = '<table><tbody>';
+    let html = '<table style="border-collapse: collapse; width: 100%;"><tbody>';
     for (let i = 0; i < rows; i++) {
         html += '<tr>';
         for (let j = 0; j < cols; j++) {
-            html += i === 0 ? '<th>標題</th>' : '<td>內容</td>';
+            if (i === 0) {
+                html += '<th style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 8px; font-weight: 600;">標題</th>';
+            } else {
+                html += '<td style="border: 1px solid #dee2e6; padding: 8px;">內容</td>';
+            }
         }
         html += '</tr>';
     }

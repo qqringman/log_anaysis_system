@@ -190,12 +190,44 @@ function handleToolbarClick(e) {
         range.selectNodeContents(blockquote);
         selection.removeAllRanges();
         selection.addRange(range);
+    } else if (command === 'foreColor' || command === 'backColor') {
+        // 顏色選擇
+        showColorPicker(command);
     } else {
         document.execCommand(command, false, value);
     }
     
     // 更新按鈕狀態
     updateToolbarState();
+}
+
+// 顯示顏色選擇器
+function showColorPicker(command) {
+    const existingPicker = document.querySelector('.color-palette.show');
+    if (existingPicker) {
+        existingPicker.classList.remove('show');
+    }
+    
+    const btn = document.querySelector(`[data-command="${command}"]`);
+    const picker = btn.parentElement.querySelector('.color-palette');
+    if (picker) {
+        picker.classList.add('show');
+    }
+}
+
+// 應用顏色
+window.applyColor = function(color, command) {
+    document.execCommand(command, false, color);
+    document.querySelector('.color-palette.show')?.classList.remove('show');
+    
+    // 更新按鈕指示器
+    const btn = document.querySelector(`[data-command="${command}"]`);
+    if (btn) {
+        const indicator = btn.querySelector('.color-indicator');
+        if (indicator) {
+            indicator.style.background = color;
+        }
+    }
 }
 
 // 程式碼對話框功能

@@ -14,7 +14,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: bold;
     line-height: 1;
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
@@ -22,6 +22,7 @@
     z-index: 8996;
     transition: all 0.3s ease;
     position: relative;
+    padding: 0;
 }
 
 .comment-fab:hover {
@@ -224,6 +225,84 @@
     width: 1px;
     background: #dee2e6;
     margin: 0 4px;
+}
+
+/* 顏色選擇器樣式 */
+.color-picker-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.color-picker-dropdown {
+    position: relative;
+}
+
+.color-picker-btn {
+    background: white;
+    border: 1px solid #dee2e6;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.color-picker-btn:hover {
+    border-color: #667eea;
+}
+
+.color-picker-btn .color-indicator {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    right: 2px;
+    height: 4px;
+    border-radius: 2px;
+    background: currentColor;
+}
+
+.color-palette {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: none;
+    z-index: 1000;
+}
+
+.color-palette.show {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+
+.color-option {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    border-color: #667eea;
+}
+
+.color-option.selected {
+    border-color: #333;
+    box-shadow: 0 0 0 2px white, 0 0 0 3px #333;
 }
 
 /* 編輯器內容區 - 支援縮放 */
@@ -454,9 +533,9 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
-    width: 700px;
+    width: 900px;
     max-width: 90vw;
-    max-height: 80vh;
+    max-height: 85vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -481,7 +560,62 @@
     padding: 20px;
     flex: 1;
     overflow-y: auto;
+    display: flex;
+    gap: 20px;
 }
+
+.code-input-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.code-preview-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+    color: #495057;
+}
+
+.code-preview {
+    flex: 1;
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    position: relative;
+}
+
+.code-preview pre {
+    margin: 0;
+}
+
+.code-preview code {
+    background: transparent;
+    padding: 0;
+}
+
+/* 程式碼高亮預覽 */
+.code-preview .hljs-keyword { color: #c792ea; }
+.code-preview .hljs-string { color: #c3e88d; }
+.code-preview .hljs-number { color: #f78c6c; }
+.code-preview .hljs-comment { color: #5f7e97; }
+.code-preview .hljs-function { color: #82aaff; }
+.code-preview .hljs-class { color: #ffcb6b; }
+.code-preview .hljs-variable { color: #f07178; }
+.code-preview .hljs-tag { color: #ff5370; }
+.code-preview .hljs-attribute { color: #c792ea; }
 
 .language-selector {
     margin-bottom: 15px;
@@ -519,6 +653,7 @@
     background: #f7fafc;
     resize: vertical;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .code-textarea:focus {
@@ -526,6 +661,25 @@
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     background: white;
+}
+
+/* 拖放提示 - 程式碼對話框 */
+.code-textarea.drop-active::before {
+    content: '拖曳檔案到這裡';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.95);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    z-index: 10;
+    border-radius: 8px;
 }
 
 .code-dialog-footer {
@@ -584,6 +738,46 @@
     height: 1px;
     background: #e9ecef;
     margin: 4px 0;
+}
+
+/* 表格顏色選單 */
+.table-color-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+    z-index: 10102;
+    min-width: 200px;
+}
+
+.table-color-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 8px;
+}
+
+.table-color-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.table-color-option {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.table-color-option:hover {
+    transform: scale(1.2);
+    border-color: #667eea;
 }
 
 /* 物件右鍵選單 */

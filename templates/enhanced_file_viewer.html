@@ -462,10 +462,9 @@
 	</div>
 
     <!-- 評論功能按鈕 -->
-    <div style="position: fixed; bottom: 100px; right: 20px; z-index: 8996;">
-        <button onclick="openCommentDialog()" 
-            style="width: 60px; height: 60px; border-radius: 50%; background: #667eea; color: white; border: none; font-size: 30px; font-weight: bold; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0;">
-            +
+    <div class="comment-fab-wrapper">
+        <button class="comment-fab" onclick="openCommentDialog()">
+            <span>+</span>
         </button>
         <div class="comment-fab-tooltip">新增評論</div>
     </div>
@@ -652,27 +651,37 @@
                 </button>
             </div>
             <div class="code-dialog-body">
-                <div class="language-selector">
-                    <label class="form-label">選擇程式語言</label>
-                    <select id="code-language">
-                        <option value="javascript">JavaScript</option>
-                        <option value="python">Python</option>
-                        <option value="java">Java</option>
-                        <option value="c">C</option>
-                        <option value="cpp">C++</option>
-                        <option value="xml">XML</option>
-                        <option value="json">JSON</option>
-                        <option value="html">HTML</option>
-                        <option value="css">CSS</option>
-                        <option value="sql">SQL</option>
-                        <option value="bash">Bash</option>
-                        <option value="ini">INI</option>
-                        <option value="diff">Diff</option>
-                        <option value="kotlin">Android/Kotlin</option>
-                    </select>
+                <div class="code-input-section">
+                    <div class="language-selector">
+                        <label class="form-label">選擇程式語言</label>
+                        <select id="code-language">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="c">C</option>
+                            <option value="cpp">C++</option>
+                            <option value="xml">XML</option>
+                            <option value="json">JSON</option>
+                            <option value="html">HTML</option>
+                            <option value="css">CSS</option>
+                            <option value="sql">SQL</option>
+                            <option value="bash">Bash</option>
+                            <option value="ini">INI</option>
+                            <option value="diff">Diff</option>
+                            <option value="kotlin">Android/Kotlin</option>
+                        </select>
+                    </div>
+                    <div class="code-textarea-wrapper">
+                        <textarea id="code-textarea" class="code-textarea" 
+                                placeholder="在此貼上或輸入程式碼...或拖曳檔案到這裡"></textarea>
+                    </div>
                 </div>
-                <textarea id="code-textarea" class="code-textarea" 
-                        placeholder="在此貼上或輸入程式碼..."></textarea>
+                <div class="code-preview-section">
+                    <label class="preview-label">預覽</label>
+                    <div class="code-preview">
+                        <pre><code>// 程式碼預覽將顯示在這裡</code></pre>
+                    </div>
+                </div>
             </div>
             <div class="code-dialog-footer">
                 <button class="btn btn-outline-secondary btn-modern" onclick="closeCodeDialog()">

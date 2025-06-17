@@ -81,6 +81,9 @@ function bindCommentEvents() {
         
         // 輸入事件監聽即時預覽
         editor.addEventListener('input', updateEditorPreview);
+        
+        // 選擇變化事件
+        document.addEventListener('selectionchange', updateToolbarState);
     }
     
     // 送出按鈕
@@ -177,6 +180,10 @@ function handleToolbarClick(e) {
     const command = btn.dataset.command;
     const value = btn.dataset.value || null;
     
+    // 確保編輯器獲得焦點
+    const editor = document.getElementById('comment-editor');
+    editor.focus();
+    
     if (command === 'createLink') {
         const url = prompt('請輸入連結網址：', 'https://');
         if (url) {
@@ -220,11 +227,12 @@ function handleToolbarClick(e) {
         // 顏色選擇
         showColorPicker(command);
     } else {
+        // 對於其他命令，直接執行
         document.execCommand(command, false, value);
     }
     
     // 更新按鈕狀態
-    updateToolbarState();
+    setTimeout(updateToolbarState, 10);
 }
 
 // 顯示顏色選擇器
@@ -244,7 +252,24 @@ function showColorPicker(command) {
 
 // 應用顏色
 window.applyColor = function(color, command) {
+    // 確保編輯器獲得焦點
+    const editor = document.getElementById('comment-editor');
+    editor.focus();
+    
+    // 恢復選擇（如果需要）
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) {
+        // 如果沒有選擇，創建一個空的選擇範圍
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        selection.addRange(range);
+    }
+    
+    // 執行顏色命令
     document.execCommand(command, false, color);
+    
+    // 關閉顏色選擇器
     document.querySelector('.color-palette.show')?.classList.remove('show');
     
     // 更新按鈕指示器
@@ -255,6 +280,9 @@ window.applyColor = function(color, command) {
             indicator.style.background = color;
         }
     }
+    
+    // 保持焦點
+    editor.focus();
 }
 
 // 程式碼對話框功能
@@ -265,12 +293,30 @@ function openCodeDialog() {
         dialog.style.zIndex = '10100'; // 確保在最上層
         
         const textarea = document.getElementById('code-textarea');
+        const wrapper = document.querySelector('.code-textarea-wrapper');
+        
         if (textarea) {
             textarea.focus();
+            
             // 綁定拖放事件
             textarea.addEventListener('dragover', handleCodeDragOver);
             textarea.addEventListener('drop', handleCodeDrop);
             textarea.addEventListener('dragleave', handleCodeDragLeave);
+            textarea.addEventListener('dragenter', handleCodeDragEnter);
+        }
+        
+        // 創建拖放提示覆蓋層（如果不存在）
+        if (!document.getElementById('code-drop-overlay')) {
+            const dropOverlay = document.createElement('div');
+            dropOverlay.id = 'code-drop-overlay';
+            dropOverlay.className = 'code-drop-overlay';
+            dropOverlay.innerHTML = '拖曳檔案到這裡';
+            
+            if (wrapper) {
+                wrapper.appendChild(dropOverlay);
+            } else if (textarea) {
+                textarea.parentElement.appendChild(dropOverlay);
+            }
         }
         
         // 初始化預覽
@@ -294,22 +340,64 @@ function updateCodePreview() {
     }
 }
 
+// 處理程式碼區域拖放進入
+function handleCodeDragEnter(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
 // 處理程式碼區域拖放
 function handleCodeDragOver(e) {
     e.preventDefault();
-    const textarea = e.currentTarget;
-    textarea.classList.add('drop-active');
+    e.stopPropagation();
+    
+    const overlay = document.getElementById('code-drop-overlay');
+    const textarea = document.getElementById('code-textarea');
+    
+    if (overlay) {
+        overlay.classList.add('active');
+    }
+    if (textarea) {
+        textarea.classList.add('drop-active');
+    }
 }
 
 function handleCodeDragLeave(e) {
-    const textarea = e.currentTarget;
-    textarea.classList.remove('drop-active');
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // 檢查是否真的離開了拖放區域
+    const wrapper = e.currentTarget.parentElement;
+    const relatedTarget = e.relatedTarget;
+    
+    if (wrapper && relatedTarget && wrapper.contains(relatedTarget)) {
+        return;
+    }
+    
+    const overlay = document.getElementById('code-drop-overlay');
+    const textarea = document.getElementById('code-textarea');
+    
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+    if (textarea) {
+        textarea.classList.remove('drop-active');
+    }
 }
 
 async function handleCodeDrop(e) {
     e.preventDefault();
-    const textarea = e.currentTarget;
-    textarea.classList.remove('drop-active');
+    e.stopPropagation();
+    
+    const overlay = document.getElementById('code-drop-overlay');
+    const textarea = document.getElementById('code-textarea');
+    
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+    if (textarea) {
+        textarea.classList.remove('drop-active');
+    }
     
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
@@ -350,12 +438,20 @@ window.closeCodeDialog = function() {
         dialog.classList.remove('show');
         document.getElementById('code-textarea').value = '';
         document.getElementById('code-language').value = 'javascript';
+        
         // 移除事件監聽器
         const textarea = document.getElementById('code-textarea');
         if (textarea) {
             textarea.removeEventListener('dragover', handleCodeDragOver);
             textarea.removeEventListener('drop', handleCodeDrop);
             textarea.removeEventListener('dragleave', handleCodeDragLeave);
+            textarea.removeEventListener('dragenter', handleCodeDragEnter);
+        }
+        
+        // 移除拖放提示覆蓋層
+        const overlay = document.getElementById('code-drop-overlay');
+        if (overlay) {
+            overlay.remove();
         }
     }
 }

@@ -462,27 +462,64 @@
 	</div>
 
     <!-- 評論功能按鈕 -->
-    <div style="position: fixed; bottom: 100px; right: 20px; z-index: 99999;">
+    <div style="position: fixed; bottom: 100px; right: 20px; z-index: 8996;">
         <button onclick="openCommentDialog()" 
-            style="width: 60px; height: 60px; border-radius: 50%; background: #667eea; color: white; border: none; font-size: 36px; font-weight: bold; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); cursor: pointer;"
-            title="新增評論">
+            style="width: 60px; height: 60px; border-radius: 50%; background: #667eea; color: white; border: none; font-size: 30px; font-weight: bold; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0;">
             +
         </button>
+        <div class="comment-fab-tooltip">新增評論</div>
     </div>
+
+    <!-- 快速跳轉到評論區 -->
+    <a href="#comments-section" class="quick-comment-link" id="quick-comment-link">
+        <i class="fas fa-comments"></i>
+        <span>查看評論</span>
+        <span class="comments-count-quick">0</span>
+    </a>
+
+    <!-- 回到頂部按鈕 -->
+    <button class="back-to-top" id="back-to-top" onclick="scrollToTop()">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
     <!-- 評論對話框 -->
     <div id="comment-dialog" class="comment-dialog">
         <div class="comment-dialog-overlay"></div>
         <div class="comment-dialog-content">
             <div class="comment-dialog-header">
-                <h5><i class="fas fa-comment-plus"></i> 新增評論</h5>
+                <h5><i class="fas fa-comment-plus" style="margin-right: 10px;"></i>新增評論</h5>
                 <button class="comment-dialog-close">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="comment-dialog-body">
+                <!-- 主題選擇器 -->
+                <div class="comment-topic-selector">
+                    <label class="form-label">
+                        <i class="fas fa-folder"></i> 討論主題（選填）
+                    </label>
+                    <input type="text" class="topic-input" id="comment-topic" 
+                        placeholder="輸入或選擇主題..." list="topic-list">
+                    <datalist id="topic-list">
+                        <option value="一般討論">
+                        <option value="錯誤報告">
+                        <option value="功能建議">
+                        <option value="程式碼檢討">
+                    </datalist>
+                </div>
+                
                 <!-- 富文本編輯器工具列 -->
                 <div class="comment-toolbar">
+                    <button class="comment-toolbar-btn" data-command="formatBlock" data-value="h1" title="標題 1">
+                        <strong>H1</strong>
+                    </button>
+                    <button class="comment-toolbar-btn" data-command="formatBlock" data-value="h2" title="標題 2">
+                        <strong>H2</strong>
+                    </button>
+                    <button class="comment-toolbar-btn" data-command="formatBlock" data-value="h3" title="標題 3">
+                        <strong>H3</strong>
+                    </button>
+                    <div class="comment-toolbar-separator"></div>
                     <button class="comment-toolbar-btn" data-command="bold" title="粗體">
                         <i class="fas fa-bold"></i>
                     </button>
@@ -505,12 +542,24 @@
                     <button class="comment-toolbar-btn" data-command="formatBlock" data-value="blockquote" title="引用">
                         <i class="fas fa-quote-left"></i>
                     </button>
+                    <button class="comment-toolbar-btn" data-command="insertCode" title="程式碼">
+                        <i class="fas fa-code"></i>
+                    </button>
+                    <button class="comment-toolbar-btn" data-command="insertTable" title="插入表格">
+                        <i class="fas fa-table"></i>
+                    </button>
                     <div class="comment-toolbar-separator"></div>
                     <button class="comment-toolbar-btn" data-command="createLink" title="插入連結">
                         <i class="fas fa-link"></i>
                     </button>
                     <button class="comment-toolbar-btn" data-command="insertImage" title="插入圖片">
                         <i class="fas fa-image"></i>
+                    </button>
+                    <button class="comment-toolbar-btn" data-command="undo" title="復原">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button class="comment-toolbar-btn" data-command="redo" title="重做">
+                        <i class="fas fa-redo"></i>
                     </button>
                 </div>
                 
@@ -529,13 +578,57 @@
                     </small>
                 </div>
                 <div class="comment-actions">
-                    <button class="btn btn-outline-secondary btn-modern" id="cancel-comment">
+                    <button class="btn btn-outline-secondary btn-modern" id="cancel-comment" onclick="closeCommentDialog()">
                         <i class="fas fa-times"></i> 取消
                     </button>
-                    <button class="btn btn-gradient-primary btn-modern" id="submit-comment">
+                    <button class="btn btn-gradient-primary btn-modern" id="submit-comment" onclick="submitComment()">
                         <i class="fas fa-paper-plane"></i> 送出
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 程式碼對話框 -->
+    <div id="code-dialog" class="code-dialog">
+        <div class="code-dialog-overlay" onclick="closeCodeDialog()"></div>
+        <div class="code-dialog-content">
+            <div class="code-dialog-header">
+                <h5><i class="fas fa-code" style="margin-right: 10px;"></i>插入程式碼</h5>
+                <button class="comment-dialog-close" onclick="closeCodeDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="code-dialog-body">
+                <div class="language-selector">
+                    <label class="form-label">選擇程式語言</label>
+                    <select id="code-language">
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                        <option value="xml">XML</option>
+                        <option value="json">JSON</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                        <option value="sql">SQL</option>
+                        <option value="bash">Bash</option>
+                        <option value="ini">INI</option>
+                        <option value="diff">Diff</option>
+                        <option value="kotlin">Android/Kotlin</option>
+                    </select>
+                </div>
+                <textarea id="code-textarea" class="code-textarea" 
+                        placeholder="在此貼上或輸入程式碼..."></textarea>
+            </div>
+            <div class="code-dialog-footer">
+                <button class="btn btn-outline-secondary btn-modern" onclick="closeCodeDialog()">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+                <button class="btn btn-gradient-primary btn-modern" onclick="insertCodeBlock()">
+                    <i class="fas fa-check"></i> 插入
+                </button>
             </div>
         </div>
     </div>

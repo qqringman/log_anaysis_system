@@ -162,12 +162,391 @@ function handleToolbarClick(e) {
             }
         };
         input.click();
+    } else if (command === 'insertCode') {
+        // 開啟程式碼對話框
+        openCodeDialog();
+    } else if (command === 'insertTable') {
+        // 插入表格
+        const rows = prompt('請輸入表格行數：', '3');
+        const cols = prompt('請輸入表格列數：', '3');
+        if (rows && cols) {
+            const table = createTable(parseInt(rows), parseInt(cols));
+            document.execCommand('insertHTML', false, table);
+        }
+    } else if (command === 'formatBlock' && value === 'blockquote') {
+        // 修正引用功能
+        const selection = window.getSelection();
+        const range = selection.getRangeAt(0);
+        const blockquote = document.createElement('blockquote');
+        blockquote.appendChild(range.extractContents());
+        range.insertNode(blockquote);
+        range.selectNodeContents(blockquote);
+        selection.removeAllRanges();
+        selection.addRange(range);
     } else {
         document.execCommand(command, false, value);
     }
     
     // 更新按鈕狀態
     updateToolbarState();
+}
+
+// 程式碼對話框功能
+function openCodeDialog() {
+    const dialog = document.getElementById('code-dialog');
+    if (dialog) {
+        dialog.classList.add('show');
+        document.getElementById('code-textarea').focus();
+    }
+}
+
+window.closeCodeDialog = function() {
+    const dialog = document.getElementById('code-dialog');
+    if (dialog) {
+        dialog.classList.remove('show');
+        document.getElementById('code-textarea').value = '';
+    }
+}
+
+window.insertCodeBlock = function() {
+    const language = document.getElementById('code-language').value;
+    const code = document.getElementById('code-textarea').value;
+    
+    if (code) {
+        const pre = document.createElement('pre');
+        pre.className = `language-${language}`;
+        const codeEl = document.createElement('code');
+        codeEl.textContent = code;
+        codeEl.className = `language-${language}`;
+        pre.appendChild(codeEl);
+        
+        // 插入到編輯器
+        const editor = document.getElementById('comment-editor');
+        editor.focus();
+        document.execCommand('insertHTML', false, pre.outerHTML);
+        
+        closeCodeDialog();
+    }
+}
+
+// 處理拖放 - 加入視覺提示
+function handleDragOver(e) {
+    e.preventDefault();
+    const editor = e.currentTarget;
+    editor.classList.add('drop-active');
+    editor.style.position = 'relative';
+}
+
+function handleDragLeave(e) {
+    const editor = e.currentTarget;
+    editor.classList.remove('drop-active');
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    const editor = e.currentTarget;
+    editor.classList.remove('drop-active');
+    
+    const files = Array.from(e.dataTransfer.files);
+    for (let file of files) {
+        if (file.type.startsWith('image/')) {
+            await handleImageFile(file);
+        } else {
+            await handleAttachmentFile(file);
+        }
+    }
+}
+
+// 送出評論 - 支援主題
+window.submitComment = async function() {
+    const editor = document.getElementById('comment-editor');
+    const content = editor.innerHTML.trim();
+    const topic = document.getElementById('comment-topic').value.trim();
+    
+    if (!content) {
+        showToast('請輸入評論內容', 'warning');
+        return;
+    }
+    
+    const filePath = document.getElementById('initial-file-path').value;
+    const commentData = {
+        content: content,
+        topic: topic || '一般討論',
+        attachments: commentAttachments,
+        file_path: filePath,
+        edit_id: currentEditingCommentId
+    };
+    
+    try {
+        const response = await fetch('/api/comment', {
+            method: currentEditingCommentId ? 'PUT' : 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(commentData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast(currentEditingCommentId ? '評論已更新' : '評論已新增', 'success');
+            closeCommentDialog();
+            loadComments();
+            updateQuickLink();
+        } else {
+            showToast(result.message || '操作失敗', 'danger');
+        }
+    } catch (error) {
+        console.error('提交評論錯誤:', error);
+        showToast('提交評論時發生錯誤', 'danger');
+    }
+}
+
+// 顯示評論 - 支援主題分組
+function displayComments() {
+    const section = document.getElementById('comments-section');
+    const list = document.getElementById('comments-list');
+    const count = document.querySelector('.comments-count');
+    
+    if (!section || !list) return;
+    
+    if (comments.length === 0) {
+        section.style.display = 'none';
+        list.innerHTML = `
+            <div class="comments-empty">
+                <i class="fas fa-comment-slash"></i>
+                <p>目前沒有評論</p>
+            </div>
+        `;
+    } else {
+        section.style.display = 'block';
+        count.textContent = comments.length;
+        
+        // 按主題分組
+        const groupedComments = {};
+        comments.forEach(comment => {
+            const topic = comment.topic || '一般討論';
+            if (!groupedComments[topic]) {
+                groupedComments[topic] = [];
+            }
+            groupedComments[topic].push(comment);
+        });
+        
+        list.innerHTML = Object.entries(groupedComments).map(([topic, topicComments]) => `
+            <div class="comment-topic-group">
+                <h5 class="comment-topic">
+                    <i class="fas fa-folder"></i>
+                    ${topic}
+                    <span class="badge">${topicComments.length}</span>
+                </h5>
+                ${topicComments.map(comment => `
+                    <div class="comment-item" data-id="${comment.id}">
+                        <div class="comment-header">
+                            <div class="comment-author">
+                                <div class="comment-avatar">${getInitials(comment.author)}</div>
+                                <div class="comment-meta">
+                                    <div class="comment-author-name">${comment.author}</div>
+                                    <div class="comment-time">${formatTime(comment.created_at)}</div>
+                                </div>
+                            </div>
+                            <div class="comment-actions">
+                                <button class="comment-reply-btn" onclick="replyToComment('${comment.id}', '${topic}')">
+                                    <i class="fas fa-reply"></i> 回覆
+                                </button>
+                                <button class="comment-action-btn" onclick="editComment('${comment.id}')">
+                                    <i class="fas fa-edit"></i> 編輯
+                                </button>
+                                <button class="comment-action-btn delete" onclick="deleteComment('${comment.id}')">
+                                    <i class="fas fa-trash"></i> 刪除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="comment-content">${comment.content}</div>
+                        ${comment.attachments && comment.attachments.length > 0 ? `
+                            <div class="comment-images">
+                                ${comment.attachments.filter(a => a.type.startsWith('image/')).map(img => `
+                                    <div class="comment-image" onclick="previewImage('${img.url || img.data}')">
+                                        <img src="${img.url || img.data}" alt="${img.name}">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+    }
+    
+    updateQuickLink();
+}
+
+// 回覆評論
+window.replyToComment = function(commentId, topic) {
+    openCommentDialog();
+    document.getElementById('comment-topic').value = topic;
+    const comment = comments.find(c => c.id === commentId);
+    if (comment) {
+        const editor = document.getElementById('comment-editor');
+        editor.innerHTML = `<blockquote>@${comment.author}: ${comment.content.substring(0, 100)}...</blockquote><p><br></p>`;
+        // 將游標移到最後
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        editor.focus();
+    }
+}
+
+// 更新快速連結
+function updateQuickLink() {
+    const link = document.getElementById('quick-comment-link');
+    const countBadge = document.querySelector('.comments-count-quick');
+    if (link && comments.length > 0) {
+        link.classList.add('show');
+        countBadge.textContent = comments.length;
+    } else if (link) {
+        link.classList.remove('show');
+    }
+    
+    // 顯示回到頂部按鈕
+    const backToTop = document.getElementById('back-to-top');
+    if (backToTop && window.scrollY > 300) {
+        backToTop.classList.add('show');
+    }
+}
+
+// 回到頂部
+window.scrollToTop = function() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 監聽滾動
+window.addEventListener('scroll', function() {
+    const backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+        if (window.scrollY > 300) {
+            backToTop.classList.add('show');
+        } else {
+            backToTop.classList.remove('show');
+        }
+    }
+});
+
+// 創建表格
+function createTable(rows, cols) {
+    let html = '<table><tbody>';
+    for (let i = 0; i < rows; i++) {
+        html += '<tr>';
+        for (let j = 0; j < cols; j++) {
+            html += i === 0 ? '<th>標題</th>' : '<td>內容</td>';
+        }
+        html += '</tr>';
+    }
+    html += '</tbody></table>';
+    return html;
+}
+
+// 處理圖片檔案 - 增加可縮放功能
+async function handleImageFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const imgId = 'img-' + Date.now();
+        const img = `<img id="${imgId}" src="${e.target.result}" style="max-width: 100%; margin: 10px 0; cursor: move;" onload="makeImageResizable('${imgId}')">`;
+        document.execCommand('insertHTML', false, img);
+    };
+    reader.readAsDataURL(file);
+}
+
+// 使圖片可縮放
+window.makeImageResizable = function(imgId) {
+    const img = document.getElementById(imgId);
+    if (!img) return;
+    
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+    
+    // 點擊圖片時顯示縮放控制點
+    img.addEventListener('click', function(e) {
+        e.preventDefault();
+        toggleImageResize(img);
+    });
+    
+    // 拖動功能
+    img.addEventListener('mousedown', function(e) {
+        if (!isResizing) {
+            const startPosX = e.clientX - img.offsetLeft;
+            const startPosY = e.clientY - img.offsetTop;
+            
+            function handleMouseMove(e) {
+                img.style.position = 'relative';
+                img.style.left = (e.clientX - startPosX) + 'px';
+                img.style.top = (e.clientY - startPosY) + 'px';
+            }
+            
+            function handleMouseUp() {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            }
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+    });
+}
+
+// 切換圖片縮放控制
+function toggleImageResize(img) {
+    const existingHandle = img.parentElement.querySelector('.image-resize-handle');
+    if (existingHandle) {
+        existingHandle.remove();
+        return;
+    }
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'relative';
+    wrapper.style.display = 'inline-block';
+    img.parentNode.insertBefore(wrapper, img);
+    wrapper.appendChild(img);
+    
+    const handle = document.createElement('div');
+    handle.className = 'image-resize-handle';
+    handle.style.position = 'absolute';
+    handle.style.right = '-5px';
+    handle.style.bottom = '-5px';
+    wrapper.appendChild(handle);
+    
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+    
+    handle.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = img.offsetWidth;
+        startHeight = img.offsetHeight;
+        e.preventDefault();
+        
+        function handleMouseMove(e) {
+            if (!isResizing) return;
+            
+            const width = startWidth + (e.clientX - startX);
+            const height = startHeight + (e.clientY - startY);
+            
+            img.style.width = width + 'px';
+            img.style.height = height + 'px';
+        }
+        
+        function handleMouseUp() {
+            isResizing = false;
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+    });
 }
 
 // 更新工具列狀態

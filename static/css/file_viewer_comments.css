@@ -1,6 +1,6 @@
 /* Enhanced File Viewer Comments System CSS */
 
-/* 新增評論按鈕 - 簡化樣式確保顯示 */
+/* 新增評論按鈕 - 修正置中和提示 */
 .comment-fab {
     position: fixed !important;
     bottom: 240px !important;
@@ -14,29 +14,39 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 24px !important;
+    font-size: 28px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
     cursor: pointer !important;
-    z-index: 9999 !important;
+    z-index: 8996 !important;
     transition: all 0.3s ease !important;
-    visibility: visible !important;
-    opacity: 1 !important;
 }
 
-.comment-fab i {
-    font-size: 24px !important;
+.comment-fab:hover {
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    background: #764ba2 !important;
+}
+
+/* 提示文字 */
+.comment-fab-tooltip {
+    position: fixed !important;
+    bottom: 255px !important;
+    right: 85px !important;
+    background: rgba(0, 0, 0, 0.8) !important;
     color: white !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
 }
 
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+.comment-fab:hover + .comment-fab-tooltip {
+    opacity: 1 !important;
 }
 
 .comment-fab:hover {
@@ -192,10 +202,10 @@
     margin: 0 4px;
 }
 
-/* 編輯器內容區 */
+/* 編輯器內容區 - 支援縮放 */
 .comment-editor {
     min-height: 200px;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     border: 2px solid #e9ecef;
     border-radius: 12px;
@@ -204,6 +214,90 @@
     line-height: 1.6;
     transition: all 0.3s ease;
     background: white;
+    resize: vertical; /* 支援垂直縮放 */
+}
+
+/* 引用樣式 */
+.comment-editor blockquote {
+    border-left: 4px solid #667eea;
+    padding-left: 16px;
+    margin: 12px 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* 程式碼樣式 */
+.comment-editor code {
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    color: #e83e8c;
+}
+
+.comment-editor pre {
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+}
+
+.comment-editor pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+/* 表格樣式 */
+.comment-editor table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.comment-editor table td,
+.comment-editor table th {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+}
+
+.comment-editor table th {
+    background: #f8f9fa;
+    font-weight: 600;
+}
+
+/* 可縮放圖片 */
+.comment-editor img {
+    max-width: 100%;
+    height: auto;
+    margin: 10px 0;
+    cursor: move;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.comment-editor img:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.comment-editor img.resizing {
+    cursor: nwse-resize;
+}
+
+/* 圖片縮放控制 */
+.image-resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #667eea;
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: nwse-resize;
+    z-index: 10;
 }
 
 .comment-editor:focus {
@@ -261,14 +355,22 @@
     transform: scale(1.1);
 }
 
-/* 對話框底部 */
+/* 確保對話框底部可見 */
 .comment-dialog-footer {
-    padding: 16px 20px;
-    background: #f8f9fa;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid #dee2e6;
+    padding: 16px 20px !important;
+    background: #f8f9fa !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-top: 1px solid #dee2e6 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.comment-actions {
+    display: flex !important;
+    gap: 10px !important;
+    visibility: visible !important;
 }
 
 .comment-actions {

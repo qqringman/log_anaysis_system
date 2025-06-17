@@ -1684,6 +1684,7 @@ def create_comment():
         data = request.get_json()
         file_path = data.get('file_path')
         content = data.get('content')
+        topic = data.get('topic', '一般討論')
         attachments = data.get('attachments', [])
         
         if not file_path or not content:
@@ -1716,6 +1717,7 @@ def create_comment():
         comment = {
             'id': str(uuid.uuid4()),
             'content': content,
+            'topic': topic,
             'attachments': saved_attachments,
             'author': session.get('username', '匿名用戶'),
             'created_at': datetime.now().isoformat(),
@@ -1743,6 +1745,7 @@ def update_comment():
         file_path = data.get('file_path')
         edit_id = data.get('edit_id')
         content = data.get('content')
+        topic = data.get('topic')
         
         if not file_path or not edit_id or not content:
             return jsonify({'success': False, 'message': '缺少必要資料'})
@@ -1752,6 +1755,8 @@ def update_comment():
             for comment in file_comments[file_path]:
                 if comment['id'] == edit_id:
                     comment['content'] = content
+                    if topic:
+                        comment['topic'] = topic
                     comment['updated_at'] = datetime.now().isoformat()
                     return jsonify({
                         'success': True,

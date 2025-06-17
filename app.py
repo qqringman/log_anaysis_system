@@ -1513,7 +1513,152 @@ def export_file():
         )
     except Exception as e:
         abort(500, f'下載檔案失敗: {str(e)}')
-	
+
+@app.route('/api/get_line_content')
+def get_line_content():
+    """獲取指定行的內容用於預覽"""
+    try:
+        file_path = request.args.get('path')
+        line_number = request.args.get('line', type=int)
+        
+        if not file_path or not line_number:
+            return jsonify({
+                'success': False, 
+                'message': '缺少必要參數'
+            })
+        
+        if not os.path.exists(file_path) or not os.path.isfile(file_path):
+            return jsonify({
+                'success': False, 
+                'message': '檔案不存在'
+            })
+        
+        if line_number < 1:
+            return jsonify({
+                'success': False, 
+                'message': '行號必須大於 0'
+            })
+        
+        # 讀取指定行的內容
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                for current_line_number, line in enumerate(f, 1):
+                    if current_line_number == line_number:
+                        # 移除換行符並限制長度
+                        content = line.rstrip('\n\r')
+                        if len(content) > 200:
+                            content = content[:200] + '...'
+                        
+                        return jsonify({
+                            'success': True,
+                            'content': content,
+                            'line_number': line_number,
+                            'file_path': file_path
+                        })
+                
+                # 如果到這裡說明行號超出範圍
+                return jsonify({
+                    'success': False,
+                    'message': f'行號 {line_number} 超出檔案範圍'
+                })
+                
+        except UnicodeDecodeError:
+            # 嘗試其他編碼
+            encodings = ['utf-8', 'gbk', 'big5', 'latin1']
+            for encoding in encodings:
+                try:
+                    with open(file_path, 'r', encoding=encoding, errors='ignore') as f:
+                        for current_line_number, line in enumerate(f, 1):
+                            if current_line_number == line_number:
+                                content = line.rstrip('\n\r')
+                                if len(content) > 200:
+                                    content = content[:200] + '...'
+                                
+                                return jsonify({
+                                    'success': True,
+                                    'content': content,
+                                    'line_number': line_number,
+                                    'file_path': file_path
+                                })
+                    break
+                except:
+                    continue
+            
+            return jsonify({
+                'success': False,
+                'message': '無法讀取檔案內容'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'讀取失敗: {str(e)}'
+        })
+
+def get_line_range():
+    """獲取指定範圍的行內容"""
+    try:
+        file_path = request.args.get('path')
+        start_line = request.args.get('start', type=int)
+        end_line = request.args.get('end', type=int)
+        
+        if not file_path or not start_line or not end_line:
+            return jsonify({
+                'success': False, 
+                'message': '缺少必要參數'
+            })
+        
+        if not os.path.exists(file_path) or not os.path.isfile(file_path):
+            return jsonify({
+                'success': False, 
+                'message': '檔案不存在'
+            })
+        
+        if start_line < 1 or end_line < start_line:
+            return jsonify({
+                'success': False, 
+                'message': '行號範圍無效'
+            })
+        
+        # 限制範圍大小（防止過大的請求）
+        if end_line - start_line + 1 > 100:
+            return jsonify({
+                'success': False, 
+                'message': '範圍過大（最多100行）'
+            })
+        
+        lines = []
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                for current_line_number, line in enumerate(f, 1):
+                    if current_line_number >= start_line and current_line_number <= end_line:
+                        lines.append({
+                            'line_number': current_line_number,
+                            'content': line.rstrip('\n\r')
+                        })
+                    elif current_line_number > end_line:
+                        break
+            
+            return jsonify({
+                'success': True,
+                'lines': lines,
+                'start_line': start_line,
+                'end_line': end_line,
+                'total_returned': len(lines)
+            })
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'message': f'讀取檔案失敗: {str(e)}'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'處理請求失敗: {str(e)}'
+        })
+        
 # 工具函數
 def read_file_lines(file_path, target_line, context=200, start_line=None, end_line=None):
     """讀取檔案指定行數及其上下文"""

@@ -361,13 +361,37 @@
         // 獲取總行數
         getTotalLines: function() {
             // 方式1: 使用全域變數
-            if (window.totalLines) {
+            if (window.totalLines && window.totalLines > 0) {
                 console.log('📊 totalLines:', window.totalLines);
                 return window.totalLines;
             }
             
-            // 方式2: 計算 DOM 中的行數
-            const codeLines = document.querySelectorAll('.code-line');
+            // 方式2: 從隱藏輸入框獲取
+            const totalLinesInput = document.getElementById('initial-total-lines');
+            if (totalLinesInput && totalLinesInput.value) {
+                const lines = parseInt(totalLinesInput.value);
+                if (lines > 0) {
+                    console.log('📊 從隱藏輸入框獲取總行數:', lines);
+                    window.totalLines = lines; // 快取到全域變數
+                    return lines;
+                }
+            }
+            
+            // 方式3: 從檔案資訊區域獲取
+            const fileInfoElements = document.querySelectorAll('.file-info-badge .info-item');
+            for (const element of fileInfoElements) {
+                const text = element.textContent || '';
+                const match = text.match(/(\d+)\s*行/);
+                if (match) {
+                    const lines = parseInt(match[1]);
+                    console.log('📊 從檔案資訊獲取總行數:', lines);
+                    window.totalLines = lines; // 快取到全域變數
+                    return lines;
+                }
+            }
+            
+            // 方式4: 計算 DOM 中的最大行號（但這可能只是當前範圍的最大值）
+            const codeLines = document.querySelectorAll('.code-line[data-line]');
             if (codeLines.length > 0) {
                 let maxLine = 0;
                 codeLines.forEach(lineEl => {
@@ -376,20 +400,64 @@
                         maxLine = lineNumber;
                     }
                 });
-                console.log('📊 計算得出總行數:', maxLine);
-                return maxLine;
+                
+                // 如果最大行號看起來像是檔案的一部分而非全部，嘗試請求真實總行數
+                if (maxLine > 0) {
+                    const currentEnd = window.currentEndLine || maxLine;
+                    if (maxLine === currentEnd) {
+                        // 這可能只是當前範圍的最後一行，需要獲取真實總行數
+                        this.fetchRealTotalLines();
+                        console.log('📊 DOM中最大行號（可能不是真實總數）:', maxLine);
+                        return maxLine; // 暫時返回這個值
+                    } else {
+                        console.log('📊 計算得出總行數:', maxLine);
+                        window.totalLines = maxLine; // 快取到全域變數
+                        return maxLine;
+                    }
+                }
             }
             
-            // 方式3: 從隱藏輸入框獲取
-            const totalLinesInput = document.getElementById('initial-total-lines');
-            if (totalLinesInput) {
-                const lines = parseInt(totalLinesInput.value);
-                console.log('📊 從隱藏輸入框獲取總行數:', lines);
-                return lines;
+            // 方式5: 嘗試從URL或其他地方獲取
+            console.log('📊 無法確定總行數，嘗試從伺服器獲取');
+            this.fetchRealTotalLines();
+            
+            // 返回一個較大的預設值，避免限制用戶輸入
+            return 999999;
+        },
+        
+        // 從伺服器獲取真實總行數
+        fetchRealTotalLines: function() {
+            const filePath = this.getCurrentFilePath();
+            if (!filePath) {
+                console.warn('⚠️ 無法獲取檔案路徑來查詢總行數');
+                return;
             }
             
-            console.log('📊 使用預設總行數: 1000');
-            return 1000;
+            const requestUrl = `/api/get_file_info?path=${encodeURIComponent(filePath)}`;
+            
+            fetch(requestUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.total_lines) {
+                        console.log('📊 從伺服器獲取真實總行數:', data.total_lines);
+                        window.totalLines = data.total_lines;
+                        
+                        // 更新UI中的總行數顯示
+                        const totalLinesEl = document.getElementById('goto-total-lines');
+                        if (totalLinesEl) {
+                            totalLinesEl.textContent = data.total_lines;
+                        }
+                        
+                        // 更新輸入框的最大值
+                        const input = document.getElementById('goto-line-input');
+                        if (input) {
+                            input.setAttribute('max', data.total_lines);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ 獲取檔案資訊失敗:', error);
+                });
         },
         
         // 填入行號
@@ -443,9 +511,18 @@
             // 檢查行是否在當前範圍內
             const startLine = window.currentStartLine || 1;
             const endLine = window.currentEndLine || this.getTotalLines();
+            const totalLines = this.getTotalLines();
             
-            console.log('📊 當前範圍:', { startLine, endLine, lineNumber });
+            console.log('📊 當前範圍:', { startLine, endLine, lineNumber, totalLines });
             
+            // 檢查是否超出文件範圍
+            if (lineNumber > totalLines) {
+                content.innerHTML = `<span class="preview-error">超出文件範圍（總共 ${totalLines} 行）</span>`;
+                preview.style.display = 'block';
+                return;
+            }
+            
+            // 如果在當前範圍內，直接顯示
             if (lineNumber >= startLine && lineNumber <= endLine) {
                 const lineElement = document.getElementById(`line-${lineNumber}`);
                 if (lineElement) {
@@ -455,16 +532,152 @@
                         const truncated = text.length > 80 ? text.substring(0, 80) + '...' : text;
                         content.innerHTML = `<span class="preview-line-number">第 ${lineNumber} 行:</span> ${truncated || '(空白行)'}`;
                         preview.style.display = 'block';
-                        console.log('👁️ 預覽內容已更新');
+                        console.log('👁️ 預覽內容已更新（範圍內）');
                         return;
                     }
                 }
-                content.textContent = '(無法預覽此行內容)';
-                preview.style.display = 'block';
-            } else {
-                content.textContent = '(需要跳轉到該行才能預覽)';
-                preview.style.display = 'block';
             }
+            
+            // 如果不在範圍內，嘗試載入預覽
+            this.loadOutOfRangePreview(lineNumber, content, preview);
+        },
+        
+        // 載入範圍外預覽
+        loadOutOfRangePreview: function(lineNumber, contentElement, previewElement) {
+            console.log('🔍 載入範圍外預覽:', lineNumber);
+            
+            // 添加載入狀態到輸入框和預覽區
+            const input = document.getElementById('goto-line-input');
+            if (input) {
+                input.classList.add('loading');
+            }
+            previewElement.classList.add('loading');
+            
+            // 顯示載入狀態
+            contentElement.innerHTML = `
+                <span class="preview-loading">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    正在載入第 ${lineNumber} 行的預覽...
+                </span>
+            `;
+            previewElement.style.display = 'block';
+            
+            // 獲取文件路徑
+            const currentFilePath = this.getCurrentFilePath();
+            if (!currentFilePath) {
+                this.showPreviewError(contentElement, previewElement, input, '無法獲取文件路徑');
+                return;
+            }
+            
+            // 發送AJAX請求獲取行內容
+            const requestUrl = `/api/get_line_content?path=${encodeURIComponent(currentFilePath)}&line=${lineNumber}`;
+            
+            // 設置請求超時
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超時
+            
+            fetch(requestUrl, { 
+                signal: controller.signal,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.content !== undefined) {
+                        const text = data.content || '';
+                        const truncated = text.length > 80 ? text.substring(0, 80) + '...' : text;
+                        contentElement.innerHTML = `
+                            <span class="preview-line-number">第 ${lineNumber} 行:</span> 
+                            ${truncated || '(空白行)'}
+                            <span class="preview-out-of-range">
+                                <i class="fas fa-external-link-alt me-1"></i>範圍外
+                            </span>
+                        `;
+                        previewElement.classList.remove('loading');
+                        previewElement.classList.remove('error');
+                        console.log('👁️ 範圍外預覽載入成功');
+                    } else {
+                        throw new Error(data.message || '無法獲取行內容');
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    console.error('❌ 載入預覽失敗:', error);
+                    
+                    let errorMessage;
+                    if (error.name === 'AbortError') {
+                        errorMessage = '載入超時，請稍後再試';
+                    } else if (error.message.includes('HTTP 404')) {
+                        errorMessage = '預覽功能暫不可用';
+                    } else if (error.message.includes('Failed to fetch')) {
+                        errorMessage = '網路連接問題';
+                    } else {
+                        errorMessage = '載入失敗';
+                    }
+                    
+                    contentElement.innerHTML = `
+                        <span class="preview-line-number">第 ${lineNumber} 行:</span> 
+                        <span class="preview-out-of-range">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            ${errorMessage}，跳轉時將載入
+                        </span>
+                    `;
+                    previewElement.classList.remove('loading');
+                })
+                .finally(() => {
+                    // 移除載入狀態
+                    if (input) {
+                        input.classList.remove('loading');
+                    }
+                    previewElement.classList.remove('loading');
+                });
+        },
+        
+        // 顯示預覽錯誤
+        showPreviewError: function(contentElement, previewElement, inputElement, message) {
+            contentElement.innerHTML = `<span class="preview-error">${message}</span>`;
+            previewElement.classList.remove('loading');
+            previewElement.classList.add('error');
+            if (inputElement) {
+                inputElement.classList.remove('loading');
+            }
+        },
+        
+        // 獲取當前文件路徑
+        getCurrentFilePath: function() {
+            // 方式1: 從全域變數獲取
+            if (window.currentFilePath) {
+                return window.currentFilePath;
+            }
+            
+            // 方式2: 從URL參數獲取
+            const urlParams = new URLSearchParams(window.location.search);
+            const pathFromUrl = urlParams.get('path');
+            if (pathFromUrl) {
+                return pathFromUrl;
+            }
+            
+            // 方式3: 從隱藏輸入框獲取
+            const pathInput = document.getElementById('initial-file-path');
+            if (pathInput && pathInput.value) {
+                return pathInput.value;
+            }
+            
+            // 方式4: 從頁面標題或其他地方推斷
+            const fileInfo = document.querySelector('.file-info-badge .info-item span');
+            if (fileInfo && fileInfo.textContent) {
+                return fileInfo.textContent.trim();
+            }
+            
+            console.warn('⚠️ 無法獲取文件路徑');
+            return null;
         },
         
         // 驗證輸入
@@ -535,40 +748,158 @@
             console.log('🎯 執行實際跳轉到行:', lineNumber);
             
             try {
-                // 方式1: 使用現有的 jumpToLine 函數
+                // 檢查行號是否在當前範圍內
+                const startLine = window.currentStartLine || 1;
+                const endLine = window.currentEndLine || this.getTotalLines();
+                const isInRange = lineNumber >= startLine && lineNumber <= endLine;
+                
+                console.log('📊 範圍檢查:', { lineNumber, startLine, endLine, isInRange });
+                
+                // 方式1: 如果在範圍內，直接滾動
+                if (isInRange) {
+                    const lineElement = document.getElementById(`line-${lineNumber}`);
+                    if (lineElement) {
+                        console.log('🎯 滾動到行元素');
+                        lineElement.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                        
+                        // 高亮該行
+                        this.highlightLine(lineElement);
+                        return;
+                    }
+                }
+                
+                // 方式2: 使用現有的 jumpToLine 函數
                 if (typeof window.jumpToLine === 'function') {
                     console.log('📞 調用 window.jumpToLine');
                     window.jumpToLine(lineNumber);
                     return;
                 }
                 
-                // 方式2: 直接滾動到指定行
-                const lineElement = document.getElementById(`line-${lineNumber}`);
-                if (lineElement) {
-                    console.log('🎯 滾動到行元素');
-                    lineElement.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center' 
-                    });
-                    
-                    // 高亮該行
-                    this.highlightLine(lineElement);
-                    return;
-                }
-                
-                // 方式3: 使用 URL 參數跳轉
-                console.log('🌐 使用 URL 跳轉');
-                const url = new URL(window.location);
-                url.searchParams.set('line', lineNumber);
-                url.searchParams.set('start', Math.max(1, lineNumber - 200));
-                url.searchParams.set('end', Math.min(this.getTotalLines(), lineNumber + 200));
-                url.searchParams.set('from', this.getCurrentLine());
-                window.location.href = url.toString();
+                // 方式3: 超出範圍時提示用戶並跳轉
+                console.log('🌐 需要重新載入頁面跳轉');
+                this.showPageReloadConfirmation(lineNumber);
                 
             } catch (error) {
                 console.error('❌ 跳轉執行錯誤:', error);
                 this.showError('跳轉失敗，請稍後再試');
             }
+        },
+        
+        // 顯示頁面重新載入確認
+        showPageReloadConfirmation: function(lineNumber) {
+            console.log('📋 顯示重新載入確認');
+            
+            const startLine = window.currentStartLine || 1;
+            const endLine = window.currentEndLine || this.getTotalLines();
+            
+            // 創建確認對話框
+            const confirmDialog = document.createElement('div');
+            confirmDialog.className = 'goto-confirm-dialog';
+            confirmDialog.innerHTML = `
+                <div class="confirm-overlay"></div>
+                <div class="confirm-content">
+                    <div class="confirm-header">
+                        <h5><i class="fas fa-info-circle me-2"></i>需要重新載入頁面</h5>
+                    </div>
+                    <div class="confirm-body">
+                        <p>第 <strong>${lineNumber}</strong> 行不在目前顯示範圍內。</p>
+                        <div class="range-info">
+                            <div class="current-range">
+                                <i class="fas fa-eye me-1"></i>
+                                目前範圍: 第 ${startLine} - ${endLine} 行
+                            </div>
+                            <div class="target-range">
+                                <i class="fas fa-crosshairs me-1"></i>
+                                跳轉目標: 第 ${lineNumber} 行
+                            </div>
+                        </div>
+                        <p class="confirm-message">
+                            <i class="fas fa-refresh me-1"></i>
+                            系統將重新載入頁面以顯示目標行及其上下文。
+                        </p>
+                    </div>
+                    <div class="confirm-footer">
+                        <button class="btn btn-outline-secondary confirm-cancel">
+                            <i class="fas fa-times me-1"></i>取消
+                        </button>
+                        <button class="btn btn-gradient-primary confirm-proceed">
+                            <i class="fas fa-arrow-right me-1"></i>繼續跳轉
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(confirmDialog);
+            
+            // 顯示動畫
+            setTimeout(() => {
+                confirmDialog.classList.add('show');
+            }, 10);
+            
+            // 綁定事件
+            const cancelBtn = confirmDialog.querySelector('.confirm-cancel');
+            const proceedBtn = confirmDialog.querySelector('.confirm-proceed');
+            const overlay = confirmDialog.querySelector('.confirm-overlay');
+            
+            const closeDialog = () => {
+                confirmDialog.classList.remove('show');
+                setTimeout(() => {
+                    if (confirmDialog.parentNode) {
+                        confirmDialog.remove();
+                    }
+                }, 300);
+            };
+            
+            // 取消按鈕
+            cancelBtn.addEventListener('click', closeDialog);
+            overlay.addEventListener('click', closeDialog);
+            
+            // 繼續按鈕
+            proceedBtn.addEventListener('click', () => {
+                closeDialog();
+                
+                // 顯示載入提示
+                this.showNavigatingAnimation(lineNumber);
+                
+                // 執行頁面跳轉
+                setTimeout(() => {
+                    const url = new URL(window.location);
+                    url.searchParams.set('line', lineNumber);
+                    url.searchParams.set('start', Math.max(1, lineNumber - 200));
+                    url.searchParams.set('end', Math.min(this.getTotalLines(), lineNumber + 200));
+                    url.searchParams.set('from', this.getCurrentLine());
+                    window.location.href = url.toString();
+                }, 500);
+            });
+            
+            // ESC 鍵關閉
+            const handleEsc = (e) => {
+                if (e.key === 'Escape') {
+                    closeDialog();
+                    document.removeEventListener('keydown', handleEsc);
+                }
+            };
+            document.addEventListener('keydown', handleEsc);
+        },
+        
+        // 顯示導航動畫
+        showNavigatingAnimation: function(lineNumber) {
+            console.log('🚀 顯示導航動畫');
+            
+            const animation = document.createElement('div');
+            animation.className = 'goto-navigating-animation show';
+            animation.innerHTML = `
+                <div class="navigating-content">
+                    <div class="navigating-spinner"></div>
+                    <div class="navigating-text">正在導航到第 ${lineNumber} 行</div>
+                    <div class="navigating-subtext">頁面載入中，請稍候...</div>
+                </div>
+            `;
+            
+            document.body.appendChild(animation);
         },
         
         // 高亮行

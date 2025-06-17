@@ -41,8 +41,11 @@ online_users = {}
 shared_results = {}
 lucky_wheels = {}
 polls = {}
+file_comments = {}  # 新增：檔案評論
 uploads_dir = os.path.join('uploads', 'chat')
+comments_dir = os.path.join('uploads', 'comments')
 os.makedirs(uploads_dir, exist_ok=True)
+os.makedirs(comments_dir, exist_ok=True)
 
 # FastGrep 配置
 config = {
@@ -1658,6 +1661,135 @@ def get_line_range():
             'success': False,
             'message': f'處理請求失敗: {str(e)}'
         })
+
+@app.route('/api/comments')
+def get_comments():
+    """獲取檔案評論"""
+    file_path = request.args.get('file_path')
+    if not file_path:
+        return jsonify({'success': False, 'message': '缺少檔案路徑'})
+    
+    # 使用檔案路徑作為鍵
+    comments = file_comments.get(file_path, [])
+    
+    return jsonify({
+        'success': True,
+        'comments': comments
+    })
+
+@app.route('/api/comment', methods=['POST'])
+def create_comment():
+    """新增評論"""
+    try:
+        data = request.get_json()
+        file_path = data.get('file_path')
+        content = data.get('content')
+        attachments = data.get('attachments', [])
+        
+        if not file_path or not content:
+            return jsonify({'success': False, 'message': '缺少必要資料'})
+        
+        # 處理附件
+        saved_attachments = []
+        for attachment in attachments:
+            if attachment.get('data'):
+                # 儲存附件
+                filename = f"{uuid.uuid4().hex}_{attachment['name']}"
+                filepath = os.path.join(comments_dir, filename)
+                
+                # Base64 解碼並儲存
+                file_data = attachment['data'].split(',')[1] if ',' in attachment['data'] else attachment['data']
+                file_content = base64.b64decode(file_data)
+                
+                with open(filepath, 'wb') as f:
+                    f.write(file_content)
+                
+                saved_attachments.append({
+                    'name': attachment['name'],
+                    'type': attachment['type'],
+                    'size': attachment['size'],
+                    'path': filepath,
+                    'url': f'/uploads/comments/{filename}'
+                })
+        
+        # 創建評論
+        comment = {
+            'id': str(uuid.uuid4()),
+            'content': content,
+            'attachments': saved_attachments,
+            'author': session.get('username', '匿名用戶'),
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
+        
+        # 儲存評論
+        if file_path not in file_comments:
+            file_comments[file_path] = []
+        file_comments[file_path].append(comment)
+        
+        return jsonify({
+            'success': True,
+            'comment': comment
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'新增評論失敗: {str(e)}'})
+
+@app.route('/api/comment', methods=['PUT'])
+def update_comment():
+    """更新評論"""
+    try:
+        data = request.get_json()
+        file_path = data.get('file_path')
+        edit_id = data.get('edit_id')
+        content = data.get('content')
+        
+        if not file_path or not edit_id or not content:
+            return jsonify({'success': False, 'message': '缺少必要資料'})
+        
+        # 尋找並更新評論
+        if file_path in file_comments:
+            for comment in file_comments[file_path]:
+                if comment['id'] == edit_id:
+                    comment['content'] = content
+                    comment['updated_at'] = datetime.now().isoformat()
+                    return jsonify({
+                        'success': True,
+                        'comment': comment
+                    })
+        
+        return jsonify({'success': False, 'message': '找不到評論'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'更新評論失敗: {str(e)}'})
+
+@app.route('/api/comment/<comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    """刪除評論"""
+    try:
+        # 在所有檔案中尋找並刪除評論
+        for file_path in file_comments:
+            comments = file_comments[file_path]
+            for i, comment in enumerate(comments):
+                if comment['id'] == comment_id:
+                    # 刪除附件檔案
+                    for attachment in comment.get('attachments', []):
+                        if 'path' in attachment and os.path.exists(attachment['path']):
+                            os.remove(attachment['path'])
+                    
+                    # 刪除評論
+                    comments.pop(i)
+                    return jsonify({'success': True})
+        
+        return jsonify({'success': False, 'message': '找不到評論'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'刪除評論失敗: {str(e)}'})
+
+@app.route('/uploads/comments/<path:filename>')
+def serve_comment_file(filename):
+    """提供評論附件檔案"""
+    return send_from_directory(comments_dir, filename)
         
 # 工具函數
 def read_file_lines(file_path, target_line, context=200, start_line=None, end_line=None):

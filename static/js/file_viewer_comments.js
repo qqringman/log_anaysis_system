@@ -1,0 +1,449 @@
+// Enhanced File Viewer Comments System JS
+
+// 全域變數
+let currentEditingCommentId = null;
+let comments = [];
+let commentAttachments = [];
+
+// 初始化評論系統
+function initCommentSystem() {
+    console.log('初始化評論系統...');
+    
+    // 創建評論區塊
+    createCommentsSection();
+    
+    // 綁定事件
+    bindCommentEvents();
+    
+    // 載入現有評論
+    loadComments();
+}
+
+// 創建評論區塊
+function createCommentsSection() {
+    // 確保評論區塊存在
+    if (!document.getElementById('comments-section')) {
+        const commentsSectionHTML = `
+            <div id="comments-section" class="comments-section" style="display: none;">
+                <div class="comments-header">
+                    <h4>
+                        <i class="fas fa-comments"></i>
+                        使用者評論
+                        <span class="comments-count">0</span>
+                    </h4>
+                </div>
+                <div id="comments-list" class="comments-list">
+                    <div class="comments-empty">
+                        <i class="fas fa-comment-slash"></i>
+                        <p>目前沒有評論</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 在檔案檢視器後面插入評論區塊
+        const fileViewer = document.querySelector('.file-viewer');
+        if (fileViewer) {
+            fileViewer.insertAdjacentHTML('afterend', commentsSectionHTML);
+        }
+    }
+}
+
+// 綁定評論相關事件
+function bindCommentEvents() {
+    // 對話框關閉
+    const closeBtn = document.querySelector('.comment-dialog-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeCommentDialog);
+    }
+    
+    // 點擊遮罩關閉
+    const overlay = document.querySelector('.comment-dialog-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', closeCommentDialog);
+    }
+    
+    // 富文本編輯器工具列
+    document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
+        btn.addEventListener('click', handleToolbarClick);
+    });
+    
+    // 編輯器事件
+    const editor = document.getElementById('comment-editor');
+    if (editor) {
+        // 貼上事件
+        editor.addEventListener('paste', handlePaste);
+        
+        // 拖放事件
+        editor.addEventListener('dragover', handleDragOver);
+        editor.addEventListener('drop', handleDrop);
+        editor.addEventListener('dragleave', handleDragLeave);
+    }
+    
+    // 送出按鈕
+    const submitBtn = document.getElementById('submit-comment');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', submitComment);
+    }
+    
+    // 取消按鈕
+    const cancelBtn = document.getElementById('cancel-comment');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', closeCommentDialog);
+    }
+}
+
+// 開啟評論對話框 - 全域函數
+window.openCommentDialog = function(editId = null) {
+    const dialog = document.getElementById('comment-dialog');
+    if (!dialog) return;
+    
+    dialog.classList.add('show');
+    document.body.style.overflow = 'hidden';
+    
+    if (editId) {
+        // 編輯模式
+        currentEditingCommentId = editId;
+        const comment = comments.find(c => c.id === editId);
+        if (comment) {
+            document.getElementById('comment-editor').innerHTML = comment.content;
+            document.querySelector('.comment-dialog-header h5').innerHTML = 
+                '<i class="fas fa-edit"></i> 編輯評論';
+            document.getElementById('submit-comment').textContent = '更新';
+        }
+    } else {
+        // 新增模式
+        currentEditingCommentId = null;
+        document.getElementById('comment-editor').innerHTML = '';
+        document.querySelector('.comment-dialog-header h5').innerHTML = 
+            '<i class="fas fa-comment-plus"></i> 新增評論';
+        document.getElementById('submit-comment').textContent = '送出';
+    }
+    
+    // 清空附件
+    commentAttachments = [];
+    updateAttachmentsDisplay();
+}
+
+// 關閉評論對話框
+function closeCommentDialog() {
+    const dialog = document.getElementById('comment-dialog');
+    if (dialog) {
+        dialog.classList.remove('show');
+        document.body.style.overflow = '';
+        
+        // 清理
+        currentEditingCommentId = null;
+        commentAttachments = [];
+        document.getElementById('comment-editor').innerHTML = '';
+        updateAttachmentsDisplay();
+    }
+}
+
+// 處理工具列點擊
+function handleToolbarClick(e) {
+    const btn = e.currentTarget;
+    const command = btn.dataset.command;
+    const value = btn.dataset.value || null;
+    
+    if (command === 'createLink') {
+        const url = prompt('請輸入連結網址：', 'https://');
+        if (url) {
+            document.execCommand(command, false, url);
+        }
+    } else if (command === 'insertImage') {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageFile(file);
+            }
+        };
+        input.click();
+    } else {
+        document.execCommand(command, false, value);
+    }
+    
+    // 更新按鈕狀態
+    updateToolbarState();
+}
+
+// 更新工具列狀態
+function updateToolbarState() {
+    document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
+        const command = btn.dataset.command;
+        if (command && document.queryCommandState(command)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+// 處理貼上事件
+async function handlePaste(e) {
+    const items = e.clipboardData.items;
+    
+    for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (file) {
+                await handleImageFile(file);
+            }
+        }
+    }
+}
+
+// 處理拖放
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drop-active');
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drop-active');
+}
+
+async function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drop-active');
+    
+    const files = Array.from(e.dataTransfer.files);
+    for (let file of files) {
+        if (file.type.startsWith('image/')) {
+            await handleImageFile(file);
+        } else {
+            await handleAttachmentFile(file);
+        }
+    }
+}
+
+// 處理圖片檔案
+async function handleImageFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = `<img src="${e.target.result}" style="max-width: 100%; margin: 10px 0;">`;
+        document.execCommand('insertHTML', false, img);
+    };
+    reader.readAsDataURL(file);
+}
+
+// 處理附件檔案
+async function handleAttachmentFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        commentAttachments.push({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: e.target.result
+        });
+        updateAttachmentsDisplay();
+    };
+    reader.readAsDataURL(file);
+}
+
+// 更新附件顯示
+function updateAttachmentsDisplay() {
+    const container = document.getElementById('comment-attachments');
+    if (!container) return;
+    
+    container.innerHTML = commentAttachments.map((file, index) => `
+        <div class="attachment-item">
+            ${file.type.startsWith('image/') ? 
+                `<img src="${file.data}" alt="${file.name}">` : 
+                `<i class="fas fa-file"></i>`
+            }
+            <span>${file.name}</span>
+            <button class="attachment-remove" onclick="removeAttachment(${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+// 移除附件
+window.removeAttachment = function(index) {
+    commentAttachments.splice(index, 1);
+    updateAttachmentsDisplay();
+}
+
+// 送出評論
+async function submitComment() {
+    const editor = document.getElementById('comment-editor');
+    const content = editor.innerHTML.trim();
+    
+    if (!content) {
+        showToast('請輸入評論內容', 'warning');
+        return;
+    }
+    
+    const filePath = document.getElementById('initial-file-path').value;
+    const commentData = {
+        content: content,
+        attachments: commentAttachments,
+        file_path: filePath,
+        edit_id: currentEditingCommentId
+    };
+    
+    try {
+        const response = await fetch('/api/comment', {
+            method: currentEditingCommentId ? 'PUT' : 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(commentData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast(currentEditingCommentId ? '評論已更新' : '評論已新增', 'success');
+            closeCommentDialog();
+            loadComments();
+        } else {
+            showToast(result.message || '操作失敗', 'danger');
+        }
+    } catch (error) {
+        console.error('提交評論錯誤:', error);
+        showToast('提交評論時發生錯誤', 'danger');
+    }
+}
+
+// 載入評論
+async function loadComments() {
+    const filePath = document.getElementById('initial-file-path').value;
+    
+    try {
+        const response = await fetch(`/api/comments?file_path=${encodeURIComponent(filePath)}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            comments = result.comments;
+            displayComments();
+        }
+    } catch (error) {
+        console.error('載入評論錯誤:', error);
+    }
+}
+
+// 顯示評論
+function displayComments() {
+    const section = document.getElementById('comments-section');
+    const list = document.getElementById('comments-list');
+    const count = document.querySelector('.comments-count');
+    
+    if (!section || !list) return;
+    
+    if (comments.length === 0) {
+        section.style.display = 'none';
+        list.innerHTML = `
+            <div class="comments-empty">
+                <i class="fas fa-comment-slash"></i>
+                <p>目前沒有評論</p>
+            </div>
+        `;
+    } else {
+        section.style.display = 'block';
+        count.textContent = comments.length;
+        
+        list.innerHTML = comments.map(comment => `
+            <div class="comment-item" data-id="${comment.id}">
+                <div class="comment-header">
+                    <div class="comment-author">
+                        <div class="comment-avatar">${getInitials(comment.author)}</div>
+                        <div class="comment-meta">
+                            <div class="comment-author-name">${comment.author}</div>
+                            <div class="comment-time">${formatTime(comment.created_at)}</div>
+                        </div>
+                    </div>
+                    <div class="comment-actions">
+                        <button class="comment-action-btn" onclick="editComment('${comment.id}')">
+                            <i class="fas fa-edit"></i> 編輯
+                        </button>
+                        <button class="comment-action-btn delete" onclick="deleteComment('${comment.id}')">
+                            <i class="fas fa-trash"></i> 刪除
+                        </button>
+                    </div>
+                </div>
+                <div class="comment-content">${comment.content}</div>
+                ${comment.attachments && comment.attachments.length > 0 ? `
+                    <div class="comment-images">
+                        ${comment.attachments.filter(a => a.type.startsWith('image/')).map(img => `
+                            <div class="comment-image" onclick="previewImage('${img.url || img.data}')">
+                                <img src="${img.url || img.data}" alt="${img.name}">
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+}
+
+// 編輯評論
+window.editComment = function(id) {
+    openCommentDialog(id);
+}
+
+// 刪除評論
+window.deleteComment = async function(id) {
+    if (!confirm('確定要刪除這則評論嗎？')) return;
+    
+    try {
+        const response = await fetch(`/api/comment/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('評論已刪除', 'success');
+            loadComments();
+        } else {
+            showToast(result.message || '刪除失敗', 'danger');
+        }
+    } catch (error) {
+        console.error('刪除評論錯誤:', error);
+        showToast('刪除評論時發生錯誤', 'danger');
+    }
+}
+
+// 預覽圖片
+window.previewImage = function(src) {
+    const overlay = document.createElement('div');
+    overlay.className = 'image-preview-overlay';
+    overlay.innerHTML = `
+        <div class="image-preview-content">
+            <img src="${src}" alt="Preview">
+        </div>
+    `;
+    overlay.onclick = () => overlay.remove();
+    document.body.appendChild(overlay);
+}
+
+// 工具函數
+function getInitials(name) {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 60000) return '剛剛';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} 分鐘前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小時前`;
+    if (diff < 604800000) return `${Math.floor(diff / 86400000)} 天前`;
+    
+    return date.toLocaleDateString('zh-TW');
+}
+
+// DOM 載入完成後初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initCommentSystem();
+});

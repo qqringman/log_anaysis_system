@@ -4,6 +4,7 @@
 let currentEditingCommentId = null;
 let comments = [];
 let commentAttachments = [];
+let savedSelection = null; // 新增：儲存文字選擇範圍
 
 // 初始化評論系統
 function initCommentSystem() {
@@ -17,6 +18,9 @@ function initCommentSystem() {
     
     // 載入現有評論
     loadComments();
+    
+    // 初始化程式碼分隔線
+    initCodeResizer();
 }
 
 // 創建評論區塊
@@ -46,6 +50,75 @@ function createCommentsSection() {
         if (fileViewer) {
             fileViewer.insertAdjacentHTML('afterend', commentsSectionHTML);
         }
+    }
+}
+
+// 新增：初始化程式碼分隔線
+function initCodeResizer() {
+    const resizer = document.getElementById('code-resizer');
+    if (!resizer) return;
+    
+    let isResizing = false;
+    let startX = 0;
+    let startLeftWidth = 0;
+    let startRightWidth = 0;
+    
+    resizer.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startX = e.clientX;
+        
+        const inputSection = document.querySelector('.code-input-section');
+        const previewSection = document.querySelector('.code-preview-section');
+        
+        startLeftWidth = inputSection.offsetWidth;
+        startRightWidth = previewSection.offsetWidth;
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        e.preventDefault();
+    });
+    
+    function handleMouseMove(e) {
+        if (!isResizing) return;
+        
+        const deltaX = e.clientX - startX;
+        const container = document.querySelector('.code-dialog-body');
+        const containerWidth = container.offsetWidth - 20 - 6; // 減去 padding 和 resizer 寬度
+        
+        const newLeftWidth = startLeftWidth + deltaX;
+        const newRightWidth = startRightWidth - deltaX;
+        
+        // 限制最小寬度
+        const minWidth = 200;
+        if (newLeftWidth >= minWidth && newRightWidth >= minWidth) {
+            const leftPercent = (newLeftWidth / containerWidth) * 100;
+            const rightPercent = (newRightWidth / containerWidth) * 100;
+            
+            document.querySelector('.code-input-section').style.flex = `0 0 ${leftPercent}%`;
+            document.querySelector('.code-preview-section').style.flex = `0 0 ${rightPercent}%`;
+        }
+    }
+    
+    function handleMouseUp() {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+    }
+}
+
+// 新增：評論管理按鈕功能
+window.toggleCommentsView = function() {
+    const section = document.getElementById('comments-section');
+    const fab = document.querySelector('.comment-manager-fab');
+    
+    if (section.style.display === 'none' || !section.style.display) {
+        section.style.display = 'block';
+        section.scrollIntoView({ behavior: 'smooth' });
+        fab.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    } else {
+        section.style.display = 'none';
+        fab.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
     }
 }
 
@@ -84,6 +157,10 @@ function bindCommentEvents() {
         
         // 選擇變化事件
         document.addEventListener('selectionchange', updateToolbarState);
+        
+        // 新增：滑鼠選擇事件
+        editor.addEventListener('mouseup', saveSelection);
+        editor.addEventListener('keyup', saveSelection);
     }
     
     // 送出按鈕
@@ -123,6 +200,26 @@ function bindCommentEvents() {
     });
 }
 
+// 新增：儲存文字選擇範圍
+function saveSelection() {
+    const editor = document.getElementById('comment-editor');
+    if (document.activeElement === editor) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            savedSelection = selection.getRangeAt(0).cloneRange();
+        }
+    }
+}
+
+// 新增：恢復文字選擇範圍
+function restoreSelection() {
+    if (savedSelection) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(savedSelection);
+    }
+}
+
 // 開啟評論對話框 - 全域函數
 window.openCommentDialog = function(editId = null) {
     const dialog = document.getElementById('comment-dialog');
@@ -157,6 +254,20 @@ window.openCommentDialog = function(editId = null) {
     // 清空附件
     commentAttachments = [];
     updateAttachmentsDisplay();
+    
+    // 重置分隔線位置
+    resetCodeResizer();
+}
+
+// 新增：重置程式碼分隔線位置
+function resetCodeResizer() {
+    const inputSection = document.querySelector('.code-input-section');
+    const previewSection = document.querySelector('.code-preview-section');
+    
+    if (inputSection && previewSection) {
+        inputSection.style.flex = '1';
+        previewSection.style.flex = '1';
+    }
 }
 
 // 關閉評論對話框
@@ -169,6 +280,7 @@ function closeCommentDialog() {
         // 清理
         currentEditingCommentId = null;
         commentAttachments = [];
+        savedSelection = null;
         document.getElementById('comment-editor').innerHTML = '';
         updateAttachmentsDisplay();
     }
@@ -183,6 +295,13 @@ function handleToolbarClick(e) {
     // 確保編輯器獲得焦點
     const editor = document.getElementById('comment-editor');
     editor.focus();
+    
+    // 恢復之前的選擇範圍
+    if (command === 'foreColor' || command === 'backColor') {
+        if (savedSelection) {
+            restoreSelection();
+        }
+    }
     
     if (command === 'createLink') {
         const url = prompt('請輸入連結網址：', 'https://');
@@ -216,19 +335,30 @@ function handleToolbarClick(e) {
     } else if (command === 'formatBlock' && value === 'blockquote') {
         // 修正引用功能
         const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const blockquote = document.createElement('blockquote');
-        blockquote.appendChild(range.extractContents());
-        range.insertNode(blockquote);
-        range.selectNodeContents(blockquote);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const blockquote = document.createElement('blockquote');
+            
+            try {
+                blockquote.appendChild(range.extractContents());
+                range.insertNode(blockquote);
+                range.selectNodeContents(blockquote);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            } catch (e) {
+                console.error('引用插入失敗:', e);
+            }
+        }
     } else if (command === 'foreColor' || command === 'backColor') {
         // 顏色選擇
         showColorPicker(command);
     } else {
         // 對於其他命令，直接執行
-        document.execCommand(command, false, value);
+        try {
+            document.execCommand(command, false, value);
+        } catch (e) {
+            console.error('命令執行失敗:', e);
+        }
     }
     
     // 更新按鈕狀態
@@ -250,24 +380,66 @@ function showColorPicker(command) {
     }
 }
 
-// 應用顏色
+// 修正：應用顏色函數
 window.applyColor = function(color, command) {
-    // 確保編輯器獲得焦點
     const editor = document.getElementById('comment-editor');
+    
+    // 確保編輯器獲得焦點
     editor.focus();
     
-    // 恢復選擇（如果需要）
-    const selection = window.getSelection();
-    if (selection.rangeCount === 0) {
-        // 如果沒有選擇，創建一個空的選擇範圍
-        const range = document.createRange();
-        range.selectNodeContents(editor);
-        range.collapse(false);
-        selection.addRange(range);
+    // 嘗試恢復之前儲存的選擇範圍
+    if (savedSelection) {
+        try {
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(savedSelection);
+        } catch (e) {
+            console.error('恢復選擇範圍失敗:', e);
+        }
     }
     
-    // 執行顏色命令
-    document.execCommand(command, false, color);
+    // 檢查是否有選擇範圍
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0 || selection.isCollapsed) {
+        // 如果沒有選擇範圍，創建一個簡單的提示
+        const span = document.createElement('span');
+        span.textContent = '選擇的文字';
+        span.style.backgroundColor = command === 'backColor' ? color : '';
+        span.style.color = command === 'foreColor' ? color : '';
+        
+        // 在游標位置插入
+        try {
+            document.execCommand('insertHTML', false, span.outerHTML);
+        } catch (e) {
+            console.error('插入顏色文字失敗:', e);
+        }
+    } else {
+        // 有選擇範圍，應用顏色
+        try {
+            const success = document.execCommand(command, false, color);
+            if (!success) {
+                // 如果 execCommand 失敗，手動處理
+                const range = selection.getRangeAt(0);
+                const span = document.createElement('span');
+                
+                if (command === 'foreColor') {
+                    span.style.color = color;
+                } else if (command === 'backColor') {
+                    span.style.backgroundColor = color;
+                }
+                
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+                
+                // 重新選擇
+                range.selectNodeContents(span);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        } catch (e) {
+            console.error('應用顏色失敗:', e);
+        }
+    }
     
     // 關閉顏色選擇器
     document.querySelector('.color-palette.show')?.classList.remove('show');
@@ -277,9 +449,17 @@ window.applyColor = function(color, command) {
     if (btn) {
         const indicator = btn.querySelector('.color-indicator');
         if (indicator) {
-            indicator.style.background = color;
+            if (command === 'foreColor') {
+                indicator.style.background = color;
+            } else {
+                indicator.style.background = color;
+            }
         }
     }
+    
+    // 清除儲存的選擇範圍並重新儲存當前範圍
+    savedSelection = null;
+    setTimeout(saveSelection, 10);
     
     // 保持焦點
     editor.focus();
@@ -321,6 +501,9 @@ function openCodeDialog() {
         
         // 初始化預覽
         updateCodePreview();
+        
+        // 重置分隔線位置
+        resetCodeResizer();
     }
 }
 
@@ -1049,12 +1232,22 @@ window.submitComment = async function() {
             closeCommentDialog();
             loadComments();
             updateQuickLink();
+            updateCommentCount();
         } else {
             showToast(result.message || '操作失敗', 'danger');
         }
     } catch (error) {
         console.error('提交評論錯誤:', error);
         showToast('提交評論時發生錯誤', 'danger');
+    }
+}
+
+// 新增：更新評論數量
+function updateCommentCount() {
+    const countBadge = document.querySelector('.comment-count-badge');
+    if (countBadge) {
+        countBadge.textContent = comments.length;
+        countBadge.style.display = comments.length > 0 ? 'block' : 'none';
     }
 }
 
@@ -1134,6 +1327,7 @@ function displayComments() {
     }
     
     updateQuickLink();
+    updateCommentCount();
 }
 
 // 回覆評論
@@ -1313,7 +1507,7 @@ function toggleImageResize(img) {
 function updateToolbarState() {
     document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
         const command = btn.dataset.command;
-        if (command && document.queryCommandState(command)) {
+        if (command && document.queryCommandState && document.queryCommandState(command)) {
             btn.classList.add('active');
         } else {
             btn.classList.remove('active');
@@ -1387,6 +1581,7 @@ async function loadComments() {
         if (result.success) {
             comments = result.comments;
             displayComments();
+            updateCommentCount();
         }
     } catch (error) {
         console.error('載入評論錯誤:', error);

@@ -34,6 +34,12 @@
 		</button>
 	</div>
     
+    <!-- 評論管理按鈕 -->
+    <div class="comment-manager-fab" onclick="toggleCommentsView()">
+        <i class="fas fa-comments"></i>
+        <span class="comment-count-badge">0</span>
+    </div>
+    
     <!-- 隱藏的初始資料 -->
     <input type="hidden" id="initial-start-line" value="{{ result.start_line }}">
     <input type="hidden" id="initial-end-line" value="{{ result.end_line }}">
@@ -675,6 +681,10 @@
                         <textarea id="code-textarea" class="code-textarea" 
                                 placeholder="在此貼上或輸入程式碼...或拖曳檔案到這裡"></textarea>
                     </div>
+                </div>
+                <!-- 新增：可拖曳分隔線 -->
+                <div class="code-resizer" id="code-resizer">
+                    <div class="resizer-line"></div>
                 </div>
                 <div class="code-preview-section">
                     <label class="preview-label">預覽</label>

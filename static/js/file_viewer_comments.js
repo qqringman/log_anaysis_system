@@ -1,4 +1,4 @@
-// Enhanced File Viewer Comments System JS
+// Enhanced File Viewer Comments System JS - Complete
 
 // 全域變數
 let currentEditingCommentId = null;
@@ -91,6 +91,9 @@ function bindCommentEvents() {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', closeCommentDialog);
     }
+    
+    // 綁定編輯器右鍵選單
+    bindEditorContextMenu();
 }
 
 // 開啟評論對話框 - 全域函數
@@ -107,6 +110,7 @@ window.openCommentDialog = function(editId = null) {
         const comment = comments.find(c => c.id === editId);
         if (comment) {
             document.getElementById('comment-editor').innerHTML = comment.content;
+            document.getElementById('comment-topic').value = comment.topic || '一般討論';
             document.querySelector('.comment-dialog-header h5').innerHTML = 
                 '<i class="fas fa-edit"></i> 編輯評論';
             document.getElementById('submit-comment').textContent = '更新';
@@ -115,6 +119,7 @@ window.openCommentDialog = function(editId = null) {
         // 新增模式
         currentEditingCommentId = null;
         document.getElementById('comment-editor').innerHTML = '';
+        document.getElementById('comment-topic').value = '';
         document.querySelector('.comment-dialog-header h5').innerHTML = 
             '<i class="fas fa-comment-plus"></i> 新增評論';
         document.getElementById('submit-comment').textContent = '送出';
@@ -163,7 +168,9 @@ function handleToolbarClick(e) {
         };
         input.click();
     } else if (command === 'insertCode') {
-        // 開啟程式碼對話框
+        // 修正：直接呼叫 openCodeDialog
+        e.preventDefault();
+        e.stopPropagation();
         openCodeDialog();
     } else if (command === 'insertTable') {
         // 插入表格
@@ -196,6 +203,7 @@ function openCodeDialog() {
     const dialog = document.getElementById('code-dialog');
     if (dialog) {
         dialog.classList.add('show');
+        dialog.style.zIndex = '10100'; // 確保在最上層
         document.getElementById('code-textarea').focus();
     }
 }
@@ -205,6 +213,7 @@ window.closeCodeDialog = function() {
     if (dialog) {
         dialog.classList.remove('show');
         document.getElementById('code-textarea').value = '';
+        document.getElementById('code-language').value = 'javascript';
     }
 }
 
@@ -212,21 +221,46 @@ window.insertCodeBlock = function() {
     const language = document.getElementById('code-language').value;
     const code = document.getElementById('code-textarea').value;
     
-    if (code) {
-        const pre = document.createElement('pre');
-        pre.className = `language-${language}`;
-        const codeEl = document.createElement('code');
-        codeEl.textContent = code;
-        codeEl.className = `language-${language}`;
-        pre.appendChild(codeEl);
-        
-        // 插入到編輯器
-        const editor = document.getElementById('comment-editor');
-        editor.focus();
-        document.execCommand('insertHTML', false, pre.outerHTML);
-        
-        closeCodeDialog();
+    if (!code.trim()) {
+        showToast('請輸入程式碼', 'warning');
+        return;
     }
+    
+    const pre = document.createElement('pre');
+    pre.className = `language-${language}`;
+    pre.dataset.elementId = 'element_' + Date.now();
+    
+    const codeEl = document.createElement('code');
+    codeEl.textContent = code;
+    codeEl.className = `language-${language}`;
+    
+    // 添加語言標籤
+    const langLabel = document.createElement('span');
+    langLabel.className = 'code-language-label';
+    langLabel.textContent = language.toUpperCase();
+    langLabel.style.cssText = `
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #a0aec0;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    `;
+    
+    pre.appendChild(langLabel);
+    pre.appendChild(codeEl);
+    
+    // 插入到編輯器
+    const editor = document.getElementById('comment-editor');
+    editor.focus();
+    document.execCommand('insertHTML', false, pre.outerHTML + '<p><br></p>');
+    
+    closeCodeDialog();
+    showToast('程式碼已插入', 'success');
 }
 
 // 處理拖放 - 加入視覺提示
@@ -234,7 +268,6 @@ function handleDragOver(e) {
     e.preventDefault();
     const editor = e.currentTarget;
     editor.classList.add('drop-active');
-    editor.style.position = 'relative';
 }
 
 function handleDragLeave(e) {
@@ -255,6 +288,323 @@ async function handleDrop(e) {
             await handleAttachmentFile(file);
         }
     }
+}
+
+// 綁定編輯器右鍵選單
+function bindEditorContextMenu() {
+    const editor = document.getElementById('comment-editor');
+    if (!editor) return;
+    
+    editor.addEventListener('contextmenu', function(e) {
+        const target = e.target;
+        
+        // 表格右鍵選單
+        if (target.tagName === 'TD' || target.tagName === 'TH' || 
+            target.closest('table')) {
+            e.preventDefault();
+            showTableContextMenu(e, target.closest('table'));
+        }
+        // 圖片右鍵選單
+        else if (target.tagName === 'IMG') {
+            e.preventDefault();
+            showElementContextMenu(e, target, 'image');
+        }
+        // 程式碼區塊右鍵選單
+        else if (target.tagName === 'PRE' || target.closest('pre')) {
+            e.preventDefault();
+            showElementContextMenu(e, target.closest('pre'), 'code');
+        }
+        // 引用區塊右鍵選單
+        else if (target.tagName === 'BLOCKQUOTE' || target.closest('blockquote')) {
+            e.preventDefault();
+            showElementContextMenu(e, target.closest('blockquote'), 'quote');
+        }
+    });
+}
+
+// 顯示表格右鍵選單
+function showTableContextMenu(event, table) {
+    removeExistingMenus();
+    
+    const menu = document.createElement('div');
+    menu.className = 'table-context-menu';
+    menu.innerHTML = `
+        <div class="table-menu-item" onclick="addTableRow(event)">
+            <i class="fas fa-plus"></i> 新增行（下方）
+        </div>
+        <div class="table-menu-item" onclick="addTableRowAbove(event)">
+            <i class="fas fa-level-up-alt"></i> 新增行（上方）
+        </div>
+        <div class="table-menu-item" onclick="deleteTableRow(event)">
+            <i class="fas fa-minus"></i> 刪除行
+        </div>
+        <div class="table-menu-separator"></div>
+        <div class="table-menu-item" onclick="addTableColumn(event)">
+            <i class="fas fa-plus"></i> 新增列（右側）
+        </div>
+        <div class="table-menu-item" onclick="addTableColumnLeft(event)">
+            <i class="fas fa-arrow-left"></i> 新增列（左側）
+        </div>
+        <div class="table-menu-item" onclick="deleteTableColumn(event)">
+            <i class="fas fa-minus"></i> 刪除列
+        </div>
+        <div class="table-menu-separator"></div>
+        <div class="table-menu-item" onclick="copyTable(event)">
+            <i class="fas fa-copy"></i> 複製表格
+        </div>
+        <div class="table-menu-item" onclick="deleteTable(event)">
+            <i class="fas fa-trash"></i> 刪除表格
+        </div>
+    `;
+    
+    menu.style.left = event.pageX + 'px';
+    menu.style.top = event.pageY + 'px';
+    menu.dataset.table = getTableId(table);
+    menu.dataset.cell = getCellPosition(event.target);
+    
+    document.body.appendChild(menu);
+    
+    // 點擊其他地方關閉選單
+    setTimeout(() => {
+        document.addEventListener('click', removeExistingMenus, { once: true });
+    }, 0);
+}
+
+// 顯示元素右鍵選單
+function showElementContextMenu(event, element, type) {
+    removeExistingMenus();
+    
+    const menu = document.createElement('div');
+    menu.className = 'element-context-menu';
+    
+    let menuItems = `
+        <div class="element-menu-item" onclick="copyElement(event)">
+            <i class="fas fa-copy"></i> 複製
+        </div>
+    `;
+    
+    if (type === 'image') {
+        menuItems += `
+            <div class="element-menu-item" onclick="resizeImage(event)">
+                <i class="fas fa-expand-arrows-alt"></i> 調整大小
+            </div>
+        `;
+    }
+    
+    menuItems += `
+        <div class="element-menu-item delete" onclick="deleteElement(event)">
+            <i class="fas fa-trash"></i> 刪除
+        </div>
+    `;
+    
+    menu.innerHTML = menuItems;
+    menu.style.left = event.pageX + 'px';
+    menu.style.top = event.pageY + 'px';
+    menu.dataset.element = getElementId(element);
+    
+    document.body.appendChild(menu);
+    
+    setTimeout(() => {
+        document.addEventListener('click', removeExistingMenus, { once: true });
+    }, 0);
+}
+
+// 表格操作函數
+window.addTableRow = function(event) {
+    const table = getTableFromMenu(event);
+    const cellInfo = getCellInfoFromMenu(event);
+    if (!table || !cellInfo) return;
+    
+    const row = table.insertRow(cellInfo.row + 1);
+    const colCount = table.rows[0].cells.length;
+    
+    for (let i = 0; i < colCount; i++) {
+        const cell = row.insertCell();
+        cell.textContent = '新內容';
+    }
+    
+    removeExistingMenus();
+}
+
+window.addTableRowAbove = function(event) {
+    const table = getTableFromMenu(event);
+    const cellInfo = getCellInfoFromMenu(event);
+    if (!table || !cellInfo) return;
+    
+    const row = table.insertRow(cellInfo.row);
+    const colCount = table.rows[0].cells.length;
+    
+    for (let i = 0; i < colCount; i++) {
+        const cell = row.insertCell();
+        cell.textContent = '新內容';
+    }
+    
+    removeExistingMenus();
+}
+
+window.deleteTableRow = function(event) {
+    const table = getTableFromMenu(event);
+    const cellInfo = getCellInfoFromMenu(event);
+    if (!table || !cellInfo) return;
+    
+    if (table.rows.length > 1) {
+        table.deleteRow(cellInfo.row);
+    }
+    
+    removeExistingMenus();
+}
+
+window.addTableColumn = function(event) {
+    const table = getTableFromMenu(event);
+    const cellInfo = getCellInfoFromMenu(event);
+    if (!table || !cellInfo) return;
+    
+    for (let i = 0; i < table.rows.length; i++) {
+        const cell = table.rows[i].insertCell(cellInfo.col + 1);
+        cell.textContent = i === 0 ? '新標題' : '新內容';
+    }
+    
+    removeExistingMenus();
+}
+
+window.addTableColumnLeft = function(event) {
+    const table = getTableFromMenu(event);
+    const cellInfo = getCellInfoFromMenu(event);
+    if (!table || !cellInfo) return;
+    
+    for (let i = 0; i < table.rows.length; i++) {
+        const cell = table.rows[i].insertCell(cellInfo.col);
+        cell.textContent = i === 0 ? '新標題' : '新內容';
+    }
+    
+    removeExistingMenus();
+}
+
+window.deleteTableColumn = function(event) {
+    const table = getTableFromMenu(event);
+    const cellInfo = getCellInfoFromMenu(event);
+    if (!table || !cellInfo) return;
+    
+    if (table.rows[0].cells.length > 1) {
+        for (let i = 0; i < table.rows.length; i++) {
+            table.rows[i].deleteCell(cellInfo.col);
+        }
+    }
+    
+    removeExistingMenus();
+}
+
+window.copyTable = function(event) {
+    const table = getTableFromMenu(event);
+    if (!table) return;
+    
+    const range = document.createRange();
+    range.selectNode(table);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    
+    showToast('表格已複製到剪貼簿', 'success');
+    removeExistingMenus();
+}
+
+window.deleteTable = function(event) {
+    const table = getTableFromMenu(event);
+    if (!table) return;
+    
+    table.remove();
+    removeExistingMenus();
+}
+
+// 元素操作函數
+window.copyElement = function(event) {
+    const element = getElementFromMenu(event);
+    if (!element) return;
+    
+    const range = document.createRange();
+    range.selectNode(element);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    
+    showToast('已複製到剪貼簿', 'success');
+    removeExistingMenus();
+}
+
+window.deleteElement = function(event) {
+    const element = getElementFromMenu(event);
+    if (!element) return;
+    
+    element.remove();
+    removeExistingMenus();
+}
+
+window.resizeImage = function(event) {
+    const element = getElementFromMenu(event);
+    if (!element || element.tagName !== 'IMG') return;
+    
+    toggleImageResize(element);
+    removeExistingMenus();
+}
+
+// 輔助函數
+function removeExistingMenus() {
+    document.querySelectorAll('.table-context-menu, .element-context-menu').forEach(menu => {
+        menu.remove();
+    });
+}
+
+function getTableFromMenu(event) {
+    const menu = event.target.closest('.table-context-menu');
+    if (!menu) return null;
+    
+    const tableId = menu.dataset.table;
+    return document.querySelector(`[data-table-id="${tableId}"]`);
+}
+
+function getElementFromMenu(event) {
+    const menu = event.target.closest('.element-context-menu');
+    if (!menu) return null;
+    
+    const elementId = menu.dataset.element;
+    return document.querySelector(`[data-element-id="${elementId}"]`);
+}
+
+function getCellInfoFromMenu(event) {
+    const menu = event.target.closest('.table-context-menu');
+    if (!menu || !menu.dataset.cell) return null;
+    
+    const [row, col] = menu.dataset.cell.split(',').map(Number);
+    return { row, col };
+}
+
+function getTableId(table) {
+    if (!table.dataset.tableId) {
+        table.dataset.tableId = 'table_' + Date.now();
+    }
+    return table.dataset.tableId;
+}
+
+function getElementId(element) {
+    if (!element.dataset.elementId) {
+        element.dataset.elementId = 'element_' + Date.now();
+    }
+    return element.dataset.elementId;
+}
+
+function getCellPosition(cell) {
+    if (!cell || (cell.tagName !== 'TD' && cell.tagName !== 'TH')) {
+        cell = cell.closest('td, th');
+    }
+    if (!cell) return '0,0';
+    
+    const row = cell.parentNode;
+    const rowIndex = Array.from(row.parentNode.children).indexOf(row);
+    const colIndex = Array.from(row.children).indexOf(cell);
+    
+    return `${rowIndex},${colIndex}`;
 }
 
 // 送出評論 - 支援主題
@@ -405,7 +755,7 @@ function updateQuickLink() {
     const countBadge = document.querySelector('.comments-count-quick');
     if (link && comments.length > 0) {
         link.classList.add('show');
-        countBadge.textContent = comments.length;
+        if (countBadge) countBadge.textContent = comments.length;
     } else if (link) {
         link.classList.remove('show');
     }
@@ -576,40 +926,6 @@ async function handlePaste(e) {
     }
 }
 
-// 處理拖放
-function handleDragOver(e) {
-    e.preventDefault();
-    e.currentTarget.classList.add('drop-active');
-}
-
-function handleDragLeave(e) {
-    e.currentTarget.classList.remove('drop-active');
-}
-
-async function handleDrop(e) {
-    e.preventDefault();
-    e.currentTarget.classList.remove('drop-active');
-    
-    const files = Array.from(e.dataTransfer.files);
-    for (let file of files) {
-        if (file.type.startsWith('image/')) {
-            await handleImageFile(file);
-        } else {
-            await handleAttachmentFile(file);
-        }
-    }
-}
-
-// 處理圖片檔案
-async function handleImageFile(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = `<img src="${e.target.result}" style="max-width: 100%; margin: 10px 0;">`;
-        document.execCommand('insertHTML', false, img);
-    };
-    reader.readAsDataURL(file);
-}
-
 // 處理附件檔案
 async function handleAttachmentFile(file) {
     const reader = new FileReader();
@@ -650,48 +966,6 @@ window.removeAttachment = function(index) {
     updateAttachmentsDisplay();
 }
 
-// 送出評論
-async function submitComment() {
-    const editor = document.getElementById('comment-editor');
-    const content = editor.innerHTML.trim();
-    
-    if (!content) {
-        showToast('請輸入評論內容', 'warning');
-        return;
-    }
-    
-    const filePath = document.getElementById('initial-file-path').value;
-    const commentData = {
-        content: content,
-        attachments: commentAttachments,
-        file_path: filePath,
-        edit_id: currentEditingCommentId
-    };
-    
-    try {
-        const response = await fetch('/api/comment', {
-            method: currentEditingCommentId ? 'PUT' : 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(commentData)
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showToast(currentEditingCommentId ? '評論已更新' : '評論已新增', 'success');
-            closeCommentDialog();
-            loadComments();
-        } else {
-            showToast(result.message || '操作失敗', 'danger');
-        }
-    } catch (error) {
-        console.error('提交評論錯誤:', error);
-        showToast('提交評論時發生錯誤', 'danger');
-    }
-}
-
 // 載入評論
 async function loadComments() {
     const filePath = document.getElementById('initial-file-path').value;
@@ -706,60 +980,6 @@ async function loadComments() {
         }
     } catch (error) {
         console.error('載入評論錯誤:', error);
-    }
-}
-
-// 顯示評論
-function displayComments() {
-    const section = document.getElementById('comments-section');
-    const list = document.getElementById('comments-list');
-    const count = document.querySelector('.comments-count');
-    
-    if (!section || !list) return;
-    
-    if (comments.length === 0) {
-        section.style.display = 'none';
-        list.innerHTML = `
-            <div class="comments-empty">
-                <i class="fas fa-comment-slash"></i>
-                <p>目前沒有評論</p>
-            </div>
-        `;
-    } else {
-        section.style.display = 'block';
-        count.textContent = comments.length;
-        
-        list.innerHTML = comments.map(comment => `
-            <div class="comment-item" data-id="${comment.id}">
-                <div class="comment-header">
-                    <div class="comment-author">
-                        <div class="comment-avatar">${getInitials(comment.author)}</div>
-                        <div class="comment-meta">
-                            <div class="comment-author-name">${comment.author}</div>
-                            <div class="comment-time">${formatTime(comment.created_at)}</div>
-                        </div>
-                    </div>
-                    <div class="comment-actions">
-                        <button class="comment-action-btn" onclick="editComment('${comment.id}')">
-                            <i class="fas fa-edit"></i> 編輯
-                        </button>
-                        <button class="comment-action-btn delete" onclick="deleteComment('${comment.id}')">
-                            <i class="fas fa-trash"></i> 刪除
-                        </button>
-                    </div>
-                </div>
-                <div class="comment-content">${comment.content}</div>
-                ${comment.attachments && comment.attachments.length > 0 ? `
-                    <div class="comment-images">
-                        ${comment.attachments.filter(a => a.type.startsWith('image/')).map(img => `
-                            <div class="comment-image" onclick="previewImage('${img.url || img.data}')">
-                                <img src="${img.url || img.data}" alt="${img.name}">
-                            </div>
-                        `).join('')}
-                    </div>
-                ` : ''}
-            </div>
-        `).join('');
     }
 }
 
@@ -825,4 +1045,12 @@ function formatTime(timestamp) {
 // DOM 載入完成後初始化
 document.addEventListener('DOMContentLoaded', function() {
     initCommentSystem();
+    
+    // 修復送出和取消按鈕的可見性
+    const dialogFooter = document.querySelector('.comment-dialog-footer');
+    if (dialogFooter) {
+        dialogFooter.style.visibility = 'visible';
+        dialogFooter.style.opacity = '1';
+        dialogFooter.style.display = 'flex';
+    }
 });

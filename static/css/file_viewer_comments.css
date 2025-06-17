@@ -1,67 +1,57 @@
-/* Enhanced File Viewer Comments System CSS */
+/* Enhanced File Viewer Comments System CSS - Complete */
 
-/* 新增評論按鈕 - 修正置中和提示 */
+/* 修復 + 按鈕置中和提示 */
 .comment-fab {
-    position: fixed !important;
-    bottom: 240px !important;
-    right: 20px !important;
-    width: 56px !important;
-    height: 56px !important;
-    border-radius: 50% !important;
-    background: #667eea !important;
-    color: white !important;
-    border: none !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 28px !important;
-    font-weight: bold !important;
-    line-height: 1 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-    cursor: pointer !important;
-    z-index: 8996 !important;
-    transition: all 0.3s ease !important;
+    position: fixed;
+    bottom: 240px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    cursor: pointer;
+    z-index: 8996;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 .comment-fab:hover {
-    transform: scale(1.1) rotate(90deg) !important;
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
-    background: #764ba2 !important;
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
 }
 
 /* 提示文字 */
-.comment-fab-tooltip {
-    position: fixed !important;
-    bottom: 255px !important;
-    right: 85px !important;
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: white !important;
-    padding: 6px 12px !important;
-    border-radius: 4px !important;
-    font-size: 12px !important;
-    white-space: nowrap !important;
-    pointer-events: none !important;
-    opacity: 0 !important;
-    transition: opacity 0.3s ease !important;
-}
-
-.comment-fab:hover + .comment-fab-tooltip {
-    opacity: 1 !important;
-}
-
-.comment-fab:hover {
-    transform: scale(1.1) rotate(90deg) !important;
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
-    background: #764ba2 !important;
-}
-
-/* 調試樣式 - 確保按鈕顯示 */
 .comment-fab::after {
-    content: '+' !important;
-    position: absolute !important;
-    font-size: 30px !important;
-    font-weight: bold !important;
-    color: white !important;
+    content: '新增評論';
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: normal;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    margin-bottom: 10px;
+}
+
+.comment-fab:hover::after {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* 評論對話框 */
@@ -101,12 +91,14 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    width: 600px;
+    width: 700px;
     max-width: 90vw;
-    max-height: 80vh;
+    max-height: 85vh;
     overflow: hidden;
     transform: scale(0.9) translateY(-20px);
     transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 .comment-dialog.show .comment-dialog-content {
@@ -154,8 +146,40 @@
 /* 編輯器區域 */
 .comment-dialog-body {
     padding: 20px;
-    max-height: 400px;
+    flex: 1;
     overflow-y: auto;
+    max-height: calc(85vh - 180px);
+}
+
+/* 主題選擇器美化 */
+.comment-topic-selector {
+    margin-bottom: 20px;
+}
+
+.comment-topic-selector label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #495057;
+}
+
+.topic-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #f8faff;
+}
+
+.topic-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
 }
 
 /* 富文本編輯器工具列 */
@@ -214,15 +238,43 @@
     line-height: 1.6;
     transition: all 0.3s ease;
     background: white;
-    resize: vertical; /* 支援垂直縮放 */
+    resize: vertical;
+    position: relative;
+}
+
+.comment-editor:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 拖放提示 */
+.comment-editor.drop-active::before {
+    content: '拖曳檔案到這裡';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.95);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+    z-index: 10;
+    border-radius: 12px;
 }
 
 /* 引用樣式 */
 .comment-editor blockquote {
     border-left: 4px solid #667eea;
-    padding-left: 16px;
-    margin: 12px 0;
-    color: #6c757d;
+    padding: 12px 20px;
+    margin: 16px 0;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 0 8px 8px 0;
+    color: #495057;
     font-style: italic;
 }
 
@@ -236,6 +288,7 @@
 }
 
 .comment-editor pre {
+    position: relative;
     background: #2d3748;
     color: #e2e8f0;
     padding: 16px;
@@ -248,6 +301,7 @@
     background: transparent;
     color: inherit;
     padding: 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
 /* 表格樣式 */
@@ -300,17 +354,6 @@
     z-index: 10;
 }
 
-.comment-editor:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.comment-editor.drop-active {
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.05);
-}
-
 /* 附件區域 */
 .comment-attachments {
     margin-top: 12px;
@@ -357,25 +400,222 @@
 
 /* 確保對話框底部可見 */
 .comment-dialog-footer {
-    padding: 16px 20px !important;
-    background: #f8f9fa !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    border-top: 1px solid #dee2e6 !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+    padding: 16px 20px;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #dee2e6;
 }
 
-.comment-actions {
-    display: flex !important;
-    gap: 10px !important;
-    visibility: visible !important;
+.comment-info {
+    font-size: 12px;
+    color: #6c757d;
 }
 
 .comment-actions {
     display: flex;
     gap: 10px;
+}
+
+/* 程式碼對話框 z-index 修復 */
+.code-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10100; /* 高於評論對話框 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.code-dialog.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.code-dialog-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+}
+
+.code-dialog-content {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+    width: 700px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.code-dialog.show .code-dialog-content {
+    transform: scale(1);
+}
+
+.code-dialog-header {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    color: white;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.code-dialog-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.language-selector {
+    margin-bottom: 15px;
+}
+
+.language-selector label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.language-selector select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.language-selector select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.code-textarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    background: #f7fafc;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.code-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    background: white;
+}
+
+.code-dialog-footer {
+    padding: 16px 20px;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* 程式碼高亮 */
+.language-javascript { color: #f7df1e; }
+.language-python { color: #3776ab; }
+.language-java { color: #007396; }
+.language-c { color: #555555; }
+.language-cpp { color: #f34b7d; }
+.language-xml { color: #ff6600; }
+.language-json { color: #90a959; }
+.language-html { color: #e34c26; }
+.language-css { color: #563d7c; }
+.language-sql { color: #336791; }
+.language-bash { color: #4eaa25; }
+.language-ini { color: #d1dbe0; }
+.language-diff { color: #88cc88; }
+.language-kotlin { color: #f18e33; }
+
+/* 表格右鍵選單 */
+.table-context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    z-index: 10101;
+    min-width: 180px;
+}
+
+.table-menu-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.table-menu-item:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}
+
+.table-menu-separator {
+    height: 1px;
+    background: #e9ecef;
+    margin: 4px 0;
+}
+
+/* 物件右鍵選單 */
+.element-context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    z-index: 10101;
+    min-width: 150px;
+}
+
+.element-menu-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.element-menu-item:hover {
+    background: #f8f9fa;
+    color: #667eea;
+}
+
+.element-menu-item.delete:hover {
+    background: #fff5f5;
+    color: #dc3545;
 }
 
 /* 評論區塊 */
@@ -615,7 +855,7 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.9);
-    z-index: 10001;
+    z-index: 10101;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -633,6 +873,117 @@
     border-radius: 8px;
 }
 
+/* 評論主題分組樣式 */
+.comment-topic-group {
+    margin-bottom: 30px;
+}
+
+.comment-topic {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e9ecef;
+    color: #495057;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.comment-topic .badge {
+    background: #667eea;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+/* 回覆按鈕 */
+.comment-reply-btn {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.comment-reply-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+/* 快速連結按鈕 */
+.quick-comment-link {
+    position: fixed;
+    bottom: 320px;
+    right: 20px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    transition: all 0.3s ease;
+    z-index: 8995;
+}
+
+.quick-comment-link.show {
+    display: flex;
+}
+
+.quick-comment-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.comments-count-quick {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+/* 回到頂部按鈕 */
+.back-to-top {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 8994;
+}
+
+.back-to-top.show {
+    display: flex;
+}
+
+.back-to-top:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 6px 20px rgba(118, 75, 162, 0.4);
+}
+
 /* 手機版調整 */
 @media (max-width: 768px) {
     .comment-fab {
@@ -646,6 +997,14 @@
     .comment-dialog-content {
         width: 95vw;
         margin: 20px;
+    }
+    
+    .code-dialog-content {
+        width: 95vw;
+    }
+    
+    .code-textarea {
+        min-height: 200px;
     }
     
     .comment-toolbar {
@@ -673,5 +1032,20 @@
     
     .comment-image img {
         height: 100px;
+    }
+    
+    .quick-comment-link {
+        bottom: 300px;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+    
+    .back-to-top {
+        bottom: 25px;
+        right: 25px;
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
     }
 }

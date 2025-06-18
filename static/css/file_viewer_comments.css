@@ -1,3 +1,45 @@
+/* 主題高亮效果 */
+.comment-topic-group.topic-highlight {
+    animation: topicHighlight 2s ease-in-out;
+}
+
+@keyframes topicHighlight {
+    0% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+    50% {
+        background-color: rgba(102, 126, 234, 0.1);
+        transform: scale(1.02);
+    }
+    100% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+}
+
+/* 對話框標題圖標美化 */
+.comment-dialog-header h5 i {
+    margin-right: 10px;
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+/* 主題快速連結優化 */
+.topic-quick-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    position: relative;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
 .topic-quick-links::before {
     content: '';
     position: absolute;
@@ -16,7 +58,20 @@
     display: flex;
     align-items: center;
     gap: 8px;
-}/* 確保按鈕可見 */
+}
+
+.topic-quick-links::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px 0 0 10px;
+}
+
+/* 確保按鈕可見 */
 .comment-actions .btn {
     position: relative !important;
     z-index: 10003 !important;

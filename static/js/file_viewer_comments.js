@@ -1,11 +1,11 @@
-// Enhanced File Viewer Comments System JS - Complete Fixed Version
+// Enhanced File Viewer Comments System JS - Complete
 
 // 全域變數
 let currentEditingCommentId = null;
 let comments = [];
 let commentAttachments = [];
 let savedSelection = null;
-let isSubmitting = false;
+let isSubmitting = false; // 防止重複提交
 
 // 初始化評論系統
 function initCommentSystem() {
@@ -80,7 +80,7 @@ function createCommentsSection() {
     }
 }
 
-// 初始化程式碼分隔線
+// 新增：初始化程式碼分隔線
 function initCodeResizer() {
     const resizer = document.getElementById('code-resizer');
     if (!resizer) return;
@@ -111,11 +111,12 @@ function initCodeResizer() {
         
         const deltaX = e.clientX - startX;
         const container = document.querySelector('.code-dialog-body');
-        const containerWidth = container.offsetWidth - 20 - 6;
+        const containerWidth = container.offsetWidth - 20 - 6; // 減去 padding 和 resizer 寬度
         
         const newLeftWidth = startLeftWidth + deltaX;
         const newRightWidth = startRightWidth - deltaX;
         
+        // 限制最小寬度
         const minWidth = 200;
         if (newLeftWidth >= minWidth && newRightWidth >= minWidth) {
             const leftPercent = (newLeftWidth / containerWidth) * 100;
@@ -133,7 +134,7 @@ function initCodeResizer() {
     }
 }
 
-// 評論管理按鈕功能
+// 新增：評論管理按鈕功能
 window.toggleCommentsView = function() {
     const section = document.getElementById('comments-section');
     const fab = document.querySelector('.comment-manager-fab');
@@ -148,23 +149,27 @@ window.toggleCommentsView = function() {
     }
 }
 
-// 處理編輯器右鍵選單
+// 處理編輯器右鍵選單 - 移到全域範圍
 function handleEditorContextMenu(e) {
     const target = e.target;
     
+    // 表格右鍵選單
     if (target.tagName === 'TD' || target.tagName === 'TH' || 
         target.closest('table')) {
         e.preventDefault();
         showTableContextMenu(e, target.closest('table'));
     }
+    // 圖片右鍵選單
     else if (target.tagName === 'IMG') {
         e.preventDefault();
         showElementContextMenu(e, target, 'image');
     }
+    // 程式碼區塊右鍵選單
     else if (target.tagName === 'PRE' || target.closest('pre')) {
         e.preventDefault();
         showElementContextMenu(e, target.closest('pre'), 'code');
     }
+    // 引用區塊右鍵選單
     else if (target.tagName === 'BLOCKQUOTE' || target.closest('blockquote')) {
         e.preventDefault();
         showElementContextMenu(e, target.closest('blockquote'), 'quote');
@@ -193,13 +198,25 @@ function bindCommentEvents() {
     // 編輯器事件
     const editor = document.getElementById('comment-editor');
     if (editor) {
+        // 貼上事件
         editor.addEventListener('paste', handlePaste);
+        
+        // 拖放事件
         editor.addEventListener('dragover', handleDragOver);
         editor.addEventListener('drop', handleDrop);
         editor.addEventListener('dragleave', handleDragLeave);
+        
+        // 輸入事件監聽即時預覽
         editor.addEventListener('input', updateEditorPreview);
+        
+        // 選擇變化事件
+        document.addEventListener('selectionchange', updateToolbarState);
+        
+        // 新增：滑鼠選擇事件
         editor.addEventListener('mouseup', saveSelection);
         editor.addEventListener('keyup', saveSelection);
+        
+        // 處理引用前後插入空白行
         editor.addEventListener('keydown', handleBlockquoteNavigation);
     }
     
@@ -297,13 +314,16 @@ function handleBlockquoteNavigation(e) {
     const blockquote = node.nodeType === 3 ? node.parentElement.closest('blockquote') : node.closest('blockquote');
     
     if (blockquote) {
+        // 在引用塊的開頭按向上鍵
         if (e.key === 'ArrowUp' && range.startOffset === 0) {
             const firstChild = blockquote.firstChild;
             if (node === firstChild || node.parentElement === firstChild) {
                 e.preventDefault();
+                // 在引用前插入新段落
                 const p = document.createElement('p');
                 p.innerHTML = '<br>';
                 blockquote.parentNode.insertBefore(p, blockquote);
+                // 將游標移到新段落
                 const newRange = document.createRange();
                 newRange.setStart(p, 0);
                 newRange.setEnd(p, 0);
@@ -311,11 +331,13 @@ function handleBlockquoteNavigation(e) {
                 selection.addRange(newRange);
             }
         }
+        // 在引用塊的結尾按向下鍵
         else if (e.key === 'ArrowDown') {
             const lastChild = blockquote.lastChild;
             const isAtEnd = node === lastChild || node.parentElement === lastChild;
             if (isAtEnd && range.endOffset === (node.nodeType === 3 ? node.textContent.length : node.childNodes.length)) {
                 e.preventDefault();
+                // 在引用後插入新段落
                 const p = document.createElement('p');
                 p.innerHTML = '<br>';
                 if (blockquote.nextSibling) {
@@ -323,6 +345,7 @@ function handleBlockquoteNavigation(e) {
                 } else {
                     blockquote.parentNode.appendChild(p);
                 }
+                // 將游標移到新段落
                 const newRange = document.createRange();
                 newRange.setStart(p, 0);
                 newRange.setEnd(p, 0);
@@ -330,8 +353,10 @@ function handleBlockquoteNavigation(e) {
                 selection.addRange(newRange);
             }
         }
+        // 在引用塊內按 Enter + Shift
         else if (e.key === 'Enter' && e.shiftKey) {
             e.preventDefault();
+            // 退出引用，在下方創建新段落
             const p = document.createElement('p');
             p.innerHTML = '<br>';
             if (blockquote.nextSibling) {
@@ -339,6 +364,7 @@ function handleBlockquoteNavigation(e) {
             } else {
                 blockquote.parentNode.appendChild(p);
             }
+            // 將游標移到新段落
             const newRange = document.createRange();
             newRange.setStart(p, 0);
             newRange.setEnd(p, 0);
@@ -373,6 +399,7 @@ function initializeEditorComplete() {
     const editor = document.getElementById('comment-editor');
     if (!editor) return;
     
+    // 綁定編輯器事件
     editor.addEventListener('paste', handlePaste);
     editor.addEventListener('dragover', handleDragOver);
     editor.addEventListener('drop', handleDrop);
@@ -383,6 +410,7 @@ function initializeEditorComplete() {
     editor.addEventListener('keydown', handleBlockquoteNavigation);
     editor.addEventListener('contextmenu', handleEditorContextMenu);
     
+    // 綁定工具列按鈕事件
     document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -391,8 +419,10 @@ function initializeEditorComplete() {
         });
     });
     
+    // 重新初始化右鍵選單
     bindEditorContextMenu();
     
+    // 點擊其他地方關閉顏色選擇器
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.color-picker-wrapper')) {
             document.querySelectorAll('.color-palette.show').forEach(palette => {
@@ -411,8 +441,10 @@ window.openCommentDialog = function(editId = null) {
     document.body.style.overflow = 'hidden';
     isSubmitting = false;
     
+    // 重置編輯器
     const editor = document.getElementById('comment-editor');
     if (editor) {
+        // 移除所有事件監聽器
         const newEditor = editor.cloneNode(false);
         newEditor.id = 'comment-editor';
         newEditor.className = 'comment-editor';
@@ -421,16 +453,19 @@ window.openCommentDialog = function(editId = null) {
         editor.parentNode.replaceChild(newEditor, editor);
     }
     
+    // 重新綁定工具列按鈕
     document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
     });
     
+    // 延遲初始化
     setTimeout(() => {
         const editor = document.getElementById('comment-editor');
         const topicInput = document.getElementById('comment-topic');
         
         if (editId) {
+            // 編輯模式
             currentEditingCommentId = editId;
             const comment = findCommentById(comments, editId);
             if (comment && editor) {
@@ -439,23 +474,73 @@ window.openCommentDialog = function(editId = null) {
                 updateDialogForEdit();
             }
         } else {
+            // 新增模式
             currentEditingCommentId = null;
             if (editor) editor.innerHTML = '';
             if (topicInput) topicInput.value = '';
             updateDialogForCreate();
         }
         
+        // 初始化編輯器
         initializeEditorComplete();
         
+        // 確保焦點
         if (editor) editor.focus();
     }, 100);
     
+    // 清空附件
     commentAttachments = [];
     updateAttachmentsDisplay();
     
+    // 重置分隔線位置
     resetCodeResizer();
     
+    // 確保按鈕可見
     ensureButtonsVisible();
+}
+
+// 新增：清理編輯器事件
+function cleanupEditorEvents() {
+    const editor = document.getElementById('comment-editor');
+    if (editor) {
+        // 克隆節點以移除所有事件監聽器
+        const newEditor = editor.cloneNode(true);
+        editor.parentNode.replaceChild(newEditor, editor);
+    }
+    
+    // 清理工具列按鈕
+    document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+}
+
+// 新增：初始化編輯器
+function initializeEditor() {
+    const editor = document.getElementById('comment-editor');
+    if (!editor) return;
+    
+    // 綁定編輯器事件
+    editor.addEventListener('paste', handlePaste);
+    editor.addEventListener('dragover', handleDragOver);
+    editor.addEventListener('drop', handleDrop);
+    editor.addEventListener('dragleave', handleDragLeave);
+    editor.addEventListener('input', updateEditorPreview);
+    editor.addEventListener('mouseup', saveSelection);
+    editor.addEventListener('keyup', saveSelection);
+    editor.addEventListener('keydown', handleBlockquoteNavigation);
+    editor.addEventListener('contextmenu', handleEditorContextMenu);
+    
+    // 綁定工具列按鈕
+    document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
+        btn.addEventListener('click', handleToolbarClick);
+    });
+    
+    // 設置焦點
+    editor.focus();
+    
+    // 綁定右鍵選單
+    bindEditorContextMenu();
 }
 
 // 更新對話框為編輯模式
@@ -512,6 +597,19 @@ function ensureButtonsVisible() {
     }
 }
 
+// 綁定編輯器事件
+function bindEditorEvents(editor) {
+    // 移除舊的事件監聽器
+    editor.removeEventListener('mouseup', saveSelection);
+    editor.removeEventListener('keyup', saveSelection);
+    editor.removeEventListener('keydown', handleBlockquoteNavigation);
+    
+    // 重新綁定
+    editor.addEventListener('mouseup', saveSelection);
+    editor.addEventListener('keyup', saveSelection);
+    editor.addEventListener('keydown', handleBlockquoteNavigation);
+}
+
 // 重置程式碼分隔線位置
 function resetCodeResizer() {
     const inputSection = document.querySelector('.code-input-section');
@@ -530,6 +628,7 @@ function closeCommentDialog() {
         dialog.classList.remove('show');
         document.body.style.overflow = '';
         
+        // 清理
         currentEditingCommentId = null;
         window.currentReplyingToId = null;
         commentAttachments = [];
@@ -549,11 +648,13 @@ function handleToolbarClick(e) {
     const command = btn.dataset.command;
     const value = btn.dataset.value || null;
     
+    // 確保編輯器獲得焦點
     const editor = document.getElementById('comment-editor');
     if (!editor) return;
     
     editor.focus();
     
+    // 恢復之前的選擇範圍
     if (savedSelection && (command === 'foreColor' || command === 'backColor')) {
         restoreSelection();
     }
@@ -627,6 +728,7 @@ function handleToolbarClick(e) {
             }
     }
     
+    // 更新按鈕狀態
     setTimeout(updateToolbarState, 10);
 }
 
@@ -645,12 +747,14 @@ function showColorPicker(command) {
     }
 }
 
-// 應用顏色
+// 應用顏色函數
 window.applyColor = function(color, command) {
     const editor = document.getElementById('comment-editor');
     
+    // 確保編輯器獲得焦點
     editor.focus();
     
+    // 嘗試恢復之前儲存的選擇範圍
     if (savedSelection) {
         try {
             const selection = window.getSelection();
@@ -661,22 +765,27 @@ window.applyColor = function(color, command) {
         }
     }
     
+    // 檢查是否有選擇範圍
     const selection = window.getSelection();
     if (selection.rangeCount === 0 || selection.isCollapsed) {
+        // 如果沒有選擇範圍，創建一個簡單的提示
         const span = document.createElement('span');
         span.textContent = '選擇的文字';
         span.style.backgroundColor = command === 'backColor' ? color : '';
         span.style.color = command === 'foreColor' ? color : '';
         
+        // 在游標位置插入
         try {
             document.execCommand('insertHTML', false, span.outerHTML);
         } catch (e) {
             console.error('插入顏色文字失敗:', e);
         }
     } else {
+        // 有選擇範圍，應用顏色
         try {
             const success = document.execCommand(command, false, color);
             if (!success) {
+                // 如果 execCommand 失敗，手動處理
                 const range = selection.getRangeAt(0);
                 const span = document.createElement('span');
                 
@@ -689,6 +798,7 @@ window.applyColor = function(color, command) {
                 span.appendChild(range.extractContents());
                 range.insertNode(span);
                 
+                // 重新選擇
                 range.selectNodeContents(span);
                 selection.removeAllRanges();
                 selection.addRange(range);
@@ -698,8 +808,10 @@ window.applyColor = function(color, command) {
         }
     }
     
+    // 關閉顏色選擇器
     document.querySelector('.color-palette.show')?.classList.remove('show');
     
+    // 更新按鈕指示器
     const btn = document.querySelector(`[data-command="${command}"]`);
     if (btn) {
         const indicator = btn.querySelector('.color-indicator');
@@ -712,9 +824,11 @@ window.applyColor = function(color, command) {
         }
     }
     
+    // 清除儲存的選擇範圍並重新儲存當前範圍
     savedSelection = null;
     setTimeout(saveSelection, 10);
     
+    // 保持焦點
     editor.focus();
 }
 
@@ -723,7 +837,7 @@ function openCodeDialog() {
     const dialog = document.getElementById('code-dialog');
     if (dialog) {
         dialog.classList.add('show');
-        dialog.style.zIndex = '10100';
+        dialog.style.zIndex = '10100'; // 確保在最上層
         
         const textarea = document.getElementById('code-textarea');
         const wrapper = document.querySelector('.code-textarea-wrapper');
@@ -731,12 +845,14 @@ function openCodeDialog() {
         if (textarea) {
             textarea.focus();
             
+            // 綁定拖放事件
             textarea.addEventListener('dragover', handleCodeDragOver);
             textarea.addEventListener('drop', handleCodeDrop);
             textarea.addEventListener('dragleave', handleCodeDragLeave);
             textarea.addEventListener('dragenter', handleCodeDragEnter);
         }
         
+        // 創建拖放提示覆蓋層（如果不存在）
         if (!document.getElementById('code-drop-overlay')) {
             const dropOverlay = document.createElement('div');
             dropOverlay.id = 'code-drop-overlay';
@@ -750,8 +866,10 @@ function openCodeDialog() {
             }
         }
         
+        // 初始化預覽
         updateCodePreview();
         
+        // 重置分隔線位置
         resetCodeResizer();
     }
 }
@@ -772,12 +890,13 @@ function updateCodePreview() {
     }
 }
 
-// 處理程式碼區域拖放
+// 處理程式碼區域拖放進入
 function handleCodeDragEnter(e) {
     e.preventDefault();
     e.stopPropagation();
 }
 
+// 處理程式碼區域拖放
 function handleCodeDragOver(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -797,6 +916,7 @@ function handleCodeDragLeave(e) {
     e.preventDefault();
     e.stopPropagation();
     
+    // 檢查是否真的離開了拖放區域
     const wrapper = e.currentTarget.parentElement;
     const relatedTarget = e.relatedTarget;
     
@@ -832,9 +952,11 @@ async function handleCodeDrop(e) {
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
         const file = files[0];
+        // 讀取檔案內容
         const reader = new FileReader();
         reader.onload = (event) => {
             textarea.value = event.target.result;
+            // 嘗試自動偵測語言
             const ext = file.name.split('.').pop().toLowerCase();
             const langMap = {
                 'js': 'javascript',
@@ -853,6 +975,7 @@ async function handleCodeDrop(e) {
             if (langMap[ext]) {
                 document.getElementById('code-language').value = langMap[ext];
             }
+            // 更新預覽
             updateCodePreview();
         };
         reader.readAsText(file);
@@ -866,6 +989,7 @@ window.closeCodeDialog = function() {
         document.getElementById('code-textarea').value = '';
         document.getElementById('code-language').value = 'javascript';
         
+        // 移除事件監聽器
         const textarea = document.getElementById('code-textarea');
         if (textarea) {
             textarea.removeEventListener('dragover', handleCodeDragOver);
@@ -874,6 +998,7 @@ window.closeCodeDialog = function() {
             textarea.removeEventListener('dragenter', handleCodeDragEnter);
         }
         
+        // 移除拖放提示覆蓋層
         const overlay = document.getElementById('code-drop-overlay');
         if (overlay) {
             overlay.remove();
@@ -1001,9 +1126,11 @@ function highlightCode(code, language) {
 // 更新編輯器預覽
 function updateEditorPreview() {
     // 此函數可用於即時預覽編輯器內容
+    const editor = document.getElementById('comment-editor');
+    // 可以在這裡添加即時預覽邏輯
 }
 
-// 處理拖放
+// 處理拖放 - 加入視覺提示
 function handleDragOver(e) {
     e.preventDefault();
     const editor = e.currentTarget;
@@ -1035,7 +1162,10 @@ function bindEditorContextMenu() {
     const editor = document.getElementById('comment-editor');
     if (!editor) return;
     
+    // 移除舊的監聽器
     editor.removeEventListener('contextmenu', handleEditorContextMenu);
+    
+    // 添加新的監聽器
     editor.addEventListener('contextmenu', handleEditorContextMenu);
 }
 
@@ -1081,13 +1211,14 @@ function showTableContextMenu(event, table) {
         </div>
     `;
     
-    menu.style.left = event.clientX + 'px';
-    menu.style.top = event.clientY + 'px';
+    menu.style.left = event.clientX + 'px';  // 改用 clientX
+    menu.style.top = event.clientY + 'px';   // 改用 clientY
     menu.dataset.table = getTableId(table);
     menu.dataset.cell = getCellPosition(event.target);
     
     document.body.appendChild(menu);
     
+    // 點擊其他地方關閉選單
     setTimeout(() => {
         document.addEventListener('click', removeExistingMenus, { once: true });
     }, 0);
@@ -1147,11 +1278,13 @@ window.applyTableColor = function(event, property, color, type) {
     if (!table) return;
     
     if (type === 'table') {
+        // 應用到整個表格
         const cells = table.querySelectorAll('td, th');
         cells.forEach(cell => {
             cell.style[property] = color;
         });
     } else if (type === 'cell') {
+        // 應用到特定儲存格
         const cellInfo = getCellInfoFromMenu({ target: colorMenu });
         if (cellInfo) {
             const cell = table.rows[cellInfo.row].cells[cellInfo.col];
@@ -1164,20 +1297,23 @@ window.applyTableColor = function(event, property, color, type) {
     removeExistingMenus();
 }
 
-// 調整選單位置
+// 調整選單位置，確保不會超出視窗範圍
 function adjustMenuPosition(menu) {
     const rect = menu.getBoundingClientRect();
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     
+    // 調整水平位置
     if (rect.right > windowWidth) {
         menu.style.left = Math.max(0, windowWidth - rect.width - 10) + 'px';
     }
     
+    // 調整垂直位置
     if (rect.bottom > windowHeight) {
         menu.style.top = Math.max(0, windowHeight - rect.height - 10) + 'px';
     }
     
+    // 確保選單不會太靠近邊緣
     const minMargin = 5;
     const currentLeft = parseInt(menu.style.left);
     const currentTop = parseInt(menu.style.top);
@@ -1218,12 +1354,13 @@ function showElementContextMenu(event, element, type) {
     `;
     
     menu.innerHTML = menuItems;
-    menu.style.left = event.clientX + 'px';
-    menu.style.top = event.clientY + 'px';
+    menu.style.left = event.clientX + 'px';  // 改用 clientX
+    menu.style.top = event.clientY + 'px';   // 改用 clientY
     menu.dataset.element = getElementId(element);
     
     document.body.appendChild(menu);
 
+    // 調整選單位置，確保不會超出視窗範圍
     adjustMenuPosition(menu);
 
     setTimeout(() => {
@@ -1288,6 +1425,7 @@ window.addTableColumn = function(event) {
     for (let i = 0; i < table.rows.length; i++) {
         const cell = table.rows[i].insertCell(cellInfo.col + 1);
         if (i === 0) {
+            // 第一行是標題，使用 th 樣式
             cell.textContent = '新標題';
             cell.style.background = '#f8f9fa';
             cell.style.border = '1px solid #dee2e6';
@@ -1311,6 +1449,7 @@ window.addTableColumnLeft = function(event) {
     for (let i = 0; i < table.rows.length; i++) {
         const cell = table.rows[i].insertCell(cellInfo.col);
         if (i === 0) {
+            // 第一行是標題，使用 th 樣式
             cell.textContent = '新標題';
             cell.style.background = '#f8f9fa';
             cell.style.border = '1px solid #dee2e6';
@@ -1453,7 +1592,7 @@ function getCellPosition(cell) {
     return `${rowIndex},${colIndex}`;
 }
 
-// 送出評論
+// 送出評論 - 防止重複提交
 window.submitComment = async function() {
     if (isSubmitting) {
         showToast('正在處理中，請稍候...', 'info');
@@ -1461,7 +1600,7 @@ window.submitComment = async function() {
     }
     
     const editor = document.getElementById('comment-editor');
-    let content = editor.innerHTML.trim();
+    const content = editor.innerHTML.trim();
     const topic = document.getElementById('comment-topic').value.trim();
     
     const replyPreview = editor.querySelector('.reply-to-preview');
@@ -1653,7 +1792,7 @@ function renderComment(comment, isReply = false, level = 0) {
                     <button class="comment-action-btn">
                         <i class="fas fa-edit"></i> 編輯
                     </button>
-                    <button class="comment-action-btn delete">
+                                <button class="comment-action-btn delete" onclick="deleteComment('${comment.id}')">
                         <i class="fas fa-trash"></i> 刪除
                     </button>
                     ${hasReplies ? `
@@ -1730,6 +1869,7 @@ function updateBackToCommentsButton() {
     const section = document.getElementById('comments-section');
     
     if (btn && section && comments.length > 0) {
+        // 監聽滾動事件
         window.addEventListener('scroll', function() {
             const rect = section.getBoundingClientRect();
             if (rect.bottom < 0) {
@@ -1762,6 +1902,7 @@ window.smoothScrollToTopic = function(topicId) {
             inline: 'nearest'
         });
         
+        // 添加高亮效果
         element.classList.add('topic-highlight');
         setTimeout(() => {
             element.classList.remove('topic-highlight');
@@ -1839,6 +1980,7 @@ function updateQuickLink() {
         link.classList.remove('show');
     }
     
+    // 顯示回到頂部按鈕
     const backToTop = document.getElementById('back-to-top');
     if (backToTop && window.scrollY > 300) {
         backToTop.classList.add('show');
@@ -1880,7 +2022,7 @@ function createTable(rows, cols) {
     return html;
 }
 
-// 處理圖片檔案
+// 處理圖片檔案 - 增加可縮放功能
 async function handleImageFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -1899,11 +2041,13 @@ window.makeImageResizable = function(imgId) {
     let isResizing = false;
     let startX, startY, startWidth, startHeight;
     
+    // 點擊圖片時顯示縮放控制點
     img.addEventListener('click', function(e) {
         e.preventDefault();
         toggleImageResize(img);
     });
     
+    // 拖動功能
     img.addEventListener('mousedown', function(e) {
         if (!isResizing) {
             const startPosX = e.clientX - img.offsetLeft;
@@ -2156,6 +2300,7 @@ function showToast(message, type = 'info') {
 document.addEventListener('DOMContentLoaded', function() {
     initCommentSystem();
     
+    // 修復送出和取消按鈕的可見性
     const dialogFooter = document.querySelector('.comment-dialog-footer');
     if (dialogFooter) {
         dialogFooter.style.visibility = 'visible';

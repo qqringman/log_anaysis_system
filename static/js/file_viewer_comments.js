@@ -1143,8 +1143,8 @@ function showTableContextMenu(event, table) {
         </div>
     `;
     
-    menu.style.left = event.pageX + 'px';
-    menu.style.top = event.pageY + 'px';
+    menu.style.left = event.clientX + 'px';  // 改用 clientX
+    menu.style.top = event.clientY + 'px';   // 改用 clientY
     menu.dataset.table = getTableId(table);
     menu.dataset.cell = getCellPosition(event.target);
     
@@ -1192,8 +1192,9 @@ window.showTableColorMenu = function(event, type) {
         </div>
     `;
     
-    colorMenu.style.left = (parseInt(parentMenu.style.left) + parentMenu.offsetWidth + 10) + 'px';
-    colorMenu.style.top = parentMenu.style.top;
+    const parentRect = parentMenu.getBoundingClientRect();
+    colorMenu.style.left = (parentRect.right + 10) + 'px';
+    colorMenu.style.top = parentRect.top + 'px';
     colorMenu.dataset.table = parentMenu.dataset.table;
     colorMenu.dataset.cell = parentMenu.dataset.cell;
     
@@ -1228,6 +1229,35 @@ window.applyTableColor = function(event, property, color, type) {
     removeExistingMenus();
 }
 
+// 調整選單位置，確保不會超出視窗範圍
+function adjustMenuPosition(menu) {
+    const rect = menu.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 調整水平位置
+    if (rect.right > windowWidth) {
+        menu.style.left = Math.max(0, windowWidth - rect.width - 10) + 'px';
+    }
+    
+    // 調整垂直位置
+    if (rect.bottom > windowHeight) {
+        menu.style.top = Math.max(0, windowHeight - rect.height - 10) + 'px';
+    }
+    
+    // 確保選單不會太靠近邊緣
+    const minMargin = 5;
+    const currentLeft = parseInt(menu.style.left);
+    const currentTop = parseInt(menu.style.top);
+    
+    if (currentLeft < minMargin) {
+        menu.style.left = minMargin + 'px';
+    }
+    if (currentTop < minMargin) {
+        menu.style.top = minMargin + 'px';
+    }
+}
+
 // 顯示元素右鍵選單
 function showElementContextMenu(event, element, type) {
     removeExistingMenus();
@@ -1256,12 +1286,15 @@ function showElementContextMenu(event, element, type) {
     `;
     
     menu.innerHTML = menuItems;
-    menu.style.left = event.pageX + 'px';
-    menu.style.top = event.pageY + 'px';
+    menu.style.left = event.clientX + 'px';  // 改用 clientX
+    menu.style.top = event.clientY + 'px';   // 改用 clientY
     menu.dataset.element = getElementId(element);
     
     document.body.appendChild(menu);
-    
+
+    // 調整選單位置，確保不會超出視窗範圍
+    adjustMenuPosition(menu);
+
     setTimeout(() => {
         document.addEventListener('click', removeExistingMenus, { once: true });
     }, 0);

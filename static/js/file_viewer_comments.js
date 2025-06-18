@@ -14,6 +14,9 @@ function initCommentSystem() {
     // 創建評論區塊
     createCommentsSection();
     
+    // 創建返回評論區按鈕
+    createBackToCommentsButton();
+    
     // 綁定事件
     bindCommentEvents();
     
@@ -22,6 +25,25 @@ function initCommentSystem() {
     
     // 初始化程式碼分隔線
     initCodeResizer();
+}
+
+// 創建返回評論區按鈕
+function createBackToCommentsButton() {
+    if (!document.getElementById('back-to-comments-btn')) {
+        const btn = document.createElement('a');
+        btn.id = 'back-to-comments-btn';
+        btn.className = 'back-to-comments-btn';
+        btn.href = '#comments-section';
+        btn.innerHTML = '<i class="fas fa-arrow-up"></i> 返回評論區';
+        btn.onclick = function(e) {
+            e.preventDefault();
+            document.getElementById('comments-section').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        };
+        document.body.appendChild(btn);
+    }
 }
 
 // 創建評論區塊
@@ -123,6 +145,33 @@ window.toggleCommentsView = function() {
     }
 }
 
+// 處理編輯器右鍵選單 - 移到全域範圍
+function handleEditorContextMenu(e) {
+    const target = e.target;
+    
+    // 表格右鍵選單
+    if (target.tagName === 'TD' || target.tagName === 'TH' || 
+        target.closest('table')) {
+        e.preventDefault();
+        showTableContextMenu(e, target.closest('table'));
+    }
+    // 圖片右鍵選單
+    else if (target.tagName === 'IMG') {
+        e.preventDefault();
+        showElementContextMenu(e, target, 'image');
+    }
+    // 程式碼區塊右鍵選單
+    else if (target.tagName === 'PRE' || target.closest('pre')) {
+        e.preventDefault();
+        showElementContextMenu(e, target.closest('pre'), 'code');
+    }
+    // 引用區塊右鍵選單
+    else if (target.tagName === 'BLOCKQUOTE' || target.closest('blockquote')) {
+        e.preventDefault();
+        showElementContextMenu(e, target.closest('blockquote'), 'quote');
+    }
+}
+
 // 綁定評論相關事件
 function bindCommentEvents() {
     // 對話框關閉
@@ -191,34 +240,7 @@ function bindCommentEvents() {
         codeLang.addEventListener('change', updateCodePreview);
     }
     
-    // 處理編輯器右鍵選單
-function handleEditorContextMenu(e) {
-    const target = e.target;
-    
-    // 表格右鍵選單
-    if (target.tagName === 'TD' || target.tagName === 'TH' || 
-        target.closest('table')) {
-        e.preventDefault();
-        showTableContextMenu(e, target.closest('table'));
-    }
-    // 圖片右鍵選單
-    else if (target.tagName === 'IMG') {
-        e.preventDefault();
-        showElementContextMenu(e, target, 'image');
-    }
-    // 程式碼區塊右鍵選單
-    else if (target.tagName === 'PRE' || target.closest('pre')) {
-        e.preventDefault();
-        showElementContextMenu(e, target.closest('pre'), 'code');
-    }
-    // 引用區塊右鍵選單
-    else if (target.tagName === 'BLOCKQUOTE' || target.closest('blockquote')) {
-        e.preventDefault();
-        showElementContextMenu(e, target.closest('blockquote'), 'quote');
-    }
-}
-
-// 綁定編輯器右鍵選單
+    // 綁定編輯器右鍵選單
     bindEditorContextMenu();
     
     // 點擊其他地方關閉顏色選擇器
@@ -321,6 +343,44 @@ function restoreSelection() {
     }
 }
 
+// 完整初始化編輯器
+function initializeEditorComplete() {
+    const editor = document.getElementById('comment-editor');
+    if (!editor) return;
+    
+    // 綁定編輯器事件
+    editor.addEventListener('paste', handlePaste);
+    editor.addEventListener('dragover', handleDragOver);
+    editor.addEventListener('drop', handleDrop);
+    editor.addEventListener('dragleave', handleDragLeave);
+    editor.addEventListener('input', updateEditorPreview);
+    editor.addEventListener('mouseup', saveSelection);
+    editor.addEventListener('keyup', saveSelection);
+    editor.addEventListener('keydown', handleBlockquoteNavigation);
+    editor.addEventListener('contextmenu', handleEditorContextMenu);
+    
+    // 綁定工具列按鈕事件
+    document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleToolbarClick(e);
+        });
+    });
+    
+    // 重新初始化右鍵選單
+    bindEditorContextMenu();
+    
+    // 點擊其他地方關閉顏色選擇器
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.color-picker-wrapper')) {
+            document.querySelectorAll('.color-palette.show').forEach(palette => {
+                palette.classList.remove('show');
+            });
+        }
+    });
+}
+
 // 開啟評論對話框 - 全域函數
 window.openCommentDialog = function(editId = null) {
     const dialog = document.getElementById('comment-dialog');
@@ -328,47 +388,54 @@ window.openCommentDialog = function(editId = null) {
     
     dialog.classList.add('show');
     document.body.style.overflow = 'hidden';
-    isSubmitting = false; // 重置提交狀態
+    isSubmitting = false;
     
-    // 清理舊的事件監聽器
-    cleanupEditorEvents();
-    
-    if (editId) {
-        // 編輯模式
-        currentEditingCommentId = editId;
-        const comment = comments.find(c => c.id === editId);
-        if (comment) {
-            // 更新標題和按鈕
-            updateDialogForEdit();
-            
-            // 延遲設置內容，確保編輯器已準備好
-            setTimeout(() => {
-                const editor = document.getElementById('comment-editor');
-                if (editor) {
-                    editor.innerHTML = comment.content;
-                    document.getElementById('comment-topic').value = comment.topic || '一般討論';
-                    
-                    // 重新初始化編輯器
-                    initializeEditor();
-                }
-            }, 100);
-        }
-    } else {
-        // 新增模式
-        currentEditingCommentId = null;
-        updateDialogForCreate();
-        
-        setTimeout(() => {
-            const editor = document.getElementById('comment-editor');
-            if (editor) {
-                editor.innerHTML = '';
-                document.getElementById('comment-topic').value = '';
-                
-                // 重新初始化編輯器
-                initializeEditor();
-            }
-        }, 100);
+    // 重置編輯器
+    const editor = document.getElementById('comment-editor');
+    if (editor) {
+        // 移除所有事件監聽器
+        const newEditor = editor.cloneNode(false);
+        newEditor.id = 'comment-editor';
+        newEditor.className = 'comment-editor';
+        newEditor.contentEditable = 'true';
+        newEditor.setAttribute('placeholder', '在此輸入評論內容...支援拖放或貼上圖片');
+        editor.parentNode.replaceChild(newEditor, editor);
     }
+    
+    // 重新綁定工具列按鈕
+    document.querySelectorAll('.comment-toolbar-btn').forEach(btn => {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+    });
+    
+    // 延遲初始化
+    setTimeout(() => {
+        const editor = document.getElementById('comment-editor');
+        const topicInput = document.getElementById('comment-topic');
+        
+        if (editId) {
+            // 編輯模式
+            currentEditingCommentId = editId;
+            const comment = comments.find(c => c.id === editId);
+            if (comment && editor) {
+                editor.innerHTML = comment.content;
+                if (topicInput) topicInput.value = comment.topic || '一般討論';
+                updateDialogForEdit();
+            }
+        } else {
+            // 新增模式
+            currentEditingCommentId = null;
+            if (editor) editor.innerHTML = '';
+            if (topicInput) topicInput.value = '';
+            updateDialogForCreate();
+        }
+        
+        // 初始化編輯器
+        initializeEditorComplete();
+        
+        // 確保焦點
+        if (editor) editor.focus();
+    }, 100);
     
     // 清空附件
     commentAttachments = [];
@@ -522,77 +589,91 @@ function closeCommentDialog() {
 
 // 處理工具列點擊
 function handleToolbarClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const btn = e.currentTarget;
     const command = btn.dataset.command;
     const value = btn.dataset.value || null;
     
     // 確保編輯器獲得焦點
     const editor = document.getElementById('comment-editor');
+    if (!editor) return;
+    
     editor.focus();
     
     // 恢復之前的選擇範圍
-    if (command === 'foreColor' || command === 'backColor') {
-        if (savedSelection) {
-            restoreSelection();
-        }
+    if (savedSelection && (command === 'foreColor' || command === 'backColor')) {
+        restoreSelection();
     }
     
-    if (command === 'createLink') {
-        const url = prompt('請輸入連結網址：', 'https://');
-        if (url) {
-            document.execCommand(command, false, url);
-        }
-    } else if (command === 'insertImage') {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleImageFile(file);
+    switch(command) {
+        case 'createLink':
+            const url = prompt('請輸入連結網址：', 'https://');
+            if (url) {
+                document.execCommand(command, false, url);
             }
-        };
-        input.click();
-    } else if (command === 'insertCode') {
-        // 修正：直接呼叫 openCodeDialog
-        e.preventDefault();
-        e.stopPropagation();
-        openCodeDialog();
-    } else if (command === 'insertTable') {
-        // 插入表格
-        const rows = prompt('請輸入表格行數：', '3');
-        const cols = prompt('請輸入表格列數：', '3');
-        if (rows && cols) {
-            const table = createTable(parseInt(rows), parseInt(cols));
-            document.execCommand('insertHTML', false, table);
-        }
-    } else if (command === 'formatBlock' && value === 'blockquote') {
-        // 修正引用功能
-        const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const blockquote = document.createElement('blockquote');
+            break;
             
-            try {
-                blockquote.appendChild(range.extractContents());
-                range.insertNode(blockquote);
-                range.selectNodeContents(blockquote);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            } catch (e) {
-                console.error('引用插入失敗:', e);
+        case 'insertImage':
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleImageFile(file);
+                }
+            };
+            input.click();
+            break;
+            
+        case 'insertCode':
+            openCodeDialog();
+            break;
+            
+        case 'insertTable':
+            const rows = prompt('請輸入表格行數：', '3');
+            const cols = prompt('請輸入表格列數：', '3');
+            if (rows && cols) {
+                const table = createTable(parseInt(rows), parseInt(cols));
+                document.execCommand('insertHTML', false, table);
             }
-        }
-    } else if (command === 'foreColor' || command === 'backColor') {
-        // 顏色選擇
-        showColorPicker(command);
-    } else {
-        // 對於其他命令，直接執行
-        try {
-            document.execCommand(command, false, value);
-        } catch (e) {
-            console.error('命令執行失敗:', e);
-        }
+            break;
+            
+        case 'formatBlock':
+            if (value === 'blockquote') {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const blockquote = document.createElement('blockquote');
+                    
+                    try {
+                        blockquote.appendChild(range.extractContents());
+                        range.insertNode(blockquote);
+                        range.selectNodeContents(blockquote);
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    } catch (e) {
+                        console.error('引用插入失敗:', e);
+                    }
+                }
+            } else {
+                document.execCommand(command, false, value);
+            }
+            break;
+            
+        case 'foreColor':
+        case 'backColor':
+            showColorPicker(command);
+            break;
+            
+        default:
+            try {
+                document.execCommand(command, false, value);
+            } catch (e) {
+                console.error('命令執行失敗:', e);
+            }
     }
     
     // 更新按鈕狀態
@@ -1013,31 +1094,11 @@ function bindEditorContextMenu() {
     const editor = document.getElementById('comment-editor');
     if (!editor) return;
     
-    editor.addEventListener('contextmenu', function(e) {
-        const target = e.target;
-        
-        // 表格右鍵選單
-        if (target.tagName === 'TD' || target.tagName === 'TH' || 
-            target.closest('table')) {
-            e.preventDefault();
-            showTableContextMenu(e, target.closest('table'));
-        }
-        // 圖片右鍵選單
-        else if (target.tagName === 'IMG') {
-            e.preventDefault();
-            showElementContextMenu(e, target, 'image');
-        }
-        // 程式碼區塊右鍵選單
-        else if (target.tagName === 'PRE' || target.closest('pre')) {
-            e.preventDefault();
-            showElementContextMenu(e, target.closest('pre'), 'code');
-        }
-        // 引用區塊右鍵選單
-        else if (target.tagName === 'BLOCKQUOTE' || target.closest('blockquote')) {
-            e.preventDefault();
-            showElementContextMenu(e, target.closest('blockquote'), 'quote');
-        }
-    });
+    // 移除舊的監聽器
+    editor.removeEventListener('contextmenu', handleEditorContextMenu);
+    
+    // 添加新的監聽器
+    editor.addEventListener('contextmenu', handleEditorContextMenu);
 }
 
 // 顯示表格右鍵選單
@@ -1540,6 +1601,10 @@ function displayComments() {
                     <i class="fas fa-folder"></i>
                     ${topic}
                     <span class="badge">${topicComments.length}</span>
+                    <button class="topic-back-btn" onclick="scrollToCommentsTop()">
+                        <i class="fas fa-arrow-up"></i>
+                        返回頂部
+                    </button>
                 </h5>
                 ${topicComments.map(comment => `
                     <div class="comment-item" data-id="${comment.id}">
@@ -1552,6 +1617,10 @@ function displayComments() {
                                 </div>
                             </div>
                             <div class="comment-actions">
+                                <button class="comment-back-btn" onclick="scrollToCommentsTop()">
+                                    <i class="fas fa-arrow-up"></i>
+                                    回到頂部
+                                </button>
                                 <button class="comment-reply-btn" onclick="replyToComment('${comment.id}', '${topic}')">
                                     <i class="fas fa-reply"></i> 回覆
                                 </button>
@@ -1595,6 +1664,36 @@ function displayComments() {
     
     updateQuickLink();
     updateCommentCount();
+    updateBackToCommentsButton();
+}
+
+// 更新返回評論區按鈕顯示狀態
+function updateBackToCommentsButton() {
+    const btn = document.getElementById('back-to-comments-btn');
+    const section = document.getElementById('comments-section');
+    
+    if (btn && section && comments.length > 0) {
+        // 監聽滾動事件
+        window.addEventListener('scroll', function() {
+            const rect = section.getBoundingClientRect();
+            if (rect.bottom < 0) {
+                btn.classList.add('show');
+            } else {
+                btn.classList.remove('show');
+            }
+        });
+    }
+}
+
+// 滾動到評論區頂部
+window.scrollToCommentsTop = function() {
+    const section = document.getElementById('comments-section');
+    if (section) {
+        section.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
 }
 
 // 新增：平滑滾動到主題

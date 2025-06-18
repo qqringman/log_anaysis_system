@@ -1,3 +1,82 @@
+/* 返回評論區按鈕 */
+.back-to-comments-btn {
+    position: fixed;
+    bottom: 370px; /* 在其他按鈕上方 */
+    right: 20px;
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+    transition: all 0.3s ease;
+    z-index: 8992;
+}
+
+.back-to-comments-btn.show {
+    display: flex;
+}
+
+.back-to-comments-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+/* 主題區塊內的返回按鈕 */
+.topic-back-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.topic-back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 評論項目內的返回按鈕 */
+.comment-back-btn {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.comment-back-btn:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* 調整其他浮動按鈕位置 */
+@media (max-width: 768px) {
+    .back-to-comments-btn {
+        bottom: 310px !important;
+    }
+}
+
 /* 主題高亮效果 */
 .comment-topic-group.topic-highlight {
     animation: topicHighlight 2s ease-in-out;

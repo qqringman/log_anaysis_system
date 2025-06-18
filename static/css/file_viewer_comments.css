@@ -41,22 +41,22 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
-/* 修復 + 按鈕置中和提示 */
+/* 修復 + 按鈕位置和大小 */
 .comment-fab-wrapper {
     position: fixed;
-    bottom: 100px;
+    bottom: 20px;
     right: 20px;
-    z-index: 8996;
+    z-index: 8994; /* 確保在最底層 */
 }
 
 .comment-fab {
-    width: 60px;
-    height: 60px;
+    width: 56px; /* 統一大小 */
+    height: 56px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    font-size: 30px;
+    font-size: 24px;
     font-weight: bold;
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
     cursor: pointer;
@@ -104,6 +104,23 @@
 .comment-fab-wrapper:hover .comment-fab-tooltip {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* 調整其他浮動按鈕位置 */
+.search-results-fab {
+    bottom: 90px !important; /* 在 + 按鈕上方 */
+}
+
+.marks-fab {
+    bottom: 160px !important; /* 在搜尋結果按鈕上方 */
+}
+
+.quick-comment-link {
+    bottom: 230px !important; /* 在標記按鈕上方 */
+}
+
+.back-to-top {
+    bottom: 300px !important; /* 在快速連結上方 */
 }
 
 /* 評論對話框 */
@@ -393,7 +410,7 @@
     border-radius: 12px;
 }
 
-/* 引用樣式 */
+/* 引用樣式 - 加入前後空白處理 */
 .comment-editor blockquote {
     border-left: 4px solid #667eea;
     padding: 12px 20px;
@@ -402,6 +419,24 @@
     border-radius: 0 8px 8px 0;
     color: #495057;
     font-style: italic;
+    position: relative;
+}
+
+/* 確保引用前後可以插入內容 */
+.comment-editor blockquote::before,
+.comment-editor blockquote::after {
+    content: '\200B'; /* 零寬度空格 */
+    position: absolute;
+    width: 100%;
+    height: 0;
+}
+
+.comment-editor blockquote::before {
+    top: -1px;
+}
+
+.comment-editor blockquote::after {
+    bottom: -1px;
 }
 
 /* 程式碼樣式 */
@@ -421,6 +456,8 @@
     border-radius: 8px;
     overflow-x: auto;
     margin: 12px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .comment-editor pre code {
@@ -524,7 +561,7 @@
     transform: scale(1.1);
 }
 
-/* 確保對話框底部可見 - 修復 z-index */
+/* 修復對話框底部 z-index 問題 */
 .comment-dialog-footer {
     padding: 16px 20px;
     background: #f8f9fa;
@@ -533,7 +570,9 @@
     align-items: center;
     border-top: 1px solid #dee2e6;
     position: relative;
-    z-index: 10;
+    z-index: 100; /* 提高 z-index */
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .comment-info {
@@ -544,6 +583,7 @@
 .comment-actions {
     display: flex;
     gap: 10px;
+    z-index: 101; /* 確保按鈕在最上層 */
 }
 
 /* 程式碼對話框 z-index 修復 */
@@ -949,6 +989,52 @@
     font-size: 12px;
 }
 
+/* 主題快速連結按鈕 */
+.topic-quick-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.topic-link-btn {
+    background: white;
+    border: 2px solid #e9ecef;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #495057;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.topic-link-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.topic-link-btn .count {
+    background: rgba(102, 126, 234, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.topic-link-btn:hover .count {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 /* 單個評論 */
 .comment-item {
     background: white;
@@ -1040,11 +1126,16 @@
     color: #dc3545;
 }
 
-/* 評論內容 */
+/* 評論內容 - 保持 HTML 格式 */
 .comment-content {
     color: #495057;
     line-height: 1.8;
     margin-bottom: 12px;
+}
+
+/* 保留編輯器中的所有樣式 */
+.comment-content * {
+    /* 保持原始樣式 */
 }
 
 .comment-content h1 { font-size: 1.5em; margin: 0.5em 0; }
@@ -1055,24 +1146,83 @@
 .comment-content u { text-decoration: underline; }
 .comment-content s { text-decoration: line-through; }
 .comment-content ul, .comment-content ol { margin: 0.5em 0; padding-left: 2em; }
+
 .comment-content blockquote {
     border-left: 4px solid #667eea;
-    padding-left: 16px;
-    margin: 12px 0;
-    color: #6c757d;
+    padding: 12px 20px;
+    margin: 16px 0;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 0 8px 8px 0;
+    color: #495057;
+    font-style: italic;
 }
+
 .comment-content code {
     background: #f8f9fa;
     padding: 2px 6px;
     border-radius: 4px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    color: #e83e8c;
 }
+
+/* 程式碼區塊保持原始樣式 */
+.comment-content pre {
+    position: relative;
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.comment-content pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+/* 程式碼語言標籤 */
+.comment-content pre .code-language-label {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #a0aec0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
 .comment-content a {
     color: #667eea;
     text-decoration: none;
 }
+
 .comment-content a:hover {
     text-decoration: underline;
+}
+
+.comment-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.comment-content table td,
+.comment-content table th {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+}
+
+.comment-content table th {
+    background: #f8f9fa;
+    font-weight: 600;
 }
 
 /* 評論圖片 */
@@ -1205,7 +1355,7 @@
 /* 快速連結按鈕 */
 .quick-comment-link {
     position: fixed;
-    bottom: 320px;
+    bottom: 230px;
     right: 20px;
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
@@ -1243,8 +1393,8 @@
 /* 回到頂部按鈕 */
 .back-to-top {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 300px;
+    right: 20px;
     width: 48px;
     height: 48px;
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
@@ -1258,7 +1408,7 @@
     box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
     cursor: pointer;
     transition: all 0.3s ease;
-    z-index: 8994;
+    z-index: 8993;
 }
 
 .back-to-top.show {
@@ -1281,7 +1431,7 @@
     }
     
     .comment-fab-wrapper {
-        bottom: 220px;
+        bottom: 15px;
         right: 15px;
     }
     
@@ -1289,6 +1439,29 @@
         width: 48px;
         height: 48px;
         font-size: 20px;
+    }
+    
+    .search-results-fab {
+        bottom: 75px !important;
+    }
+    
+    .marks-fab {
+        bottom: 130px !important;
+    }
+    
+    .quick-comment-link {
+        bottom: 185px !important;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 12px;
+    }
+    
+    .back-to-top {
+        bottom: 240px !important;
+        right: 15px;
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
     }
     
     .comment-dialog-content {
@@ -1340,18 +1513,12 @@
         height: 100px;
     }
     
-    .quick-comment-link {
-        bottom: 300px;
-        right: 15px;
-        padding: 10px 16px;
-        font-size: 12px;
+    .topic-quick-links {
+        padding: 10px;
     }
     
-    .back-to-top {
-        bottom: 25px;
-        right: 25px;
-        width: 42px;
-        height: 42px;
-        font-size: 16px;
+    .topic-link-btn {
+        padding: 6px 12px;
+        font-size: 12px;
     }
 }

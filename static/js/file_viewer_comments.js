@@ -4,7 +4,8 @@
 let currentEditingCommentId = null;
 let comments = [];
 let commentAttachments = [];
-let savedSelection = null; // 新增：儲存文字選擇範圍
+let savedSelection = null;
+let isSubmitting = false; // 防止重複提交
 
 // 初始化評論系統
 function initCommentSystem() {
@@ -161,6 +162,9 @@ function bindCommentEvents() {
         // 新增：滑鼠選擇事件
         editor.addEventListener('mouseup', saveSelection);
         editor.addEventListener('keyup', saveSelection);
+        
+        // 處理引用前後插入空白行
+        editor.addEventListener('keydown', handleBlockquoteNavigation);
     }
     
     // 送出按鈕
@@ -200,6 +204,76 @@ function bindCommentEvents() {
     });
 }
 
+// 處理引用前後插入空白行
+function handleBlockquoteNavigation(e) {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+    
+    const range = selection.getRangeAt(0);
+    const node = range.startContainer;
+    const blockquote = node.nodeType === 3 ? node.parentElement.closest('blockquote') : node.closest('blockquote');
+    
+    if (blockquote) {
+        // 在引用塊的開頭按向上鍵
+        if (e.key === 'ArrowUp' && range.startOffset === 0) {
+            const firstChild = blockquote.firstChild;
+            if (node === firstChild || node.parentElement === firstChild) {
+                e.preventDefault();
+                // 在引用前插入新段落
+                const p = document.createElement('p');
+                p.innerHTML = '<br>';
+                blockquote.parentNode.insertBefore(p, blockquote);
+                // 將游標移到新段落
+                const newRange = document.createRange();
+                newRange.setStart(p, 0);
+                newRange.setEnd(p, 0);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+        }
+        // 在引用塊的結尾按向下鍵
+        else if (e.key === 'ArrowDown') {
+            const lastChild = blockquote.lastChild;
+            const isAtEnd = node === lastChild || node.parentElement === lastChild;
+            if (isAtEnd && range.endOffset === (node.nodeType === 3 ? node.textContent.length : node.childNodes.length)) {
+                e.preventDefault();
+                // 在引用後插入新段落
+                const p = document.createElement('p');
+                p.innerHTML = '<br>';
+                if (blockquote.nextSibling) {
+                    blockquote.parentNode.insertBefore(p, blockquote.nextSibling);
+                } else {
+                    blockquote.parentNode.appendChild(p);
+                }
+                // 將游標移到新段落
+                const newRange = document.createRange();
+                newRange.setStart(p, 0);
+                newRange.setEnd(p, 0);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+        }
+        // 在引用塊內按 Enter + Shift
+        else if (e.key === 'Enter' && e.shiftKey) {
+            e.preventDefault();
+            // 退出引用，在下方創建新段落
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            if (blockquote.nextSibling) {
+                blockquote.parentNode.insertBefore(p, blockquote.nextSibling);
+            } else {
+                blockquote.parentNode.appendChild(p);
+            }
+            // 將游標移到新段落
+            const newRange = document.createRange();
+            newRange.setStart(p, 0);
+            newRange.setEnd(p, 0);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+        }
+    }
+}
+
 // 新增：儲存文字選擇範圍
 function saveSelection() {
     const editor = document.getElementById('comment-editor');
@@ -227,6 +301,17 @@ window.openCommentDialog = function(editId = null) {
     
     dialog.classList.add('show');
     document.body.style.overflow = 'hidden';
+    isSubmitting = false; // 重置提交狀態
+    
+    // 確保所有編輯器功能正常
+    setTimeout(() => {
+        const editor = document.getElementById('comment-editor');
+        if (editor) {
+            editor.focus();
+            // 重新綁定事件
+            bindEditorEvents(editor);
+        }
+    }, 100);
     
     if (editId) {
         // 編輯模式
@@ -236,7 +321,7 @@ window.openCommentDialog = function(editId = null) {
             document.getElementById('comment-editor').innerHTML = comment.content;
             document.getElementById('comment-topic').value = comment.topic || '一般討論';
             document.querySelector('.comment-dialog-header h5').innerHTML = 
-                '<i class="fas fa-edit" style="margin-right: 10px;"></i>編輯評論';
+                '<i class="fas fa-edit"></i>編輯評論';
             document.getElementById('submit-comment').innerHTML = 
                 '<i class="fas fa-save"></i> 更新';
         }
@@ -246,7 +331,7 @@ window.openCommentDialog = function(editId = null) {
         document.getElementById('comment-editor').innerHTML = '';
         document.getElementById('comment-topic').value = '';
         document.querySelector('.comment-dialog-header h5').innerHTML = 
-            '<i class="fas fa-comment-plus" style="margin-right: 10px;"></i>新增評論';
+            '<i class="fas fa-comment-plus"></i>新增評論';
         document.getElementById('submit-comment').innerHTML = 
             '<i class="fas fa-paper-plane"></i> 送出';
     }
@@ -257,6 +342,19 @@ window.openCommentDialog = function(editId = null) {
     
     // 重置分隔線位置
     resetCodeResizer();
+}
+
+// 綁定編輯器事件
+function bindEditorEvents(editor) {
+    // 移除舊的事件監聽器
+    editor.removeEventListener('mouseup', saveSelection);
+    editor.removeEventListener('keyup', saveSelection);
+    editor.removeEventListener('keydown', handleBlockquoteNavigation);
+    
+    // 重新綁定
+    editor.addEventListener('mouseup', saveSelection);
+    editor.addEventListener('keyup', saveSelection);
+    editor.addEventListener('keydown', handleBlockquoteNavigation);
 }
 
 // 新增：重置程式碼分隔線位置
@@ -281,6 +379,7 @@ function closeCommentDialog() {
         currentEditingCommentId = null;
         commentAttachments = [];
         savedSelection = null;
+        isSubmitting = false;
         document.getElementById('comment-editor').innerHTML = '';
         updateAttachmentsDisplay();
     }
@@ -1196,8 +1295,13 @@ function getCellPosition(cell) {
     return `${rowIndex},${colIndex}`;
 }
 
-// 送出評論 - 支援主題
+// 送出評論 - 防止重複提交
 window.submitComment = async function() {
+    if (isSubmitting) {
+        showToast('正在處理中，請稍候...', 'info');
+        return;
+    }
+    
     const editor = document.getElementById('comment-editor');
     const content = editor.innerHTML.trim();
     const topic = document.getElementById('comment-topic').value.trim();
@@ -1206,6 +1310,8 @@ window.submitComment = async function() {
         showToast('請輸入評論內容', 'warning');
         return;
     }
+    
+    isSubmitting = true;
     
     const filePath = document.getElementById('initial-file-path').value;
     const commentData = {
@@ -1230,7 +1336,7 @@ window.submitComment = async function() {
         if (result.success) {
             showToast(currentEditingCommentId ? '評論已更新' : '評論已新增', 'success');
             closeCommentDialog();
-            loadComments();
+            await loadComments();
             updateQuickLink();
             updateCommentCount();
         } else {
@@ -1239,6 +1345,8 @@ window.submitComment = async function() {
     } catch (error) {
         console.error('提交評論錯誤:', error);
         showToast('提交評論時發生錯誤', 'danger');
+    } finally {
+        isSubmitting = false;
     }
 }
 
@@ -1251,7 +1359,7 @@ function updateCommentCount() {
     }
 }
 
-// 顯示評論 - 支援主題分組
+// 顯示評論 - 支援主題分組和快速連結
 function displayComments() {
     const section = document.getElementById('comments-section');
     const list = document.getElementById('comments-list');
@@ -1281,8 +1389,18 @@ function displayComments() {
             groupedComments[topic].push(comment);
         });
         
-        list.innerHTML = Object.entries(groupedComments).map(([topic, topicComments]) => `
-            <div class="comment-topic-group">
+        // 創建主題快速連結
+        const topicLinks = Object.entries(groupedComments).map(([topic, topicComments]) => `
+            <a href="#topic-${topic.replace(/\s+/g, '-')}" class="topic-link-btn">
+                <i class="fas fa-folder"></i>
+                ${topic}
+                <span class="count">${topicComments.length}</span>
+            </a>
+        `).join('');
+        
+        // 創建評論列表
+        const commentsHTML = Object.entries(groupedComments).map(([topic, topicComments]) => `
+            <div class="comment-topic-group" id="topic-${topic.replace(/\s+/g, '-')}">
                 <h5 class="comment-topic">
                     <i class="fas fa-folder"></i>
                     ${topic}
@@ -1324,6 +1442,19 @@ function displayComments() {
                 `).join('')}
             </div>
         `).join('');
+        
+        // 組合HTML
+        list.innerHTML = `
+            ${Object.keys(groupedComments).length > 1 ? `
+                <div class="topic-quick-links">
+                    <label style="font-weight: 600; margin-right: 10px;">
+                        <i class="fas fa-th-list"></i> 快速跳轉：
+                    </label>
+                    ${topicLinks}
+                </div>
+            ` : ''}
+            ${commentsHTML}
+        `;
     }
     
     updateQuickLink();
@@ -1333,20 +1464,32 @@ function displayComments() {
 // 回覆評論
 window.replyToComment = function(commentId, topic) {
     openCommentDialog();
-    document.getElementById('comment-topic').value = topic;
-    const comment = comments.find(c => c.id === commentId);
-    if (comment) {
-        const editor = document.getElementById('comment-editor');
-        editor.innerHTML = `<blockquote>@${comment.author}: ${comment.content.substring(0, 100)}...</blockquote><p><br></p>`;
-        // 將游標移到最後
-        const range = document.createRange();
-        const sel = window.getSelection();
-        range.selectNodeContents(editor);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        editor.focus();
-    }
+    
+    // 確保編輯器已經初始化
+    setTimeout(() => {
+        document.getElementById('comment-topic').value = topic;
+        const comment = comments.find(c => c.id === commentId);
+        if (comment) {
+            const editor = document.getElementById('comment-editor');
+            const authorName = comment.author;
+            const commentPreview = comment.content.replace(/<[^>]*>/g, '').substring(0, 100);
+            
+            editor.innerHTML = `<blockquote>@${authorName}: ${commentPreview}...</blockquote><p><br></p>`;
+            
+            // 將游標移到最後
+            editor.focus();
+            const range = document.createRange();
+            const sel = window.getSelection();
+            const p = editor.querySelector('p:last-child') || editor;
+            range.selectNodeContents(p);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+            
+            // 重新綁定編輯器事件
+            bindEditorEvents(editor);
+        }
+    }, 200);
 }
 
 // 更新快速連結
@@ -1606,7 +1749,7 @@ window.deleteComment = async function(id) {
         
         if (result.success) {
             showToast('評論已刪除', 'success');
-            loadComments();
+            await loadComments();
         } else {
             showToast(result.message || '刪除失敗', 'danger');
         }
@@ -1645,6 +1788,35 @@ function formatTime(timestamp) {
     if (diff < 604800000) return `${Math.floor(diff / 86400000)} 天前`;
     
     return date.toLocaleDateString('zh-TW');
+}
+
+// 顯示 Toast 提示
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `custom-toast ${type}`;
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="fas fa-${type === 'success' ? 'check' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times' : 'info'}"></i>
+        </div>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // DOM 載入完成後初始化

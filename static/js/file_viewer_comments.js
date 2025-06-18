@@ -579,6 +579,7 @@ function closeCommentDialog() {
         
         // 清理
         currentEditingCommentId = null;
+        window.currentReplyingToId = null; // 清除回覆狀態
         commentAttachments = [];
         savedSelection = null;
         isSubmitting = false;
@@ -1532,8 +1533,15 @@ window.submitComment = async function() {
     }
     
     const editor = document.getElementById('comment-editor');
-    const content = editor.innerHTML.trim();
+    let content = editor.innerHTML.trim();
     const topic = document.getElementById('comment-topic').value.trim();
+    
+    // 移除回覆預覽區塊
+    const replyPreview = editor.querySelector('.reply-to-preview');
+    if (replyPreview) {
+        replyPreview.remove();
+        content = editor.innerHTML.trim();
+    }
     
     if (!content) {
         showToast('請輸入評論內容', 'warning');
@@ -1548,7 +1556,8 @@ window.submitComment = async function() {
         topic: topic || '一般討論',
         attachments: commentAttachments,
         file_path: filePath,
-        edit_id: currentEditingCommentId
+        edit_id: currentEditingCommentId,
+        parent_comment_id: window.currentReplyingToId || null // 添加父評論ID
     };
     
     try {
@@ -1565,9 +1574,25 @@ window.submitComment = async function() {
         if (result.success) {
             showToast(currentEditingCommentId ? '評論已更新' : '評論已新增', 'success');
             closeCommentDialog();
+            window.currentReplyingToId = null; // 清除回覆狀態
             await loadComments();
             updateQuickLink();
             updateCommentCount();
+            
+            // 如果是回覆，滾動到該評論
+            if (commentData.parent_comment_id) {
+                setTimeout(() => {
+                    const parentElement = document.querySelector(`[data-id="${commentData.parent_comment_id}"]`);
+                    if (parentElement) {
+                        parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // 展開回覆區域
+                        const repliesContainer = parentElement.querySelector('.comment-replies');
+                        if (repliesContainer && repliesContainer.style.display === 'none') {
+                            toggleReplies(commentData.parent_comment_id);
+                        }
+                    }
+                }, 500);
+            }
         } else {
             showToast(result.message || '操作失敗', 'danger');
         }
@@ -1588,7 +1613,7 @@ function updateCommentCount() {
     }
 }
 
-// 顯示評論 - 支援主題分組和快速連結
+// 顯示評論 - 支援主題分組、快速連結和巢狀回覆
 function displayComments() {
     const section = document.getElementById('comments-section');
     const list = document.getElementById('comments-list');
@@ -1606,7 +1631,10 @@ function displayComments() {
         `;
     } else {
         section.style.display = 'block';
-        count.textContent = comments.length;
+        
+        // 計算總評論數（包括回覆）
+        const totalCount = countAllComments(comments);
+        count.textContent = totalCount;
         
         // 按主題分組
         const groupedComments = {};
@@ -1619,66 +1647,35 @@ function displayComments() {
         });
         
         // 創建主題快速連結
-        const topicLinks = Object.entries(groupedComments).map(([topic, topicComments]) => `
-            <a href="#topic-${topic.replace(/\s+/g, '-')}" class="topic-link-btn" onclick="smoothScrollToTopic('${topic.replace(/\s+/g, '-')}'); return false;">
-                <i class="fas fa-folder"></i>
-                ${topic}
-                <span class="count">${topicComments.length}</span>
-            </a>
-        `).join('');
-        
-        // 創建評論列表
-        const commentsHTML = Object.entries(groupedComments).map(([topic, topicComments]) => `
-            <div class="comment-topic-group" id="topic-${topic.replace(/\s+/g, '-')}">
-                <h5 class="comment-topic">
+        const topicLinks = Object.entries(groupedComments).map(([topic, topicComments]) => {
+            const topicTotal = countTopicComments(topicComments);
+            return `
+                <a href="#topic-${topic.replace(/\s+/g, '-')}" class="topic-link-btn" onclick="smoothScrollToTopic('${topic.replace(/\s+/g, '-')}'); return false;">
                     <i class="fas fa-folder"></i>
                     ${topic}
-                    <span class="badge">${topicComments.length}</span>
-                    <button class="topic-back-btn" onclick="scrollToCommentsTop()">
-                        <i class="fas fa-arrow-up"></i>
-                        返回頂部
-                    </button>
-                </h5>
-                ${topicComments.map(comment => `
-                    <div class="comment-item" data-id="${comment.id}">
-                        <div class="comment-header">
-                            <div class="comment-author">
-                                <div class="comment-avatar">${getInitials(comment.author)}</div>
-                                <div class="comment-meta">
-                                    <div class="comment-author-name">${comment.author}</div>
-                                    <div class="comment-time">${formatTime(comment.created_at)}</div>
-                                </div>
-                            </div>
-                            <div class="comment-actions">
-                                <button class="comment-back-btn" onclick="scrollToCommentsTop()">
-                                    <i class="fas fa-arrow-up"></i>
-                                    回到頂部
-                                </button>
-                                <button class="comment-reply-btn" onclick="replyToComment('${comment.id}', '${topic}')">
-                                    <i class="fas fa-reply"></i> 回覆
-                                </button>
-                                <button class="comment-action-btn" onclick="editComment('${comment.id}')">
-                                    <i class="fas fa-edit"></i> 編輯
-                                </button>
-                                <button class="comment-action-btn delete" onclick="deleteComment('${comment.id}')">
-                                    <i class="fas fa-trash"></i> 刪除
-                                </button>
-                            </div>
-                        </div>
-                        <div class="comment-content">${comment.content}</div>
-                        ${comment.attachments && comment.attachments.length > 0 ? `
-                            <div class="comment-images">
-                                ${comment.attachments.filter(a => a.type.startsWith('image/')).map(img => `
-                                    <div class="comment-image" onclick="previewImage('${img.url || img.data}')">
-                                        <img src="${img.url || img.data}" alt="${img.name}">
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                `).join('')}
-            </div>
-        `).join('');
+                    <span class="count">${topicTotal}</span>
+                </a>
+            `;
+        }).join('');
+        
+        // 創建評論列表
+        const commentsHTML = Object.entries(groupedComments).map(([topic, topicComments]) => {
+            const topicTotal = countTopicComments(topicComments);
+            return `
+                <div class="comment-topic-group" id="topic-${topic.replace(/\s+/g, '-')}">
+                    <h5 class="comment-topic">
+                        <i class="fas fa-folder"></i>
+                        ${topic}
+                        <span class="badge">${topicTotal}</span>
+                        <button class="topic-back-btn" onclick="scrollToCommentsTop()">
+                            <i class="fas fa-arrow-up"></i>
+                            返回頂部
+                        </button>
+                    </h5>
+                    ${topicComments.map(comment => renderComment(comment, false)).join('')}
+                </div>
+            `;
+        }).join('');
         
         // 組合HTML
         list.innerHTML = `
@@ -1698,6 +1695,111 @@ function displayComments() {
     updateQuickLink();
     updateCommentCount();
     updateBackToCommentsButton();
+}
+
+// 渲染單個評論（包括回覆）
+function renderComment(comment, isReply = false, parentId = null) {
+    const replyClass = isReply ? 'reply' : '';
+    const replyIndicator = isReply ? '<span class="reply-indicator"><i class="fas fa-reply"></i>回覆</span>' : '';
+    const hasReplies = comment.replies && comment.replies.length > 0;
+    const repliesCountBadge = hasReplies ? `<span class="replies-count">${comment.replies.length} 則回覆</span>` : '';
+    
+    const commentHTML = `
+        <div class="comment-item ${replyClass}" data-id="${comment.id}">
+            <div class="comment-header">
+                <div class="comment-author">
+                    <div class="comment-avatar">${getInitials(comment.author)}</div>
+                    <div class="comment-meta">
+                        <div class="comment-author-name">
+                            ${comment.author}
+                            ${replyIndicator}
+                            ${repliesCountBadge}
+                        </div>
+                        <div class="comment-time">${formatTime(comment.created_at)}</div>
+                    </div>
+                </div>
+                <div>
+                    ${!isReply ? `
+                        <button class="comment-back-btn" onclick="scrollToCommentsTop()">
+                            <i class="fas fa-arrow-up"></i>
+                            回到頂部
+                        </button>
+                    ` : ''}
+                    <button class="comment-reply-btn" onclick="replyToComment('${comment.id}', '${comment.topic}', '${parentId || ''}')">
+                        <i class="fas fa-reply"></i> 回覆
+                    </button>
+                    <button class="comment-action-btn" onclick="editComment('${comment.id}')">
+                        <i class="fas fa-edit"></i> 編輯
+                    </button>
+                    <button class="comment-action-btn delete" onclick="deleteComment('${comment.id}')">
+                        <i class="fas fa-trash"></i> 刪除
+                    </button>
+                    ${hasReplies ? `
+                        <button class="replies-toggle" onclick="toggleReplies('${comment.id}')" id="toggle-${comment.id}">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="comment-content">${comment.content}</div>
+            ${comment.attachments && comment.attachments.length > 0 ? `
+                <div class="comment-images">
+                    ${comment.attachments.filter(a => a.type.startsWith('image/')).map(img => `
+                        <div class="comment-image" onclick="previewImage('${img.url || img.data}')">
+                            <img src="${img.url || img.data}" alt="${img.name}">
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            ${hasReplies ? `
+                <div class="comment-replies" id="replies-${comment.id}">
+                    ${comment.replies.map(reply => renderComment(reply, true, comment.id)).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    return commentHTML;
+}
+
+// 計算所有評論數（包括回覆）
+function countAllComments(commentList) {
+    let count = 0;
+    commentList.forEach(comment => {
+        count++; // 計算主評論
+        if (comment.replies && comment.replies.length > 0) {
+            count += countAllComments(comment.replies); // 遞迴計算回覆
+        }
+    });
+    return count;
+}
+
+// 計算主題內的評論數
+function countTopicComments(topicComments) {
+    let count = 0;
+    topicComments.forEach(comment => {
+        count++;
+        if (comment.replies && comment.replies.length > 0) {
+            count += countAllComments(comment.replies);
+        }
+    });
+    return count;
+}
+
+// 切換回覆顯示/隱藏
+window.toggleReplies = function(commentId) {
+    const repliesContainer = document.getElementById(`replies-${commentId}`);
+    const toggleBtn = document.getElementById(`toggle-${commentId}`);
+    
+    if (repliesContainer && toggleBtn) {
+        if (repliesContainer.style.display === 'none') {
+            repliesContainer.style.display = 'block';
+            toggleBtn.classList.remove('collapsed');
+        } else {
+            repliesContainer.style.display = 'none';
+            toggleBtn.classList.add('collapsed');
+        }
+    }
 }
 
 // 更新返回評論區按鈕顯示狀態
@@ -1747,9 +1849,12 @@ window.smoothScrollToTopic = function(topicId) {
     }
 }
 
-// 回覆評論
-window.replyToComment = function(commentId, topic) {
+// 回覆評論函數
+window.replyToComment = function(commentId, topic, parentCommentId) {
     openCommentDialog();
+    
+    // 設置當前正在回覆的評論ID
+    window.currentReplyingToId = commentId;
     
     // 確保編輯器已經初始化
     setTimeout(() => {
@@ -1760,12 +1865,19 @@ window.replyToComment = function(commentId, topic) {
             topicInput.value = topic;
         }
         
-        const comment = comments.find(c => c.id === commentId);
+        const comment = findCommentById(comments, commentId);
         if (comment && editor) {
             const authorName = comment.author;
             const commentPreview = comment.content.replace(/<[^>]*>/g, '').substring(0, 100);
             
-            editor.innerHTML = `<blockquote>@${authorName}: ${commentPreview}...</blockquote><p><br></p>`;
+            // 創建回覆預覽
+            editor.innerHTML = `
+                <div class="reply-to-preview">
+                    <span class="reply-to-author">@${authorName}:</span>
+                    ${commentPreview}${comment.content.length > 100 ? '...' : ''}
+                </div>
+                <p><br></p>
+            `;
             
             // 重新初始化編輯器（確保所有功能正常）
             initializeEditor();
@@ -1783,6 +1895,20 @@ window.replyToComment = function(commentId, topic) {
             }, 50);
         }
     }, 200);
+}
+
+// 遞迴查找評論
+function findCommentById(commentList, id) {
+    for (let comment of commentList) {
+        if (comment.id === id) {
+            return comment;
+        }
+        if (comment.replies && comment.replies.length > 0) {
+            const found = findCommentById(comment.replies, id);
+            if (found) return found;
+        }
+    }
+    return null;
 }
 
 // 更新快速連結

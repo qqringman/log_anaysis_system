@@ -1683,3 +1683,308 @@
         font-size: 12px;
     }
 }
+
+/* 回覆評論容器 */
+.comment-replies {
+    margin-left: 50px; /* 縮排距離 */
+    margin-top: 15px;
+    position: relative;
+}
+
+/* 回覆評論連接線系統 */
+.comment-item {
+    position: relative;
+}
+
+/* 垂直連接線 */
+.comment-replies::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: -15px;
+    bottom: 20px;
+    width: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+
+/* 水平連接線 */
+.comment-replies .comment-item::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 30px;
+    width: 20px;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+
+/* 連接點 */
+.comment-replies .comment-item::after {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 26px;
+    width: 10px;
+    height: 10px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 50%;
+    z-index: 2;
+}
+
+/* 最後一個回覆的特殊處理 */
+.comment-replies .comment-item:last-child ~ .comment-replies::before {
+    bottom: auto;
+    height: calc(100% - 15px);
+}
+
+/* 回覆評論項目 */
+.comment-item.reply {
+    background: linear-gradient(135deg, #f3f8ff 0%, #e8f4fd 100%); /* 淡藍色漸層背景 */
+    border: 1px solid #bbdefb; /* 藍色邊框 */
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.08); /* 藍色陰影 */
+    margin-left: 5px; /* 稍微右移以配合連接線 */
+}
+
+.comment-item.reply:hover {
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #e8f4fd 0%, #dbeafe 100%);
+}
+
+/* 回覆評論頭像 - 使用不同的顏色 */
+.comment-item.reply .comment-avatar {
+    background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%); /* 藍色漸層 */
+    width: 36px; /* 稍微小一點 */
+    height: 36px;
+    font-size: 14px;
+}
+
+/* 回覆標記 */
+.reply-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.reply-indicator i {
+    font-size: 10px;
+}
+
+/* 多層回覆的不同顏色 */
+.comment-replies .comment-replies {
+    margin-left: 40px; /* 第二層縮排更少 */
+}
+
+/* 第二層連接線顏色 */
+.comment-replies .comment-replies::before {
+    background: #c5cae9; /* 淡紫色 */
+}
+
+.comment-replies .comment-replies .comment-item::before {
+    background: #c5cae9;
+}
+
+.comment-replies .comment-replies .comment-item::after {
+    border-color: #c5cae9;
+}
+
+.comment-replies .comment-replies .comment-item.reply {
+    background: linear-gradient(135deg, #f3f0ff 0%, #ede7ff 100%); /* 淡紫色背景 */
+    border-color: #d1c4e9;
+}
+
+.comment-replies .comment-replies .comment-item.reply:hover {
+    background: linear-gradient(135deg, #ede7ff 0%, #e1d5ff 100%);
+    box-shadow: 0 4px 12px rgba(103, 58, 183, 0.15);
+}
+
+.comment-replies .comment-replies .comment-avatar {
+    background: linear-gradient(135deg, #9575cd 0%, #7e57c2 100%); /* 紫色漸層 */
+}
+
+/* 第三層及更深層的樣式 */
+.comment-replies .comment-replies .comment-replies {
+    margin-left: 35px;
+}
+
+.comment-replies .comment-replies .comment-replies::before {
+    background: #ffccbc; /* 淡橙色 */
+}
+
+.comment-replies .comment-replies .comment-replies .comment-item::before {
+    background: #ffccbc;
+}
+
+.comment-replies .comment-replies .comment-replies .comment-item::after {
+    border-color: #ffccbc;
+}
+
+.comment-replies .comment-replies .comment-replies .comment-item.reply {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); /* 淡橙色背景 */
+    border-color: #ffccbc;
+}
+
+/* 引用的原始評論預覽 */
+.reply-to-preview {
+    background: rgba(0, 0, 0, 0.04);
+    border-left: 3px solid #90a4ae;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #607d8b;
+    border-radius: 0 4px 4px 0;
+    position: relative;
+    overflow: hidden;
+    max-height: 60px;
+}
+
+.reply-to-preview::before {
+    content: '回覆';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 10px;
+    color: #90a4ae;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.reply-to-author {
+    font-weight: 600;
+    color: #455a64;
+    margin-right: 6px;
+}
+
+/* 收合/展開回覆 */
+.replies-toggle {
+    background: none;
+    border: 1px solid #e0e0e0;
+    color: #757575;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.replies-toggle:hover {
+    background: #f5f5f5;
+    border-color: #bdbdbd;
+}
+
+.replies-toggle i {
+    transition: transform 0.2s ease;
+}
+
+.replies-toggle.collapsed i {
+    transform: rotate(-90deg);
+}
+
+/* 回覆計數標籤 */
+.replies-count {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+/* 載入更多回覆按鈕 */
+.load-more-replies {
+    background: white;
+    border: 1px solid #e0e0e0;
+    color: #1976d2;
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 10px 0 10px 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.load-more-replies:hover {
+    background: #f5f5f5;
+    border-color: #1976d2;
+}
+
+/* 動畫效果 */
+@keyframes slideInReply {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.comment-replies .comment-item {
+    animation: slideInReply 0.3s ease-out;
+}
+
+/* 編輯模式下的回覆 */
+.comment-item.reply.editing .comment-content {
+    display: none;
+}
+
+.comment-item.reply.editing .comment-edit-area {
+    display: block;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+/* 手機版調整 */
+@media (max-width: 768px) {
+    .comment-manager-fab {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        top: 70px;
+        right: 5px;
+    }
+    
+    .comment-replies {
+        margin-left: 30px;
+        padding-left: 15px;
+    }
+    
+    .comment-replies::before {
+        left: -10px;
+        top: -10px;
+        width: 20px;
+        height: 20px;
+    }
+    
+    .comment-item.reply .comment-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+    
+    .reply-to-preview {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    
+    .load-more-replies {
+        margin-left: 30px;
+    }

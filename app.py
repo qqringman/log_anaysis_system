@@ -133,20 +133,6 @@ def init_database():
         )
     ''')
     
-    # 用戶評論表
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS user_comments (
-            id TEXT PRIMARY KEY,
-            analysis_id TEXT,
-            module_name TEXT,
-            file_path TEXT,
-            comment TEXT,
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
     # 分享結果表
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS shared_results (
@@ -183,6 +169,37 @@ def init_database():
         ('analysis', '分析討論', '討論日誌分析相關問題', 'system'),
         ('tech', '技術支援', '技術問題與解答', 'system')
     ''')
+    
+    # 用戶評論表 - 添加 parent_comment_id 欄位
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_comments (
+            id TEXT PRIMARY KEY,
+            analysis_id TEXT,
+            module_name TEXT,
+            file_path TEXT,
+            comment TEXT,
+            topic TEXT DEFAULT '一般討論',
+            author TEXT,
+            parent_comment_id TEXT,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (parent_comment_id) REFERENCES user_comments (id)
+        )
+    ''')
+    
+    # 檢查現有表格是否有 parent_comment_id 欄位，如果沒有則添加
+    cursor.execute("PRAGMA table_info(user_comments)")
+    columns = [column[1] for column in cursor.fetchall()]
+    
+    if 'parent_comment_id' not in columns:
+        cursor.execute('ALTER TABLE user_comments ADD COLUMN parent_comment_id TEXT')
+    
+    if 'topic' not in columns:
+        cursor.execute('ALTER TABLE user_comments ADD COLUMN topic TEXT DEFAULT "一般討論"')
+    
+    if 'author' not in columns:
+        cursor.execute('ALTER TABLE user_comments ADD COLUMN author TEXT')
     
     conn.commit()
     conn.close()
@@ -1662,29 +1679,71 @@ def get_line_range():
             'message': f'處理請求失敗: {str(e)}'
         })
 
+# 修改評論 API 路由
 @app.route('/api/comments')
 def get_comments():
-    """獲取檔案評論"""
+    """獲取檔案評論 - 支援巢狀回覆"""
     file_path = request.args.get('file_path')
     if not file_path:
         return jsonify({'success': False, 'message': '缺少檔案路徑'})
     
-    # 使用檔案路徑作為鍵
-    comments = file_comments.get(file_path, [])
+    conn = sqlite3.connect('chat_data.db')
+    cursor = conn.cursor()
+    
+    # 獲取所有評論（包括回覆）
+    cursor.execute('''
+        SELECT id, comment as content, topic, author, created_at, updated_at, parent_comment_id
+        FROM user_comments
+        WHERE file_path = ?
+        ORDER BY created_at ASC
+    ''', (file_path,))
+    
+    all_comments = []
+    comment_map = {}
+    
+    for row in cursor.fetchall():
+        comment = {
+            'id': row[0],
+            'content': row[1],
+            'topic': row[2] or '一般討論',
+            'author': row[3] or session.get('username', '匿名用戶'),
+            'created_at': row[4],
+            'updated_at': row[5],
+            'parent_comment_id': row[6],
+            'replies': [],
+            'attachments': []  # 這裡可以後續擴展附件功能
+        }
+        comment_map[comment['id']] = comment
+        all_comments.append(comment)
+    
+    # 組織巢狀結構
+    root_comments = []
+    for comment in all_comments:
+        if comment['parent_comment_id']:
+            # 這是回覆，將其添加到父評論的 replies 中
+            parent = comment_map.get(comment['parent_comment_id'])
+            if parent:
+                parent['replies'].append(comment)
+        else:
+            # 這是根評論
+            root_comments.append(comment)
+    
+    conn.close()
     
     return jsonify({
         'success': True,
-        'comments': comments
+        'comments': root_comments
     })
 
 @app.route('/api/comment', methods=['POST'])
 def create_comment():
-    """新增評論"""
+    """新增評論 - 支援回覆"""
     try:
         data = request.get_json()
         file_path = data.get('file_path')
         content = data.get('content')
         topic = data.get('topic', '一般討論')
+        parent_comment_id = data.get('parent_comment_id')
         attachments = data.get('attachments', [])
         
         if not file_path or not content:
@@ -1714,20 +1773,31 @@ def create_comment():
                 })
         
         # 創建評論
+        comment_id = str(uuid.uuid4())
+        author = session.get('username', '匿名用戶')
+        
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO user_comments 
+            (id, file_path, comment, topic, author, parent_comment_id, created_by) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (comment_id, file_path, content, topic, author, parent_comment_id, author))
+        
+        conn.commit()
+        conn.close()
+        
         comment = {
-            'id': str(uuid.uuid4()),
+            'id': comment_id,
             'content': content,
             'topic': topic,
+            'author': author,
+            'parent_comment_id': parent_comment_id,
             'attachments': saved_attachments,
-            'author': session.get('username', '匿名用戶'),
             'created_at': datetime.now().isoformat(),
             'updated_at': datetime.now().isoformat()
         }
-        
-        # 儲存評論
-        if file_path not in file_comments:
-            file_comments[file_path] = []
-        file_comments[file_path].append(comment)
         
         return jsonify({
             'success': True,
@@ -1750,20 +1820,45 @@ def update_comment():
         if not file_path or not edit_id or not content:
             return jsonify({'success': False, 'message': '缺少必要資料'})
         
-        # 尋找並更新評論
-        if file_path in file_comments:
-            for comment in file_comments[file_path]:
-                if comment['id'] == edit_id:
-                    comment['content'] = content
-                    if topic:
-                        comment['topic'] = topic
-                    comment['updated_at'] = datetime.now().isoformat()
-                    return jsonify({
-                        'success': True,
-                        'comment': comment
-                    })
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
         
-        return jsonify({'success': False, 'message': '找不到評論'})
+        # 更新評論
+        cursor.execute('''
+            UPDATE user_comments 
+            SET comment = ?, topic = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (content, topic, edit_id))
+        
+        # 獲取更新後的評論
+        cursor.execute('''
+            SELECT id, comment as content, topic, author, created_at, updated_at, parent_comment_id
+            FROM user_comments
+            WHERE id = ?
+        ''', (edit_id,))
+        
+        row = cursor.fetchone()
+        if row:
+            comment = {
+                'id': row[0],
+                'content': row[1],
+                'topic': row[2],
+                'author': row[3],
+                'created_at': row[4],
+                'updated_at': row[5],
+                'parent_comment_id': row[6]
+            }
+            
+            conn.commit()
+            conn.close()
+            
+            return jsonify({
+                'success': True,
+                'comment': comment
+            })
+        else:
+            conn.close()
+            return jsonify({'success': False, 'message': '找不到評論'})
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'更新評論失敗: {str(e)}'})

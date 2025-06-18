@@ -1,7 +1,9 @@
+/* Enhanced File Viewer Comments System CSS - Complete Fixed Version */
+
 /* 返回評論區按鈕 */
 .back-to-comments-btn {
     position: fixed;
-    bottom: 370px; /* 在其他按鈕上方 */
+    bottom: 370px;
     right: 20px;
     background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
     color: white;
@@ -52,22 +54,26 @@
 
 /* 評論項目內的返回按鈕 */
 .comment-back-btn {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
-    border: 1px solid rgba(102, 126, 234, 0.2);
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 11px;
+    background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%);
+    color: #5c6bc0;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(92, 107, 192, 0.15);
 }
 
 .comment-back-btn:hover {
-    background: rgba(102, 126, 234, 0.2);
-    border-color: rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, #5c6bc0 0%, #3f51b5 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(92, 107, 192, 0.3);
 }
 
 /* 調整其他浮動按鈕位置 */
@@ -139,17 +145,6 @@
     gap: 8px;
 }
 
-.topic-quick-links::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 10px 0 0 10px;
-}
-
 /* 確保按鈕可見 */
 .comment-actions .btn {
     position: relative !important;
@@ -160,12 +155,12 @@
     padding: 10px 20px !important;
     min-width: 100px;
     font-weight: 500;
-}/* Enhanced File Viewer Comments System CSS - Complete */
+}
 
 /* 評論管理浮動按鈕 - 在設備切換器下方 */
 .comment-manager-fab {
     position: fixed;
-    top: 80px; /* 在設備切換器下方 */
+    top: 80px;
     right: 10px;
     width: 48px;
     height: 48px;
@@ -208,11 +203,11 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 8994; /* 確保在最底層 */
+    z-index: 8994;
 }
 
 .comment-fab {
-    width: 56px; /* 統一大小 */
+    width: 56px;
     height: 56px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -270,19 +265,19 @@
 
 /* 調整其他浮動按鈕位置 */
 .search-results-fab {
-    bottom: 90px !important; /* 在 + 按鈕上方 */
+    bottom: 90px !important;
 }
 
 .marks-fab {
-    bottom: 160px !important; /* 在搜尋結果按鈕上方 */
+    bottom: 160px !important;
 }
 
 .quick-comment-link {
-    bottom: 230px !important; /* 在標記按鈕上方 */
+    bottom: 230px !important;
 }
 
 .back-to-top {
-    bottom: 300px !important; /* 在快速連結上方 */
+    bottom: 300px !important;
 }
 
 /* 評論對話框 */
@@ -381,7 +376,7 @@
     overflow-y: auto;
     max-height: calc(85vh - 180px);
     position: relative;
-    z-index: 1; /* 低於 footer 的 z-index */
+    z-index: 1;
 }
 
 /* 主題選擇器美化 */
@@ -589,7 +584,7 @@
 /* 確保引用前後可以插入內容 */
 .comment-editor blockquote::before,
 .comment-editor blockquote::after {
-    content: '\200B'; /* 零寬度空格 */
+    content: '\200B';
     position: absolute;
     width: 100%;
     height: 0;
@@ -734,10 +729,10 @@
     align-items: center;
     border-top: 1px solid #dee2e6;
     position: relative;
-    z-index: 10001 !important; /* 大幅提高 z-index */
+    z-index: 10001 !important;
     visibility: visible !important;
     opacity: 1 !important;
-    min-height: 72px; /* 確保有足夠高度 */
+    min-height: 72px;
 }
 
 .comment-info {
@@ -748,8 +743,8 @@
 .comment-actions {
     display: flex;
     gap: 10px;
-    z-index: 10002 !important; /* 確保按鈕在最上層 */
-    position: relative; /* 確保 z-index 生效 */
+    z-index: 10002 !important;
+    position: relative;
 }
 
 /* 程式碼對話框 z-index 修復 */
@@ -759,7 +754,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 10100; /* 高於評論對話框 */
+    z-index: 10100;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1155,6 +1150,28 @@
     font-size: 12px;
 }
 
+/* 新增評論按鈕 */
+.btn-new-comment {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-new-comment:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
 /* 主題快速連結按鈕 */
 .topic-quick-links {
     display: flex;
@@ -1262,29 +1279,98 @@
     color: #6c757d;
 }
 
-.comment-item:hover .comment-actions {
-    opacity: 1;
+/* 評論操作按鈕組 */
+.comment-actions-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.comment-action-btn {
-    background: none;
-    border: none;
-    color: #6c757d;
-    cursor: pointer;
-    padding: 6px 10px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    font-size: 12px;
-}
-
-.comment-action-btn:hover {
-    background: #f8f9fa;
+/* 評論操作按鈕 - 統一的設計感 */
+.comment-reply-btn,
+.comment-action-btn,
+.replies-toggle {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     color: #495057;
+    border: 1px solid #dee2e6;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 回覆按鈕 - 藍色主題 */
+.comment-reply-btn {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1976d2;
+    border-color: #90caf9;
+}
+
+.comment-reply-btn:hover {
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    border-color: transparent;
+}
+
+/* 編輯按鈕 - 綠色主題 */
+.comment-action-btn:not(.delete) {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    color: #388e3c;
+    border-color: #81c784;
+}
+
+.comment-action-btn:not(.delete):hover {
+    background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    border-color: transparent;
+}
+
+/* 刪除按鈕 - 紅色主題 */
+.comment-action-btn.delete {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    color: #d32f2f;
+    border-color: #ef9a9a;
 }
 
 .comment-action-btn.delete:hover {
-    background: #fff5f5;
-    color: #dc3545;
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    border-color: transparent;
+}
+
+/* 展開/收合按鈕 */
+.replies-toggle {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    border-color: #ba68c8;
+    padding: 4px 8px;
+}
+
+.replies-toggle:hover {
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    color: white;
+    transform: rotate(180deg);
+    border-color: transparent;
+}
+
+.replies-toggle.collapsed {
+    transform: rotate(-90deg);
+}
+
+.replies-toggle.collapsed:hover {
+    transform: rotate(90deg);
 }
 
 /* 評論內容 - 保持 HTML 格式 */
@@ -1295,10 +1381,6 @@
 }
 
 /* 保留編輯器中的所有樣式 */
-.comment-content * {
-    /* 保持原始樣式 */
-}
-
 .comment-content h1 { font-size: 1.5em; margin: 0.5em 0; }
 .comment-content h2 { font-size: 1.3em; margin: 0.5em 0; }
 .comment-content h3 { font-size: 1.1em; margin: 0.5em 0; }
@@ -1496,23 +1578,6 @@
     font-weight: normal;
 }
 
-/* 回覆按鈕 */
-.comment-reply-btn {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.comment-reply-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
-}
-
 /* 快速連結按鈕 */
 .quick-comment-link {
     position: fixed;
@@ -1682,11 +1747,20 @@
         padding: 6px 12px;
         font-size: 12px;
     }
+    
+    /* 調整按鈕在手機版的大小 */
+    .comment-reply-btn,
+    .comment-action-btn,
+    .replies-toggle,
+    .comment-back-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
 }
 
 /* 回覆評論容器 */
 .comment-replies {
-    margin-left: 50px; /* 縮排距離 */
+    margin-left: 50px;
     margin-top: 15px;
     position: relative;
 }
@@ -1704,7 +1778,7 @@
     top: -15px;
     bottom: 20px;
     width: 2px;
-    background: #e0e0e0;
+    background: linear-gradient(180deg, #e0e0e0 0%, #bdbdbd 100%);
     z-index: 1;
 }
 
@@ -1716,7 +1790,7 @@
     top: 30px;
     width: 20px;
     height: 2px;
-    background: #e0e0e0;
+    background: linear-gradient(90deg, #e0e0e0 0%, #bdbdbd 100%);
     z-index: 1;
 }
 
@@ -1729,9 +1803,16 @@
     width: 10px;
     height: 10px;
     background: white;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #bdbdbd;
     border-radius: 50%;
     z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.comment-replies .comment-item:hover::after {
+    background: #2196f3;
+    border-color: #1976d2;
+    transform: scale(1.2);
 }
 
 /* 最後一個回覆的特殊處理 */
@@ -1740,26 +1821,93 @@
     height: calc(100% - 15px);
 }
 
-/* 回覆評論項目 */
+/* 回覆評論項目 - 第一層 */
 .comment-item.reply {
-    background: linear-gradient(135deg, #f3f8ff 0%, #e8f4fd 100%); /* 淡藍色漸層背景 */
-    border: 1px solid #bbdefb; /* 藍色邊框 */
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.08); /* 藍色陰影 */
-    margin-left: 5px; /* 稍微右移以配合連接線 */
+    background: linear-gradient(135deg, #e8f4fd 0%, #dbeafe 100%);
+    border: 1px solid #90caf9;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.08);
+    margin-left: 5px;
 }
 
 .comment-item.reply:hover {
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
     transform: translateY(-1px);
-    background: linear-gradient(135deg, #e8f4fd 0%, #dbeafe 100%);
+    background: linear-gradient(135deg, #dbeafe 0%, #c5e4fe 100%);
 }
 
-/* 回覆評論頭像 - 使用不同的顏色 */
+/* 回覆評論頭像 - 第一層 */
 .comment-item.reply .comment-avatar {
-    background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%); /* 藍色漸層 */
-    width: 36px; /* 稍微小一點 */
+    background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+    width: 36px;
     height: 36px;
     font-size: 14px;
+}
+
+/* 第二層回覆樣式 */
+.comment-item.reply.reply-level-1 {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    border-color: #ba68c8;
+}
+
+.comment-item.reply.reply-level-1:hover {
+    background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%);
+    box-shadow: 0 4px 12px rgba(156, 39, 176, 0.15);
+}
+
+.comment-item.reply.reply-level-1 .comment-avatar {
+    background: linear-gradient(135deg, #ab47bc 0%, #8e24aa 100%);
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+}
+
+/* 第三層回覆樣式 */
+.comment-item.reply.reply-level-2 {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-color: #ffab91;
+}
+
+.comment-item.reply.reply-level-2:hover {
+    background: linear-gradient(135deg, #ffe0b2 0%, #ffccbc 100%);
+    box-shadow: 0 4px 12px rgba(255, 112, 67, 0.15);
+}
+
+.comment-item.reply.reply-level-2 .comment-avatar {
+    background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%);
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+}
+
+/* 第四層及更深層回覆樣式 */
+.comment-item.reply.reply-level-3 {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-color: #81c784;
+}
+
+.comment-item.reply.reply-level-3:hover {
+    background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+}
+
+.comment-item.reply.reply-level-3 .comment-avatar {
+    background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%);
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+}
+
+/* 多層回覆的不同顏色連接線 */
+.comment-replies .comment-replies::before {
+    background: linear-gradient(180deg, #ba68c8 0%, #9c27b0 100%);
+}
+
+.comment-replies .comment-replies .comment-replies::before {
+    background: linear-gradient(180deg, #ff7043 0%, #ff5722 100%);
+}
+
+.comment-replies .comment-replies .comment-replies .comment-replies::before {
+    background: linear-gradient(180deg, #66bb6a 0%, #4caf50 100%);
 }
 
 /* 回覆標記 */
@@ -1778,60 +1926,6 @@
 
 .reply-indicator i {
     font-size: 10px;
-}
-
-/* 多層回覆的不同顏色 */
-.comment-replies .comment-replies {
-    margin-left: 40px; /* 第二層縮排更少 */
-}
-
-/* 第二層連接線顏色 */
-.comment-replies .comment-replies::before {
-    background: #c5cae9; /* 淡紫色 */
-}
-
-.comment-replies .comment-replies .comment-item::before {
-    background: #c5cae9;
-}
-
-.comment-replies .comment-replies .comment-item::after {
-    border-color: #c5cae9;
-}
-
-.comment-replies .comment-replies .comment-item.reply {
-    background: linear-gradient(135deg, #f3f0ff 0%, #ede7ff 100%); /* 淡紫色背景 */
-    border-color: #d1c4e9;
-}
-
-.comment-replies .comment-replies .comment-item.reply:hover {
-    background: linear-gradient(135deg, #ede7ff 0%, #e1d5ff 100%);
-    box-shadow: 0 4px 12px rgba(103, 58, 183, 0.15);
-}
-
-.comment-replies .comment-replies .comment-avatar {
-    background: linear-gradient(135deg, #9575cd 0%, #7e57c2 100%); /* 紫色漸層 */
-}
-
-/* 第三層及更深層的樣式 */
-.comment-replies .comment-replies .comment-replies {
-    margin-left: 35px;
-}
-
-.comment-replies .comment-replies .comment-replies::before {
-    background: #ffccbc; /* 淡橙色 */
-}
-
-.comment-replies .comment-replies .comment-replies .comment-item::before {
-    background: #ffccbc;
-}
-
-.comment-replies .comment-replies .comment-replies .comment-item::after {
-    border-color: #ffccbc;
-}
-
-.comment-replies .comment-replies .comment-replies .comment-item.reply {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); /* 淡橙色背景 */
-    border-color: #ffccbc;
 }
 
 /* 引用的原始評論預覽 */
@@ -1867,20 +1961,17 @@
 
 /* 收合/展開回覆 */
 .replies-toggle {
-    background: none;
-    border: 1px solid #e0e0e0;
-    color: #757575;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-left: auto;
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    border-color: #ba68c8;
+    padding: 4px 8px;
 }
 
 .replies-toggle:hover {
-    background: #f5f5f5;
-    border-color: #bdbdbd;
+    background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+    color: white;
+    transform: rotate(180deg);
+    border-color: transparent;
 }
 
 .replies-toggle i {
@@ -1954,14 +2045,6 @@
 
 /* 手機版調整 */
 @media (max-width: 768px) {
-    .comment-manager-fab {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
-        top: 70px;
-        right: 5px;
-    }
-    
     .comment-replies {
         margin-left: 30px;
         padding-left: 15px;
@@ -1988,3 +2071,4 @@
     .load-more-replies {
         margin-left: 30px;
     }
+}

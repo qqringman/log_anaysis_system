@@ -1867,12 +1867,17 @@ def update_comment():
 def delete_comment(comment_id):
     """刪除評論"""
     try:
+        print("111111111111111111")
+        print(file_comments)
+        print("1111111111111111113")
         # 在所有檔案中尋找並刪除評論
         for file_path in file_comments:
+            print(file_path)
             comments = file_comments[file_path]
             for i, comment in enumerate(comments):
                 if comment['id'] == comment_id:
                     # 刪除附件檔案
+                    print("1111111111111111112222")
                     for attachment in comment.get('attachments', []):
                         if 'path' in attachment and os.path.exists(attachment['path']):
                             os.remove(attachment['path'])

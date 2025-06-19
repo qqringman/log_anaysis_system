@@ -1666,8 +1666,8 @@
             return droppedFiles;
         };
                 
-        // 添加開啟多檔案瀏覽器的功能
-        function openMultiViewer(type = 'selected') {
+         // 添加開啟多檔案瀏覽器的功能
+         function openMultiViewer(type = 'selected') {
             let filesToOpen = [];
             let foldersToOpen = [];
             
@@ -1677,67 +1677,40 @@
                     const selectedFiles = fileBrowser.getSelectedFiles();
                     
                     if (selectedFiles.length === 0) {
-                        // 如果沒有選中的檔案，嘗試獲取當前瀏覽路徑下的所有檔案
-                        const currentPath = document.getElementById('path-input')?.value || '/home';
-                        const fileListItems = document.querySelectorAll('#file-list .file-item[data-type="file"]');
-                        
-                        fileListItems.forEach(item => {
-                            const fileName = item.querySelector('.item-name')?.textContent || '';
-                            const filePath = item.dataset.path || '';
-                            
-                            if (fileName && filePath) {
-                                filesToOpen.push({
-                                    type: 'file',
-                                    name: fileName,
-                                    path: filePath
-                                });
-                            }
-                        });
-                        
-                        if (filesToOpen.length > 0) {
-                            foldersToOpen.push({
-                                type: 'folder',
-                                name: currentPath.split('/').pop() || '檔案',
-                                path: currentPath,
-                                children: filesToOpen
-                            });
-                        }
-                    } else {
-                        filesToOpen = selectedFiles.map(file => ({
+                        utils.showAlert('請先選擇檔案', 'warning');
+                        return;
+                    }
+                    
+                    // 獲取當前路徑作為資料夾
+                    const currentPath = document.getElementById('path-input')?.value || '/home';
+                    foldersToOpen.push({
+                        type: 'folder',
+                        name: '瀏覽器選擇',
+                        path: currentPath,
+                        children: selectedFiles.map(file => ({
                             type: 'file',
                             name: file.name,
                             path: file.path
-                        }));
-                        
-                        // 獲取當前路徑作為資料夾
-                        const currentPath = document.getElementById('path-input')?.value || '/home';
-                        foldersToOpen.push({
-                            type: 'folder',
-                            name: '選中的檔案',
-                            path: currentPath,
-                            children: filesToOpen
-                        });
-                    }
+                        }))
+                    });
                 } else if (type === 'dropped') {
                     // 獲取拖放的檔案
                     const droppedFiles = quickAnalysis.getDroppedFiles();
                     
                     if (droppedFiles.length === 0) {
-                        alert('沒有拖放的檔案');
+                        utils.showAlert('沒有拖放的檔案', 'warning');
                         return;
                     }
-                    
-                    filesToOpen = droppedFiles.map(file => ({
-                        type: 'file',
-                        name: file.name,
-                        path: file.path
-                    }));
                     
                     foldersToOpen.push({
                         type: 'folder',
                         name: '拖放的檔案',
                         path: '/dropped',
-                        children: filesToOpen
+                        children: droppedFiles.map(file => ({
+                            type: 'file',
+                            name: file.name,
+                            path: file.path
+                        }))
                     });
                 } else if (type === 'all') {
                     // 合併所有檔案
@@ -1771,7 +1744,7 @@
                     }
                     
                     if (foldersToOpen.length === 0) {
-                        alert('沒有選擇或拖放任何檔案');
+                        utils.showAlert('沒有選擇或拖放任何檔案', 'warning');
                         return;
                     }
                 }
@@ -1779,8 +1752,8 @@
                 // 建立群組資料
                 const groups = [
                     {
-                        name: '分析檔案',
-                        icon: 'fa-file-alt',
+                        name: '檔案分析',
+                        icon: 'fa-folder',
                         items: foldersToOpen
                     }
                 ];
@@ -1791,7 +1764,7 @@
                 
             } catch (error) {
                 console.error('開啟多檔案瀏覽器錯誤:', error);
-                alert('開啟多檔案瀏覽器時發生錯誤');
+                utils.showAlert('開啟多檔案瀏覽器時發生錯誤', 'danger');
             }
         }
 

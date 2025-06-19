@@ -288,6 +288,39 @@
             display: block;
         }
         
+        /* 設定區域 */
+        .sidebar-settings {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            margin-top: auto;
+        }
+        
+        .settings-btn {
+            width: 100%;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .settings-btn:hover {
+            background: #e9ecef;
+            color: #667eea;
+            border-color: #667eea;
+        }
+        
+        .sidebar.collapsed .settings-btn span {
+            display: none;
+        }
+        
         /* 修復側邊欄縮合時的樣式 */
         .sidebar.collapsed .group-item {
             padding: 5px;
@@ -1037,22 +1070,30 @@
         
         .recent-file-info {
             flex: 1;
+            overflow: hidden;
         }
         
         .recent-file-name {
             font-weight: 500;
             color: #333;
             margin-bottom: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .recent-file-path {
             font-size: 12px;
             color: #999;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
         .recent-file-time {
             font-size: 12px;
             color: #666;
+            flex-shrink: 0;
         }
         
         /* 已儲存的工作區 */
@@ -1084,6 +1125,140 @@
         .workspace-info {
             font-size: 12px;
             color: #666;
+        }
+        
+        /* 確認對話框 */
+        .confirm-dialog {
+            background: white;
+            border-radius: 15px;
+            padding: 0;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .confirm-dialog-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .confirm-dialog-body {
+            padding: 30px 20px;
+            text-align: center;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .confirm-dialog-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        /* 設定對話框 */
+        .settings-modal .modal-body {
+            padding: 0;
+        }
+        
+        .settings-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .settings-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .settings-tab:hover {
+            background: #e9ecef;
+        }
+        
+        .settings-tab.active {
+            background: white;
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        
+        .settings-content {
+            padding: 20px;
+        }
+        
+        .settings-section {
+            margin-bottom: 25px;
+        }
+        
+        .settings-section h6 {
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .settings-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+        
+        .settings-option-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
         }
         
         /* 手機版樣式 */
@@ -1185,6 +1360,14 @@
                 <!-- 群組將動態載入 -->
             </div>
             
+            <!-- 設定區域 -->
+            <div class="sidebar-settings">
+                <button class="settings-btn" onclick="openSettingsModal()">
+                    <i class="fas fa-cog"></i>
+                    <span>設定</span>
+                </button>
+            </div>
+            
             <!-- 側邊欄切換按鈕 -->
             <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <i class="fas fa-chevron-left" id="toggle-icon"></i>
@@ -1235,7 +1418,7 @@
                 </div>
                 
                 <div class="file-viewer-container" id="file-viewer">
-                    <div class="empty-state" id="empty-state" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="empty-state" id="empty-state">
                         <i class="fas fa-file-alt"></i>
                         <h5>選擇檔案開始瀏覽</h5>
                         <p>從左側檔案樹選擇檔案，或拖曳檔案到此處</p>
@@ -1295,12 +1478,12 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+                <div class="upload-area" id="upload-area">
                     <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)">
                     <i class="fas fa-cloud-upload-alt"></i>
                     <h6>拖曳檔案到此處或點擊選擇</h6>
                     <p>支援多個檔案同時上傳</p>
-                    <button class="btn btn-primary">選擇檔案</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">選擇檔案</button>
                 </div>
                 <div class="uploaded-files" id="uploaded-files" style="display: none;">
                     <h6 class="mb-3">已選擇的檔案</h6>
@@ -1351,6 +1534,84 @@
             </div>
         </div>
     </div>
+    
+    <!-- 確認對話框容器 -->
+    <div id="confirm-dialog-container"></div>
+    
+    <!-- 設定對話框 -->
+    <div id="settings-modal" class="modal settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="fas fa-cog me-2"></i>設定</h5>
+                <button onclick="closeSettingsModal()" style="background: none; border: none; font-size: 24px; color: #999;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <div class="settings-tab active" onclick="showSettingsTab('general')">一般</div>
+                    <div class="settings-tab" onclick="showSettingsTab('appearance')">外觀</div>
+                    <div class="settings-tab" onclick="showSettingsTab('advanced')">進階</div>
+                </div>
+                <div class="settings-content">
+                    <div id="general-settings" class="settings-panel">
+                        <div class="settings-section">
+                            <h6>檔案設定</h6>
+                            <div class="settings-option">
+                                <span class="settings-option-label">自動儲存工作區</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="auto-save">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="settings-option">
+                                <span class="settings-option-label">記住最近開啟的檔案</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="remember-recent" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="appearance-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h6>主題設定</h6>
+                            <div class="settings-option">
+                                <span class="settings-option-label">深色模式</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="dark-mode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="settings-option">
+                                <span class="settings-option-label">緊湊模式</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="compact-mode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="advanced-settings" class="settings-panel" style="display: none;">
+                        <div class="settings-section">
+                            <h6>進階選項</h6>
+                            <div class="settings-option">
+                                <span class="settings-option-label">開發者模式</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="dev-mode">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSettingsModal()">關閉</button>
+                <button class="btn btn-primary" onclick="saveSettings()">儲存設定</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // 全域變數
@@ -1366,6 +1627,7 @@
         let tabCounter = 0;
         let tabColors = ['#e74c3c', '#f39c12', '#27ae60', '#3498db', '#9b59b6', '#1abc9c', '#34495e', '#e67e22'];
         let currentView = 'files';
+        let isDragging = false;
         
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -1683,33 +1945,35 @@
                 if (switchToTab) {
                     switchTab(existingTab.id);
                 }
-            } else {
-                // 創建新標籤
-                const tabId = generateTabId();
-                const colorIndex = tabCounter % tabColors.length;
-                const tab = {
-                    id: tabId,
-                    name: file.name || file.path.split('/').pop() || 'Untitled',
-                    path: file.path,
-                    content: null,
-                    loading: true,
-                    color: tabColors[colorIndex]
-                };
-                
-                tabCounter++;
-                currentTabs.push(tab);
-                renderTabs();
-                
-                if (switchToTab) {
-                    switchTab(tabId);
-                }
-                
-                // 載入檔案內容
-                loadFileContent(file.path, tabId);
-                
-                // 添加到最近檔案
-                addToRecentFiles(file);
+                return; // 避免重複開啟
             }
+            
+            // 創建新標籤
+            const tabId = generateTabId();
+            const colorIndex = tabCounter % tabColors.length;
+            const tab = {
+                id: tabId,
+                name: file.name || file.path.split('/').pop() || 'Untitled',
+                path: file.path,
+                content: null,
+                loading: true,
+                color: tabColors[colorIndex],
+                isLocal: file.isLocal || false
+            };
+            
+            tabCounter++;
+            currentTabs.push(tab);
+            renderTabs();
+            
+            if (switchToTab) {
+                switchTab(tabId);
+            }
+            
+            // 載入檔案內容
+            loadFileContent(file.path, tabId, file.isLocal);
+            
+            // 添加到最近檔案
+            addToRecentFiles(file);
             
             // 高亮顯示當前檔案
             document.querySelectorAll('.file-item').forEach(item => {
@@ -1854,7 +2118,7 @@
                 
                 // 隱藏空狀態
                 const emptyState = document.getElementById('empty-state');
-                if (emptyState) {
+                if (emptyState && emptyState.parentNode === viewerContainer) {
                     emptyState.style.display = 'none';
                 }
                 
@@ -1871,12 +2135,12 @@
                     }
                 } else {
                     // 單一視窗模式
+                    viewerContainer.innerHTML = '';
                     if (tab.content) {
-                        viewerContainer.innerHTML = '';
                         viewerContainer.appendChild(tab.content);
                     } else if (!tab.loading) {
                         tab.loading = true;
-                        loadFileContent(tab.path, tab.id);
+                        loadFileContent(tab.path, tab.id, tab.isLocal);
                     }
                 }
             }
@@ -1911,25 +2175,42 @@
         }
         
         // 載入檔案內容
-        async function loadFileContent(filePath, tabId) {
+        async function loadFileContent(filePath, tabId, isLocal = false) {
             try {
                 const viewerContainer = document.getElementById('file-viewer');
+                const tab = currentTabs.find(t => t.id === tabId);
                 
-                // 創建 iframe
-                const iframe = document.createElement('iframe');
-                iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
-                iframe.style.border = 'none';
+                if (!tab) return;
                 
-                iframe.onload = () => {
-                    const tab = currentTabs.find(t => t.id === tabId);
-                    if (tab) {
+                if (isLocal) {
+                    // 本地檔案直接使用 iframe 顯示
+                    const iframe = document.createElement('iframe');
+                    iframe.src = filePath;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    
+                    tab.loading = false;
+                    tab.content = iframe;
+                    renderTabs();
+                    
+                    if (tabId === activeTabId) {
+                        viewerContainer.innerHTML = '';
+                        viewerContainer.appendChild(iframe);
+                    }
+                } else {
+                    // 遠端檔案
+                    const iframe = document.createElement('iframe');
+                    iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    
+                    iframe.onload = () => {
                         tab.loading = false;
                         tab.content = iframe;
                         renderTabs();
                         
-                        // 如果是當前活動標籤，顯示內容
                         if (tabId === activeTabId) {
                             if (splitView) {
                                 const leftPane = document.getElementById('split-left');
@@ -1942,34 +2223,32 @@
                                 viewerContainer.appendChild(iframe);
                             }
                         }
-                    }
-                };
-                
-                iframe.onerror = () => {
-                    viewerContainer.innerHTML = `
-                        <div class="error-state">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <p>載入檔案失敗</p>
-                        </div>
-                    `;
+                    };
                     
-                    const tab = currentTabs.find(t => t.id === tabId);
-                    if (tab) {
+                    iframe.onerror = () => {
                         tab.loading = false;
                         renderTabs();
+                        
+                        if (tabId === activeTabId) {
+                            viewerContainer.innerHTML = `
+                                <div class="error-state">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <p>載入檔案失敗</p>
+                                </div>
+                            `;
+                        }
+                    };
+                    
+                    // 如果是當前標籤，先顯示載入狀態
+                    if (tabId === activeTabId) {
+                        viewerContainer.innerHTML = `
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>載入中...</p>
+                            </div>
+                        `;
                     }
-                };
-                
-                // 如果是當前標籤，先顯示載入狀態
-                if (tabId === activeTabId) {
-                    viewerContainer.innerHTML = `
-                        <div class="loading-state">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>載入中...</p>
-                        </div>
-                    `;
                 }
-                
             } catch (error) {
                 console.error('載入檔案失敗:', error);
                 showToast('載入檔案失敗', 'error');
@@ -2156,7 +2435,7 @@
                     tab.loading = true;
                     tab.content = null;
                     renderTabs();
-                    loadFileContent(tab.path, tab.id);
+                    loadFileContent(tab.path, tab.id, tab.isLocal);
                     showToast('已重新整理', 'success');
                 }
             }
@@ -2212,11 +2491,8 @@
                         viewerContainer.appendChild(tab.content);
                     }
                 } else {
-                    const emptyState = document.getElementById('empty-state');
-                    if (emptyState) {
-                        emptyState.style.display = 'flex';
-                        viewerContainer.appendChild(emptyState);
-                    }
+                    const emptyState = createEmptyState();
+                    viewerContainer.appendChild(emptyState);
                 }
                 showToast('已關閉分割視窗', 'info');
             }
@@ -2228,20 +2504,30 @@
             viewerContainer.innerHTML = `
                 <div class="split-container">
                     <div class="split-pane" id="split-left">
-                        <div class="empty-state">
+                        <div class="empty-state" id="split-left-empty">
                             <i class="fas fa-file-alt"></i>
-                            <p>選擇檔案顯示在左側</p>
+                            <p>選擇檔案顯示在左側，或拖曳檔案到此處</p>
                         </div>
                     </div>
                     <div class="split-divider" onmousedown="initResize(event)"></div>
                     <div class="split-pane" id="split-right">
-                        <div class="empty-state">
+                        <div class="empty-state" id="split-right-empty">
                             <i class="fas fa-file-alt"></i>
-                            <p>選擇檔案顯示在右側</p>
+                            <p>選擇檔案顯示在右側，或拖曳檔案到此處</p>
                         </div>
                     </div>
                 </div>
             `;
+            
+            // 設置分割視窗的拖放事件
+            const leftEmpty = document.getElementById('split-left-empty');
+            const rightEmpty = document.getElementById('split-right-empty');
+            
+            [leftEmpty, rightEmpty].forEach(empty => {
+                empty.addEventListener('dragover', handleDragOver);
+                empty.addEventListener('dragleave', handleDragLeave);
+                empty.addEventListener('drop', handleDrop);
+            });
             
             // 如果有活動標籤，載入到左側
             if (activeTabId) {
@@ -2331,16 +2617,10 @@
                 
                 if (result.success) {
                     currentWorkspaceId = result.state_id;
-                    showToast('工作區已儲存！', 'success');
-                    
-                    // 顯示分享連結
-                    const shareMessage = `工作區已儲存！\n\n分享連結：${result.share_url}`;
-                    if (confirm(shareMessage + '\n\n是否要複製連結？')) {
-                        navigator.clipboard.writeText(result.share_url);
-                        showToast('連結已複製', 'success');
-                    }
-                    
                     closeSaveModal();
+                    
+                    // 使用美化的對話框顯示分享連結
+                    showShareDialog(result.share_url);
                 } else {
                     showToast('儲存失敗：' + result.message, 'error');
                 }
@@ -2350,11 +2630,73 @@
             }
         }
         
+        // 顯示分享對話框
+        function showShareDialog(shareUrl) {
+            const dialogHTML = `
+                <div class="modal show" id="share-dialog">
+                    <div class="modal-content" style="max-width: 450px;">
+                        <div class="modal-header">
+                            <h5><i class="fas fa-share-alt me-2"></i>工作區已儲存</h5>
+                            <button onclick="closeShareDialog()" style="background: none; border: none; font-size: 24px; color: #999;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 48px; color: #28a745; margin-bottom: 20px;"></i>
+                            <p style="margin-bottom: 20px;">您的工作區已成功儲存！</p>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0 0 10px 0; font-size: 14px; color: #666;">分享連結：</p>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" value="${shareUrl}" readonly 
+                                           style="flex: 1; padding: 8px 12px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px;"
+                                           id="share-url-input">
+                                    <button class="btn btn-primary" onclick="copyShareUrl()">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button class="btn btn-primary" onclick="window.open('${shareUrl}', '_blank')">
+                                    <i class="fas fa-external-link-alt me-2"></i>開啟連結
+                                </button>
+                                <button class="btn btn-secondary" onclick="closeShareDialog()">關閉</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', dialogHTML);
+        }
+        
+        function closeShareDialog() {
+            const dialog = document.getElementById('share-dialog');
+            if (dialog) {
+                dialog.remove();
+            }
+        }
+        
+        function copyShareUrl() {
+            const input = document.getElementById('share-url-input');
+            input.select();
+            document.execCommand('copy');
+            showToast('連結已複製', 'success');
+        }
+        
         function exportFile() {
             if (activeTabId) {
                 const tab = currentTabs.find(t => t.id === activeTabId);
                 if (tab) {
-                    window.open(`/api/export?path=${encodeURIComponent(tab.path)}`, '_blank');
+                    if (tab.isLocal) {
+                        // 本地檔案直接下載
+                        const a = document.createElement('a');
+                        a.href = tab.path;
+                        a.download = tab.name;
+                        a.click();
+                    } else {
+                        // 遠端檔案
+                        window.open(`/api/export?path=${encodeURIComponent(tab.path)}`, '_blank');
+                    }
                 }
             } else {
                 showToast('請先開啟檔案', 'info');
@@ -2364,11 +2706,13 @@
         // 開啟上傳對話框
         function openUploadModal() {
             document.getElementById('upload-modal').classList.add('show');
+            uploadedFiles = [];
+            document.getElementById('uploaded-files').style.display = 'none';
+            document.getElementById('file-input').value = '';
         }
         
         function closeUploadModal() {
             document.getElementById('upload-modal').classList.remove('show');
-            // 清空已選擇的檔案
             uploadedFiles = [];
             document.getElementById('uploaded-files').style.display = 'none';
             document.getElementById('file-input').value = '';
@@ -2447,22 +2791,24 @@
         
         // 設置拖放功能
         function setupDragAndDrop() {
-            const uploadArea = document.getElementById('upload-area');
-            const emptyState = document.getElementById('empty-state');
-            
             // 上傳區域的拖放
+            const uploadArea = document.getElementById('upload-area');
             if (uploadArea) {
                 uploadArea.addEventListener('dragover', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     uploadArea.classList.add('drag-over');
                 });
                 
-                uploadArea.addEventListener('dragleave', () => {
+                uploadArea.addEventListener('dragleave', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     uploadArea.classList.remove('drag-over');
                 });
                 
                 uploadArea.addEventListener('drop', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     uploadArea.classList.remove('drag-over');
                     
                     const files = Array.from(e.dataTransfer.files);
@@ -2471,25 +2817,58 @@
             }
             
             // 空狀態的拖放
+            const emptyState = document.getElementById('empty-state');
             if (emptyState) {
                 emptyState.addEventListener('dragover', handleDragOver);
                 emptyState.addEventListener('dragleave', handleDragLeave);
                 emptyState.addEventListener('drop', handleDrop);
             }
+            
+            // 防止整個頁面的拖放默認行為
+            document.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            document.addEventListener('drop', (e) => {
+                e.preventDefault();
+            });
+        }
+        
+        // 創建空狀態元素
+        function createEmptyState() {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.id = 'empty-state';
+            emptyState.innerHTML = `
+                <i class="fas fa-file-alt"></i>
+                <h5>選擇檔案開始瀏覽</h5>
+                <p>從左側檔案樹選擇檔案，或拖曳檔案到此處</p>
+            `;
+            
+            // 設置拖放事件
+            emptyState.addEventListener('dragover', handleDragOver);
+            emptyState.addEventListener('dragleave', handleDragLeave);
+            emptyState.addEventListener('drop', handleDrop);
+            
+            return emptyState;
         }
         
         // 處理拖放事件
         function handleDragOver(event) {
             event.preventDefault();
+            event.stopPropagation();
             event.currentTarget.classList.add('drag-over');
         }
         
         function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
             event.currentTarget.classList.remove('drag-over');
         }
         
         function handleDrop(event) {
             event.preventDefault();
+            event.stopPropagation();
             event.currentTarget.classList.remove('drag-over');
             
             const files = Array.from(event.dataTransfer.files);
@@ -2597,6 +2976,86 @@
                 toast.remove();
             }, 3000);
         }
+        
+        // 開啟設定對話框
+        function openSettingsModal() {
+            document.getElementById('settings-modal').classList.add('show');
+        }
+        
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.remove('show');
+        }
+        
+        // 顯示設定標籤
+        function showSettingsTab(tab) {
+            // 切換標籤
+            document.querySelectorAll('.settings-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // 顯示對應內容
+            document.querySelectorAll('.settings-panel').forEach(panel => {
+                panel.style.display = 'none';
+            });
+            document.getElementById(`${tab}-settings`).style.display = 'block';
+        }
+        
+        // 儲存設定
+        function saveSettings() {
+            const settings = {
+                autoSave: document.getElementById('auto-save').checked,
+                rememberRecent: document.getElementById('remember-recent').checked,
+                darkMode: document.getElementById('dark-mode').checked,
+                compactMode: document.getElementById('compact-mode').checked,
+                devMode: document.getElementById('dev-mode').checked
+            };
+            
+            localStorage.setItem('multiViewerSettings', JSON.stringify(settings));
+            showToast('設定已儲存', 'success');
+            closeSettingsModal();
+            
+            // 應用設定
+            applySettings(settings);
+        }
+        
+        // 應用設定
+        function applySettings(settings) {
+            // 這裡可以實作各種設定的應用邏輯
+            if (settings.darkMode) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            if (settings.compactMode) {
+                document.body.classList.add('compact-mode');
+            } else {
+                document.body.classList.remove('compact-mode');
+            }
+        }
+        
+        // 載入設定
+        function loadSettings() {
+            try {
+                const stored = localStorage.getItem('multiViewerSettings');
+                if (stored) {
+                    const settings = JSON.parse(stored);
+                    document.getElementById('auto-save').checked = settings.autoSave || false;
+                    document.getElementById('remember-recent').checked = settings.rememberRecent !== false;
+                    document.getElementById('dark-mode').checked = settings.darkMode || false;
+                    document.getElementById('compact-mode').checked = settings.compactMode || false;
+                    document.getElementById('dev-mode').checked = settings.devMode || false;
+                    
+                    applySettings(settings);
+                }
+            } catch (e) {
+                console.warn('無法載入設定');
+            }
+        }
+        
+        // 初始化設定
+        loadSettings();
     </script>
 </body>
 </html>

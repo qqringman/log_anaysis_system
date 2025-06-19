@@ -1599,9 +1599,12 @@
     
     <!-- Main app initialization -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    
+
     <!-- Layout controls enhancement script -->
     <script>
+        // 全域變數來管理選中的檔案
+        window.selectedFilesMap = new Map();
+        window.droppedFilesMap = new Map();
 
         // 添加獲取選中檔案的方法
         if (!window.fileBrowser) {
@@ -1610,35 +1613,78 @@
 
         // 獲取瀏覽器選中的檔案
         window.fileBrowser.getSelectedFiles = function() {
-            const selectedFiles = [];
+            const selectedFiles = Array.from(window.selectedFilesMap.values());
+            console.log('獲取選中的檔案:', selectedFiles);
+            return selectedFiles;
+        };
+        
+        // 處理檔案點擊 - 全域函數
+        window.handleFileClick = function(element) {
+            const filePath = element.dataset.path;
+            const fileName = element.querySelector('h6')?.textContent.trim() || 
+                            element.querySelector('.file-name')?.textContent.trim() || 
+                            filePath.split('/').pop();
             
-            // 從 appConfig 中獲取選中的檔案路徑
-            if (window.appConfig && window.appConfig.state && window.appConfig.state.selectedFiles) {
-                window.appConfig.state.selectedFiles.forEach(filePath => {
-                    // 從檔案路徑中提取檔案名稱
-                    const fileName = filePath.split('/').pop() || filePath;
-                    selectedFiles.push({
-                        name: fileName,
-                        path: filePath
-                    });
-                });
+            if (!filePath || !fileName) {
+                console.error('無法獲取檔案資訊');
+                return;
+            }
+            
+            const fileKey = filePath;
+            
+            if (window.selectedFilesMap.has(fileKey)) {
+                // 取消選中
+                window.selectedFilesMap.delete(fileKey);
+                element.classList.remove('selected');
             } else {
-                // 備用方案：從 DOM 中獲取選中的檔案
-                document.querySelectorAll('.file-item.selected').forEach(item => {
-                    const fileNameElement = item.querySelector('h6');
-                    const fileName = fileNameElement ? fileNameElement.textContent.trim() : '';
-                    const filePath = item.dataset.path || '';
+                // 選中檔案
+                window.selectedFilesMap.set(fileKey, {
+                    name: fileName,
+                    path: filePath
+                });
+                element.classList.add('selected');
+            }
+            
+            // 更新計數
+            updateSelectionCount();
+        };
+        
+        // 更新選中計數
+        function updateSelectionCount() {
+            const count = window.selectedFilesMap.size;
+            document.getElementById('selected-count').textContent = count;
+            document.getElementById('analyze-btn').disabled = count === 0;
+            updateFileCountsDisplay();
+        }
+        
+        // 全選/取消全選
+        window.fileBrowser.toggleSelectAll = function() {
+            const allFileItems = document.querySelectorAll('.file-item');
+            
+            if (window.selectedFilesMap.size === allFileItems.length) {
+                // 取消全選
+                window.selectedFilesMap.clear();
+                allFileItems.forEach(item => item.classList.remove('selected'));
+            } else {
+                // 全選
+                window.selectedFilesMap.clear();
+                allFileItems.forEach(item => {
+                    const filePath = item.dataset.path;
+                    const fileName = item.querySelector('h6')?.textContent.trim() || 
+                                item.querySelector('.file-name')?.textContent.trim() || 
+                                filePath.split('/').pop();
                     
-                    if (fileName && filePath) {
-                        selectedFiles.push({
+                    if (filePath && fileName) {
+                        window.selectedFilesMap.set(filePath, {
                             name: fileName,
                             path: filePath
                         });
+                        item.classList.add('selected');
                     }
                 });
             }
             
-            return selectedFiles;
+            updateSelectionCount();
         };
         
         // 添加快速分析的方法
@@ -1648,26 +1694,43 @@
         
         // 獲取拖放的檔案
         window.quickAnalysis.getDroppedFiles = function() {
-            const droppedFiles = [];
-            
-            // 獲取拖放檔案列表中的所有檔案
-            document.querySelectorAll('#dropped-files-container .dropped-file-item').forEach(item => {
-                const fileName = item.querySelector('.file-name')?.textContent || '';
-                const filePath = item.dataset.path || '';
-                
-                if (fileName && filePath) {
-                    droppedFiles.push({
-                        name: fileName,
-                        path: filePath
-                    });
-                }
-            });
-            
+            const droppedFiles = Array.from(window.droppedFilesMap.values());
+            console.log('獲取拖放的檔案:', droppedFiles);
             return droppedFiles;
         };
-                
-         // 添加開啟多檔案瀏覽器的功能
-         function openMultiViewer(type = 'selected') {
+        
+        // 添加拖放檔案
+        window.quickAnalysis.addDroppedFile = function(file) {
+            window.droppedFilesMap.set(file.path, file);
+            updateFileCountsDisplay();
+        };
+        
+        // 清除拖放檔案
+        window.quickAnalysis.clearDroppedFiles = function() {
+            window.droppedFilesMap.clear();
+            document.getElementById('dropped-files-container').innerHTML = '';
+            document.getElementById('dropped-files-list').style.display = 'none';
+            updateFileCountsDisplay();
+        };
+        
+        // 更新檔案數量顯示
+        function updateFileCountsDisplay() {
+            const browserCount = window.selectedFilesMap.size;
+            const droppedCount = window.droppedFilesMap.size;
+            const totalCount = browserCount + droppedCount;
+            
+            document.getElementById('browser-files-count').textContent = browserCount;
+            document.getElementById('dropped-files-count').textContent = droppedCount;
+            document.getElementById('total-files-count').textContent = totalCount;
+            
+            const quickAnalyzeBtn = document.getElementById('quick-analyze-btn');
+            if (quickAnalyzeBtn) {
+                quickAnalyzeBtn.disabled = totalCount === 0;
+            }
+        }
+        
+        // 添加開啟多檔案瀏覽器的功能
+        function openMultiViewer(type = 'selected') {
             let filesToOpen = [];
             let foldersToOpen = [];
             
@@ -1676,8 +1739,15 @@
                     // 獲取瀏覽器選擇的檔案
                     const selectedFiles = fileBrowser.getSelectedFiles();
                     
+                    console.log('openMultiViewer - 選中的檔案:', selectedFiles);
+                    
                     if (selectedFiles.length === 0) {
-                        utils.showAlert('請先選擇檔案', 'warning');
+                        // 如果有 utils.showAlert
+                        if (window.utils && window.utils.showAlert) {
+                            utils.showAlert('請先選擇檔案', 'warning');
+                        } else {
+                            alert('請先選擇檔案');
+                        }
                         return;
                     }
                     
@@ -1698,7 +1768,11 @@
                     const droppedFiles = quickAnalysis.getDroppedFiles();
                     
                     if (droppedFiles.length === 0) {
-                        utils.showAlert('沒有拖放的檔案', 'warning');
+                        if (window.utils && window.utils.showAlert) {
+                            utils.showAlert('沒有拖放的檔案', 'warning');
+                        } else {
+                            alert('沒有拖放的檔案');
+                        }
                         return;
                     }
                     
@@ -1744,7 +1818,11 @@
                     }
                     
                     if (foldersToOpen.length === 0) {
-                        utils.showAlert('沒有選擇或拖放任何檔案', 'warning');
+                        if (window.utils && window.utils.showAlert) {
+                            utils.showAlert('沒有選擇或拖放任何檔案', 'warning');
+                        } else {
+                            alert('沒有選擇或拖放任何檔案');
+                        }
                         return;
                     }
                 }
@@ -1758,13 +1836,19 @@
                     }
                 ];
                 
+                console.log('準備開啟多檔案瀏覽器，群組資料:', groups);
+                
                 // 編碼資料並開啟新視窗
                 const encodedGroups = encodeURIComponent(JSON.stringify(groups));
                 window.open(`/multi_viewer?groups=${encodedGroups}`, '_blank');
                 
             } catch (error) {
                 console.error('開啟多檔案瀏覽器錯誤:', error);
-                utils.showAlert('開啟多檔案瀏覽器時發生錯誤', 'danger');
+                if (window.utils && window.utils.showAlert) {
+                    utils.showAlert('開啟多檔案瀏覽器時發生錯誤', 'danger');
+                } else {
+                    alert('開啟多檔案瀏覽器時發生錯誤');
+                }
             }
         }
 
@@ -1772,6 +1856,47 @@
         $(document).ready(function() {
             // Load modals
             $('#modals-container').load("{{ url_for('static', filename='modals.html') }}");
+
+            // 使用 MutationObserver 監聽檔案列表的變化
+            const observeFileList = function() {
+                const fileList = document.getElementById('file-list');
+                if (!fileList) {
+                    // 如果檔案列表還不存在，稍後再試
+                    setTimeout(observeFileList, 500);
+                    return;
+                }
+                
+                // 為所有現有的檔案項目添加點擊事件
+                const addClickHandlers = function() {
+                    document.querySelectorAll('.file-item').forEach(item => {
+                        // 移除舊的 onclick
+                        item.onclick = null;
+                        // 添加新的 onclick
+                        item.onclick = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleFileClick(this);
+                        };
+                    });
+                };
+                
+                // 立即添加處理器
+                addClickHandlers();
+                
+                // 監聽變化
+                const observer = new MutationObserver(function(mutations) {
+                    // 當有新元素添加時，重新綁定事件
+                    addClickHandlers();
+                });
+                
+                observer.observe(fileList, {
+                    childList: true,
+                    subtree: true
+                });
+            };
+            
+            // 開始監聽
+            setTimeout(observeFileList, 100);
 
             // 延遲添加按鈕，確保 DOM 完全載入
             setTimeout(() => {
@@ -1782,7 +1907,7 @@
                     multiViewerBtn.id = 'multi-viewer-btn-browser';
                     multiViewerBtn.className = 'btn btn-sm btn-outline-primary ms-3';
                     multiViewerBtn.innerHTML = '<i class="fas fa-window-restore me-1"></i>多檔案瀏覽器';
-                    multiViewerBtn.onclick = () => openMultiViewer('all');
+                    multiViewerBtn.onclick = () => openMultiViewer('selected');
                     fileBrowserTitle.appendChild(multiViewerBtn);
                 }
                 
@@ -1828,6 +1953,7 @@
             $(window).on('resize', updateLayoutSlider);
         });
 
-    </script>
+    </script>    
+
 </body>
 </html>

@@ -14,7 +14,7 @@ import time
 import json
 import queue
 import re
-from io import StringIO
+from io import StringIO, BytesIO
 import tempfile
 import zipfile
 import tarfile
@@ -28,7 +28,7 @@ import secrets
 from werkzeug.utils import secure_filename
 import hashlib
 import qrcode
-from io import BytesIO
+from PIL import Image
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(32)
@@ -245,6 +245,8 @@ def generate_short_code(length=6):
 def multi_viewer():
     """多檔案瀏覽器介面"""
     state_id = request.args.get('state')
+    state_data = None
+    
     if state_id:
         # 載入已儲存的狀態
         conn = sqlite3.connect('chat_data.db')
@@ -271,9 +273,9 @@ def multi_viewer():
                 if not password or hashlib.sha256(password.encode()).hexdigest() != password_hash:
                     return render_template('multi_viewer_auth.html', state_id=state_id)
             
-            return render_template('multi_file_viewer.html', state_data=state[2])
+            state_data = state[2]
     
-    return render_template('multi_file_viewer.html')
+    return render_template('multi_file_viewer.html', state_data=state_data)
 
 @app.route('/api/multi_viewer/save', methods=['POST'])
 def save_multi_viewer_state():
@@ -392,7 +394,7 @@ def generate_qrcode(state_id):
         img.save(buf, format='PNG')
         buf.seek(0)
         
-        return Response(buf, mimetype='image/png')
+        return Response(buf.getvalue(), mimetype='image/png')
         
     except Exception as e:
         abort(500)
@@ -410,6 +412,29 @@ def short_url_redirect(short_code):
         return redirect(url_for('multi_viewer', state=result[0]))
     else:
         abort(404)
+
+# 修改匯出檔案路由
+@app.route('/api/export')
+def export_file():
+    """匯出檔案"""
+    file_path = request.args.get('path')
+    
+    if not file_path or not os.path.exists(file_path):
+        abort(404, '檔案不存在')
+    
+    try:
+        # 取得檔案名稱
+        filename = os.path.basename(file_path)
+        
+        # 使用 send_file 直接下載檔案
+        return send_from_directory(
+            os.path.dirname(file_path),
+            filename,
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        abort(500, f'下載檔案失敗: {str(e)}')
 
 # 其他原有的函數保持不變...
 def check_fastgrep_available():
@@ -1776,25 +1801,6 @@ def build_folder_tree(path, max_depth=3, current_depth=0):
         return items
     except PermissionError:
         return []
-    """匯出檔案"""
-    file_path = request.args.get('path')
-    
-    if not file_path or not os.path.exists(file_path):
-        abort(404, '檔案不存在')
-    
-    try:
-        # 取得檔案名稱
-        filename = os.path.basename(file_path)
-        
-        # 使用 send_file 直接下載檔案
-        return send_from_directory(
-            os.path.dirname(file_path),
-            filename,
-            as_attachment=True,
-            download_name=filename
-        )
-    except Exception as e:
-        abort(500, f'下載檔案失敗: {str(e)}')
 
 @app.route('/api/get_line_content')
 def get_line_content():

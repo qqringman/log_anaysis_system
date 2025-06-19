@@ -2255,16 +2255,26 @@
                     return;
                 }
                 
+                // 標記為載入中
+                tab.loading = true;
+                tab.content = null;
+                
                 // 創建 iframe
                 const iframe = document.createElement('iframe');
+                iframe.id = `iframe-${tabId}`;
+                
                 if (isLocal) {
                     iframe.src = filePath;
                 } else {
-                    iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
+                    // 確保路徑正確編碼
+                    const encodedPath = encodeURIComponent(filePath);
+                    iframe.src = `/file_viewer?path=${encodedPath}`;
                 }
+                
                 iframe.style.width = '100%';
                 iframe.style.height = '100%';
                 iframe.style.border = 'none';
+                iframe.style.display = 'block';
                 
                 console.log('創建 iframe，src:', iframe.src);
                 
@@ -2275,10 +2285,7 @@
                     tab.content = iframe;
                     renderTabs();
                     
-                    // 如果是當前標籤，更新顯示
-                    if (tabId === activeTabId) {
-                        updateViewerContent(tab);
-                    }
+                    // 不需要再次更新內容，因為 iframe 已經在容器中
                 };
                 
                 // 設置錯誤處理
@@ -2293,12 +2300,15 @@
                     }
                 };
                 
-                // 立即將 iframe 添加到內容（如果是當前標籤）
+                // 如果是當前標籤，顯示 iframe
                 if (tabId === activeTabId) {
                     const viewerContainer = document.getElementById('file-viewer');
                     viewerContainer.innerHTML = '';
                     viewerContainer.appendChild(iframe);
                 }
+                
+                // 儲存 iframe 到 tab，即使還在載入中
+                tab.content = iframe;
                 
                 // 設置超時
                 setTimeout(() => {

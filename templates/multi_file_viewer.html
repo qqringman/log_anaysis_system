@@ -1632,12 +1632,26 @@
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
             // 檢查是否有儲存的狀態
-            const stateData = {{ state_data|default('null')|safe }};
+            let stateData = null;
+            try {
+                // 使用更安全的方式處理模板變數
+                {% if state_data %}
+                stateData = {{ state_data|tojson|safe }};
+                {% else %}
+                stateData = null;
+                {% endif %}
+            } catch (e) {
+                console.error('處理 state_data 時發生錯誤:', e);
+                stateData = null;
+            }
             
             if (stateData) {
                 try {
-                    const state = JSON.parse(stateData);
-                    loadWorkspaceState(state);
+                    // 如果 stateData 是字串，需要解析
+                    if (typeof stateData === 'string') {
+                        stateData = JSON.parse(stateData);
+                    }
+                    loadWorkspaceState(stateData);
                 } catch (e) {
                     console.error('載入工作區狀態失敗', e);
                 }
@@ -1646,10 +1660,12 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const groupsData = urlParams.get('groups');
                 
+                console.log('URL 參數 groups:', groupsData); // 調試用
+                
                 if (groupsData) {
                     try {
                         groups = JSON.parse(decodeURIComponent(groupsData));
-                        console.log('載入的群組資料:', groups);
+                        console.log('解析後的群組資料:', groups); // 調試用
                         
                         // 確保檔案都有正確的名稱
                         groups.forEach(group => {
@@ -1665,8 +1681,13 @@
                         // 自動開啟第一個檔案
                         setTimeout(() => {
                             const firstFile = findFirstFile(groups);
+                            console.log('找到的第一個檔案:', firstFile); // 調試用
+                            
                             if (firstFile) {
                                 openFile(firstFile);
+                            } else {
+                                console.log('沒有找到任何檔案');
+                                showToast('沒有找到可開啟的檔案', 'warning');
                             }
                         }, 500);
                         
@@ -1675,6 +1696,7 @@
                         showToast('無法載入檔案資料，請重新嘗試', 'error');
                     }
                 } else {
+                    console.log('沒有 groups 參數，載入預設資料');
                     // 載入預設資料
                     loadDefaultGroups();
                 }
@@ -1726,14 +1748,23 @@
         
         // 找到第一個檔案
         function findFirstFile(groups) {
+            console.log('查找第一個檔案，群組數量:', groups.length); // 調試用
+            
             for (let group of groups) {
+                console.log('檢查群組:', group.name, group); // 調試用
+                
                 if (group.items) {
                     for (let item of group.items) {
+                        console.log('檢查項目:', item); // 調試用
+                        
                         if (item.type === 'file') {
                             return item;
                         } else if (item.type === 'folder' && item.children) {
+                            console.log('檢查資料夾子項目，數量:', item.children.length); // 調試用
+                            
                             for (let child of item.children) {
                                 if (child.type === 'file') {
+                                    console.log('找到檔案:', child); // 調試用
                                     return child;
                                 }
                             }
@@ -1741,6 +1772,8 @@
                     }
                 }
             }
+            
+            console.log('沒有找到任何檔案'); // 調試用
             return null;
         }
         
@@ -1761,9 +1794,13 @@
             const container = document.getElementById('groups-container');
             container.innerHTML = '';
             
+            console.log('渲染群組，數量:', groups.length); // 調試用
+            
             let totalFiles = 0;
             
             groups.forEach((group, groupIndex) => {
+                console.log('渲染群組:', group.name, group); // 調試用
+                
                 const groupDiv = createGroupElement(group, groupIndex);
                 container.appendChild(groupDiv);
                 
@@ -1772,6 +1809,8 @@
                     totalFiles += countFiles(group.items);
                 }
             });
+            
+            console.log('總檔案數:', totalFiles); // 調試用
             
             // 更新檔案計數
             document.getElementById('files-count').textContent = totalFiles;
@@ -1938,6 +1977,15 @@
         
         // 開啟檔案
         function openFile(file, switchToTab = true) {
+            console.log('開啟檔案:', file); // 調試用
+            
+            // 檢查必要的屬性
+            if (!file || !file.path) {
+                console.error('檔案資料不完整:', file);
+                showToast('檔案資料不完整', 'error');
+                return;
+            }
+            
             // 檢查是否已開啟
             const existingTab = currentTabs.find(tab => tab.path === file.path);
             
@@ -1960,6 +2008,8 @@
                 color: tabColors[colorIndex],
                 isLocal: file.isLocal || false
             };
+            
+            console.log('創建新標籤:', tab); // 調試用
             
             tabCounter++;
             currentTabs.push(tab);

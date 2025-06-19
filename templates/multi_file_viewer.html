@@ -2013,6 +2013,12 @@
             
             tabCounter++;
             currentTabs.push(tab);
+
+            // 確保設置 activeTabId
+            if (switchToTab || !activeTabId) {
+                activeTabId = tab.id;
+            }
+            
             renderTabs();
             
             if (switchToTab) {
@@ -2039,7 +2045,7 @@
             return 'tab-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         }
         
-        // 渲染標籤
+       // 渲染標籤
         function renderTabs() {
             const tabsContainer = document.getElementById('file-tabs');
             
@@ -2047,13 +2053,9 @@
             const mobileBtn = tabsContainer.querySelector('.mobile-menu-btn');
             const addBtn = tabsContainer.querySelector('.add-tab-btn');
             
-            // 清空標籤
-            while (tabsContainer.firstChild) {
-                if (tabsContainer.firstChild === mobileBtn || tabsContainer.firstChild === addBtn) {
-                    break;
-                }
-                tabsContainer.removeChild(tabsContainer.firstChild);
-            }
+            // 清空標籤（保留按鈕）
+            const existingTabs = tabsContainer.querySelectorAll('.file-tab');
+            existingTabs.forEach(tab => tab.remove());
             
             // 插入標籤
             currentTabs.forEach(tab => {
@@ -2071,7 +2073,13 @@
             const tabDiv = document.createElement('div');
             tabDiv.className = `file-tab ${tab.id === activeTabId ? 'active' : ''}`;
             tabDiv.style.setProperty('--tab-color', tab.color);
-            tabDiv.onclick = () => switchTab(tab.id);
+            tabDiv.onclick = (e) => {
+                // 防止點擊子元素時觸發
+                if (e.target.closest('.tab-close') || e.target.closest('.color-picker')) {
+                    return;
+                }
+                switchTab(tab.id);
+            };
             tabDiv.oncontextmenu = (e) => showTabContextMenu(e, tab);
             tabDiv.title = tab.path;
             
@@ -2159,6 +2167,8 @@
         
         // 切換標籤
         function switchTab(tabId) {
+            console.log('切換到標籤:', tabId); // 調試
+            
             activeTabId = tabId;
             renderTabs();
             
@@ -2168,7 +2178,7 @@
                 
                 // 隱藏空狀態
                 const emptyState = document.getElementById('empty-state');
-                if (emptyState && emptyState.parentNode === viewerContainer) {
+                if (emptyState) {
                     emptyState.style.display = 'none';
                 }
                 
@@ -2187,8 +2197,18 @@
                     // 單一視窗模式
                     viewerContainer.innerHTML = '';
                     if (tab.content) {
+                        console.log('顯示標籤內容'); // 調試
                         viewerContainer.appendChild(tab.content);
-                    } else if (!tab.loading) {
+                    } else if (tab.loading) {
+                        console.log('標籤還在載入中'); // 調試
+                        viewerContainer.innerHTML = `
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>載入中...</p>
+                            </div>
+                        `;
+                    } else {
+                        console.log('重新載入標籤內容'); // 調試
                         tab.loading = true;
                         loadFileContent(tab.path, tab.id, tab.isLocal);
                     }
@@ -2226,85 +2246,123 @@
         
         // 載入檔案內容
         async function loadFileContent(filePath, tabId, isLocal = false) {
+            console.log('開始載入檔案內容:', { filePath, tabId, isLocal });
+            
             try {
-                const viewerContainer = document.getElementById('file-viewer');
                 const tab = currentTabs.find(t => t.id === tabId);
+                if (!tab) {
+                    console.error('找不到標籤:', tabId);
+                    return;
+                }
                 
-                if (!tab) return;
-                
+                // 創建 iframe
+                const iframe = document.createElement('iframe');
                 if (isLocal) {
-                    // 本地檔案直接使用 iframe 顯示
-                    const iframe = document.createElement('iframe');
                     iframe.src = filePath;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    
+                } else {
+                    iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
+                }
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                
+                console.log('創建 iframe，src:', iframe.src);
+                
+                // 設置載入完成處理
+                iframe.onload = () => {
+                    console.log('iframe 載入完成');
                     tab.loading = false;
                     tab.content = iframe;
                     renderTabs();
                     
+                    // 如果是當前標籤，更新顯示
                     if (tabId === activeTabId) {
-                        viewerContainer.innerHTML = '';
-                        viewerContainer.appendChild(iframe);
+                        updateViewerContent(tab);
                     }
-                } else {
-                    // 遠端檔案
-                    const iframe = document.createElement('iframe');
-                    iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
+                };
+                
+                // 設置錯誤處理
+                iframe.onerror = (error) => {
+                    console.error('iframe 載入失敗:', error);
+                    tab.loading = false;
+                    tab.content = null;
+                    renderTabs();
                     
-                    iframe.onload = () => {
-                        tab.loading = false;
-                        tab.content = iframe;
-                        renderTabs();
-                        
-                        if (tabId === activeTabId) {
-                            if (splitView) {
-                                const leftPane = document.getElementById('split-left');
-                                if (leftPane) {
-                                    leftPane.innerHTML = '';
-                                    leftPane.appendChild(iframe);
-                                }
-                            } else {
-                                viewerContainer.innerHTML = '';
-                                viewerContainer.appendChild(iframe);
-                            }
-                        }
-                    };
-                    
-                    iframe.onerror = () => {
-                        tab.loading = false;
-                        renderTabs();
-                        
-                        if (tabId === activeTabId) {
-                            viewerContainer.innerHTML = `
-                                <div class="error-state">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <p>載入檔案失敗</p>
-                                </div>
-                            `;
-                        }
-                    };
-                    
-                    // 如果是當前標籤，先顯示載入狀態
                     if (tabId === activeTabId) {
-                        viewerContainer.innerHTML = `
-                            <div class="loading-state">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <p>載入中...</p>
-                            </div>
-                        `;
+                        showErrorState(filePath);
                     }
+                };
+                
+                // 立即將 iframe 添加到內容（如果是當前標籤）
+                if (tabId === activeTabId) {
+                    const viewerContainer = document.getElementById('file-viewer');
+                    viewerContainer.innerHTML = '';
+                    viewerContainer.appendChild(iframe);
                 }
+                
+                // 設置超時
+                setTimeout(() => {
+                    if (tab.loading) {
+                        console.error('載入超時');
+                        tab.loading = false;
+                        renderTabs();
+                        if (tabId === activeTabId) {
+                            showErrorState(filePath, '載入超時');
+                        }
+                    }
+                }, 30000);
+                
             } catch (error) {
-                console.error('載入檔案失敗:', error);
+                console.error('載入檔案內容失敗:', error);
                 showToast('載入檔案失敗', 'error');
             }
         }
-        
+
+        // 更新檢視器內容
+        function updateViewerContent(tab) {
+            const viewerContainer = document.getElementById('file-viewer');
+            viewerContainer.innerHTML = '';
+            
+            if (tab.content) {
+                viewerContainer.appendChild(tab.content);
+            } else if (tab.loading) {
+                viewerContainer.innerHTML = `
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>載入中...</p>
+                    </div>
+                `;
+            } else {
+                showErrorState(tab.path);
+            }
+        }
+
+        // 顯示錯誤狀態
+        function showErrorState(filePath, message = '載入檔案失敗') {
+            const viewerContainer = document.getElementById('file-viewer');
+            viewerContainer.innerHTML = `
+                <div class="error-state">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>${message}</p>
+                    <p style="font-size: 12px; color: #999;">${filePath}</p>
+                    <button class="btn btn-primary" onclick="retryLoadFile('${filePath}')">
+                        <i class="fas fa-redo"></i> 重試
+                    </button>
+                </div>
+            `;
+        }
+
+        // 重試載入檔案
+        window.retryLoadFile = function(filePath) {
+            const tab = currentTabs.find(t => t.path === filePath);
+            if (tab) {
+                tab.loading = true;
+                tab.content = null;
+                renderTabs();
+                loadFileContent(filePath, tab.id, tab.isLocal);
+            }
+        };
+
         // 切換側邊欄
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

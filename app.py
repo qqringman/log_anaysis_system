@@ -26,6 +26,9 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, rooms, send
 import base64
 import secrets
 from werkzeug.utils import secure_filename
+import hashlib
+import qrcode
+from io import BytesIO
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = secrets.token_hex(32)
@@ -42,6 +45,7 @@ shared_results = {}
 lucky_wheels = {}
 polls = {}
 file_comments = {}  # 新增：檔案評論
+multi_viewer_states = {}  # 新增：多檔案瀏覽器狀態
 uploads_dir = os.path.join('uploads', 'chat')
 comments_dir = os.path.join('uploads', 'comments')
 os.makedirs(uploads_dir, exist_ok=True)
@@ -161,6 +165,34 @@ def init_database():
         )
     ''')
     
+    # 多檔案瀏覽器狀態表
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS multi_viewer_states (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            state_data TEXT NOT NULL,
+            created_by TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_public INTEGER DEFAULT 0,
+            password_hash TEXT,
+            view_count INTEGER DEFAULT 0,
+            short_url TEXT UNIQUE
+        )
+    ''')
+    
+    # 短網址表
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS short_urls (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            short_code TEXT UNIQUE NOT NULL,
+            original_url TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME,
+            view_count INTEGER DEFAULT 0
+        )
+    ''')
+    
     # 創建預設聊天室
     cursor.execute('''
         INSERT OR IGNORE INTO chat_rooms (id, name, description, created_by)
@@ -204,6 +236,182 @@ def init_database():
     conn.commit()
     conn.close()
 
+def generate_short_code(length=6):
+    """生成短網址代碼"""
+    chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(secrets.choice(chars) for _ in range(length))
+
+@app.route('/multi_viewer')
+def multi_viewer():
+    """多檔案瀏覽器介面"""
+    state_id = request.args.get('state')
+    if state_id:
+        # 載入已儲存的狀態
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM multi_viewer_states WHERE id = ? OR short_url = ?', (state_id, state_id))
+        state = cursor.fetchone()
+        conn.close()
+        
+        if state:
+            # 更新瀏覽次數
+            conn = sqlite3.connect('chat_data.db')
+            cursor = conn.cursor()
+            cursor.execute('UPDATE multi_viewer_states SET view_count = view_count + 1 WHERE id = ?', (state[0],))
+            conn.commit()
+            conn.close()
+            
+            # 檢查權限
+            is_public = bool(state[6])
+            password_hash = state[7]
+            
+            if not is_public and password_hash:
+                # 需要密碼驗證
+                password = request.args.get('pwd')
+                if not password or hashlib.sha256(password.encode()).hexdigest() != password_hash:
+                    return render_template('multi_viewer_auth.html', state_id=state_id)
+            
+            return render_template('multi_file_viewer.html', state_data=state[2])
+    
+    return render_template('multi_file_viewer.html')
+
+@app.route('/api/multi_viewer/save', methods=['POST'])
+def save_multi_viewer_state():
+    """儲存多檔案瀏覽器狀態"""
+    try:
+        data = request.get_json()
+        state_id = str(uuid.uuid4())
+        short_code = generate_short_code()
+        
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
+        
+        # 確保短網址唯一
+        while cursor.execute('SELECT 1 FROM multi_viewer_states WHERE short_url = ?', (short_code,)).fetchone():
+            short_code = generate_short_code()
+        
+        password_hash = None
+        if data.get('password'):
+            password_hash = hashlib.sha256(data['password'].encode()).hexdigest()
+        
+        cursor.execute('''
+            INSERT INTO multi_viewer_states 
+            (id, name, state_data, created_by, is_public, password_hash, short_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            state_id,
+            data.get('name', '未命名的工作區'),
+            json.dumps(data['state']),
+            session.get('username', 'anonymous'),
+            1 if data.get('is_public', True) else 0,
+            password_hash,
+            short_code
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        # 生成分享連結
+        base_url = request.host_url.rstrip('/')
+        share_url = f"{base_url}/s/{short_code}"
+        full_url = f"{base_url}/multi_viewer?state={state_id}"
+        
+        return jsonify({
+            'success': True,
+            'state_id': state_id,
+            'share_url': share_url,
+            'full_url': full_url,
+            'short_code': short_code
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'儲存失敗: {str(e)}'})
+
+@app.route('/api/multi_viewer/list')
+def list_multi_viewer_states():
+    """列出已儲存的多檔案瀏覽器狀態"""
+    try:
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, name, created_by, created_at, updated_at, is_public, view_count, short_url
+            FROM multi_viewer_states
+            WHERE created_by = ? OR is_public = 1
+            ORDER BY updated_at DESC
+        ''', (session.get('username', 'anonymous'),))
+        
+        states = []
+        for row in cursor.fetchall():
+            states.append({
+                'id': row[0],
+                'name': row[1],
+                'created_by': row[2],
+                'created_at': row[3],
+                'updated_at': row[4],
+                'is_public': bool(row[5]),
+                'view_count': row[6],
+                'short_url': row[7]
+            })
+        
+        conn.close()
+        return jsonify(states)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)})
+
+@app.route('/api/multi_viewer/qrcode/<state_id>')
+def generate_qrcode(state_id):
+    """生成 QR Code"""
+    try:
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT short_url FROM multi_viewer_states WHERE id = ? OR short_url = ?', (state_id, state_id))
+        result = cursor.fetchone()
+        conn.close()
+        
+        if not result:
+            abort(404)
+        
+        short_code = result[0]
+        url = f"{request.host_url.rstrip('/')}/s/{short_code}"
+        
+        # 生成 QR Code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(url)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # 轉換為 bytes
+        buf = BytesIO()
+        img.save(buf, format='PNG')
+        buf.seek(0)
+        
+        return Response(buf, mimetype='image/png')
+        
+    except Exception as e:
+        abort(500)
+
+@app.route('/s/<short_code>')
+def short_url_redirect(short_code):
+    """短網址重定向"""
+    conn = sqlite3.connect('chat_data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT id FROM multi_viewer_states WHERE short_url = ?', (short_code,))
+    result = cursor.fetchone()
+    conn.close()
+    
+    if result:
+        return redirect(url_for('multi_viewer', state=result[0]))
+    else:
+        abort(404)
+
+# 其他原有的函數保持不變...
 def check_fastgrep_available():
     """檢查 grep 命令是否可用"""
     try:
@@ -1516,11 +1724,6 @@ def serve_chat_file(filename):
     """提供聊天室上傳檔案"""
     return send_from_directory(uploads_dir, filename)
 
-@app.route('/multi_viewer')
-def multi_viewer():
-    """多檔案瀏覽器介面"""
-    return render_template('multi_file_viewer.html')
-
 @app.route('/api/folder_tree')
 def get_folder_tree():
     """獲取資料夾樹狀結構"""
@@ -2057,6 +2260,7 @@ if __name__ == '__main__':
     print("   - 自定義幸運轉盤")
     print("   - 聊天室管理中心")
     print("   - 分享功能")
+    print("   - 多檔案瀏覽器支援")
     print("=" * 50)
     
     # 確保必要目錄存在

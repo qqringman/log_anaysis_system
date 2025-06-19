@@ -951,6 +951,10 @@ def extract_mentions(message):
 # API 路由
 @app.route('/')
 def index():
+    # 如果要預設使用多檔案瀏覽器，可以直接重定向
+    # return redirect('/multi_viewer')
+    
+    # 或者保持原本的主頁，讓用戶選擇
     return render_template('enhanced_index_v2.html')
 
 @app.route('/room/<room_id>')

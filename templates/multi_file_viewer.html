@@ -782,17 +782,53 @@
                 </div>
             `;
             
-            // 這裡應該調用後端 API 載入檔案內容
-            // 暫時使用模擬內容
-            setTimeout(() => {
+            try {
+                // 如果是 File 物件（從檔案選擇器或拖放）
+                if (file instanceof File) {
+                    // 上傳檔案到伺服器
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const response = await fetch('/api/upload_file', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 載入上傳的檔案
+                        viewer.innerHTML = `
+                            <iframe src="/file_viewer?path=${encodeURIComponent(result.file_path)}" 
+                                    style="width: 100%; height: 100%; border: none;"></iframe>
+                        `;
+                        openedFiles.set(file.name, result.file_path);
+                    } else {
+                        viewer.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h5>載入失敗</h5>
+                                <p>${result.message}</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    // 直接載入檔案路徑
+                    viewer.innerHTML = `
+                        <iframe src="/file_viewer?path=${encodeURIComponent(file.path || file)}" 
+                                style="width: 100%; height: 100%; border: none;"></iframe>
+                    `;
+                    openedFiles.set(file.name || file, file.path || file);
+                }
+            } catch (error) {
                 viewer.innerHTML = `
-                    <iframe src="/file_viewer?path=${encodeURIComponent(file.name)}" 
-                            style="width: 100%; height: 100%; border: none;"></iframe>
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h5>載入錯誤</h5>
+                        <p>${error.message}</p>
+                    </div>
                 `;
-                
-                // 儲存已開啟的檔案
-                openedFiles.set(file.name, file);
-            }, 500);
+            }
         }
         
         // 顯示空狀態
@@ -841,9 +877,187 @@
         }
         
         // 載入資料夾內容
-        async function loadFolderContent(folderName) {
-            // 這裡應該調用後端 API 獲取資料夾內容
-            console.log('載入資料夾:', folderName);
+        async function loadFolderContent(folderPath) {
+            try {
+                const response = await fetch(`/api/browse?path=${encodeURIComponent(folderPath)}`);
+                const result = await response.json();
+                
+                if (result.error) {
+                    console.error('載入資料夾失敗:', result.error);
+                    return;
+                }
+                
+                // 在檔案瀏覽器中顯示檔案列表
+                const viewer = document.getElementById('file-viewer');
+                viewer.innerHTML = `
+                    <div style="padding: 20px;">
+                        <h4><i class="fas fa-folder-open"></i> ${folderPath}</h4>
+                        <div class="file-list" style="margin-top: 20px;">
+                            ${result.items.map(item => `
+                                <div class="file-list-item" style="padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;"
+                                     onclick="openFileFromList('${item.path}', '${item.name}', '${item.type}')">
+                                    <i class="fas fa-${item.type === 'directory' ? 'folder' : 'file-alt'}"></i>
+                                    <span style="margin-left: 10px;">${item.name}</span>
+                                    <span style="float: right; color: #999;">${item.size || ''}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('載入資料夾失敗:', error);
+            }
+        }
+        
+        // 從檔案列表開啟檔案
+        function openFileFromList(path, name, type) {
+            if (type === 'directory') {
+                // 如果是資料夾，載入資料夾內容
+                loadFolderContent(path);
+                // 更新資料夾樹的選中狀態
+                updateFolderTreeSelection(path);
+            } else {
+                // 如果是檔案，在新標籤頁開啟
+                openFileInNewTab({ name: name, path: path });
+            }
+        }
+        
+        // 更新資料夾樹選中狀態
+        function updateFolderTreeSelection(path) {
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 嘗試找到對應的資料夾項目
+            const folderItems = document.querySelectorAll('.folder-item');
+            folderItems.forEach(item => {
+                const folderName = item.querySelector('.folder-name')?.textContent;
+                if (path.includes(folderName)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+        // 在新標籤頁中開啟檔案（修改版）
+        function openFileInNewTab(file) {
+            const tabsContainer = document.querySelector('.file-tabs');
+            const addBtn = document.querySelector('.add-tab-btn');
+            
+            const fileName = file.name || file.path?.split('/').pop() || 'untitled';
+            
+            // 檢查是否已經打開
+            const existingTab = Array.from(document.querySelectorAll('.file-tab')).find(tab => 
+                tab.querySelector('.file-tab-name').textContent === fileName
+            );
+            
+            if (existingTab) {
+                activateTab(existingTab);
+                return;
+            }
+            
+            // 創建新標籤
+            const newTab = document.createElement('div');
+            newTab.className = 'file-tab';
+            newTab.innerHTML = `
+                <i class="fas fa-file-alt file-tab-icon"></i>
+                <span class="file-tab-name">${fileName}</span>
+                <button class="file-tab-close" onclick="closeTab(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            tabsContainer.insertBefore(newTab, addBtn);
+            
+            // 綁定點擊事件
+            newTab.addEventListener('click', function(e) {
+                if (!e.target.closest('.file-tab-close')) {
+                    activateTab(this);
+                }
+            });
+            
+            // 激活新標籤
+            activateTab(newTab);
+            
+            // 載入檔案內容
+            loadFileContent(file);
+        }
+        
+        // 初始化時載入資料夾樹
+        async function loadFolderTree() {
+            try {
+                const response = await fetch('/api/folder_tree?path=/home');
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderFolderTree(result.tree);
+                }
+            } catch (error) {
+                console.error('載入資料夾樹失敗:', error);
+            }
+        }
+        
+        // 渲染資料夾樹
+        function renderFolderTree(tree, container = document.getElementById('folder-tree')) {
+            container.innerHTML = '';
+            
+            tree.forEach(item => {
+                const folderItem = document.createElement('div');
+                folderItem.className = 'folder-item';
+                
+                if (item.type === 'folder') {
+                    folderItem.innerHTML = `
+                        <i class="fas fa-chevron-right folder-toggle"></i>
+                        <i class="fas fa-folder folder-icon"></i>
+                        <span class="folder-name">${item.name}</span>
+                        <span class="folder-count">${item.count || 0}</span>
+                    `;
+                    
+                    container.appendChild(folderItem);
+                    
+                    // 添加子資料夾容器
+                    if (item.children && item.children.length > 0) {
+                        const childrenContainer = document.createElement('div');
+                        childrenContainer.className = 'folder-children';
+                        renderFolderTree(item.children, childrenContainer);
+                        container.appendChild(childrenContainer);
+                    }
+                } else {
+                    folderItem.innerHTML = `
+                        <i class="fas fa-file-alt folder-icon" style="margin-left: 25px;"></i>
+                        <span class="folder-name">${item.name}</span>
+                        <span class="folder-count">${item.size}</span>
+                    `;
+                    container.appendChild(folderItem);
+                }
+                
+                // 綁定點擊事件
+                folderItem.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    
+                    if (item.type === 'folder') {
+                        // 展開/收合資料夾
+                        const toggle = this.querySelector('.folder-toggle');
+                        const children = this.nextElementSibling;
+                        
+                        if (children && children.classList.contains('folder-children')) {
+                            toggle.classList.toggle('expanded');
+                            children.classList.toggle('expanded');
+                        }
+                        
+                        // 載入資料夾內容
+                        loadFolderContent(item.path);
+                    } else {
+                        // 開啟檔案
+                        openFileInNewTab(item);
+                    }
+                    
+                    // 更新選中狀態
+                    document.querySelectorAll('.folder-item').forEach(f => {
+                        f.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
         }
         
         // 初始化拖放功能
@@ -948,7 +1162,10 @@
         
         // 頁面載入完成後初始化
         document.addEventListener('DOMContentLoaded', function() {
-            initFolderTree();
+            // 載入資料夾樹
+            loadFolderTree();
+            
+            // 初始化功能
             initDragAndDrop();
             initSidebarResize();
             
@@ -960,6 +1177,13 @@
                     }
                 });
             });
+            
+            // 檢查 URL 參數，看是否要直接開啟某個檔案
+            const urlParams = new URLSearchParams(window.location.search);
+            const filePath = urlParams.get('file');
+            if (filePath) {
+                openFileInNewTab({ path: filePath, name: filePath.split('/').pop() });
+            }
         });
     </script>
 </body>

@@ -720,7 +720,7 @@
     transform: scale(1.1);
 }
 
-/* 修復對話框底部 z-index 問題 */
+/* 評論對話框底部 z-index 問題 */
 .comment-dialog-footer {
     padding: 16px 20px;
     background: #f8f9fa;
@@ -2071,4 +2071,71 @@
     .load-more-replies {
         margin-left: 30px;
     }
+}
+
+/* Toast 樣式 */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10300;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.custom-toast {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 16px 20px;
+    min-width: 300px;
+    animation: slideInRight 0.3s ease;
+    border-left: 4px solid;
+}
+
+.custom-toast.info { border-left-color: #3b82f6; }
+.custom-toast.success { border-left-color: #10b981; }
+.custom-toast.warning { border-left-color: #f59e0b; }
+.custom-toast.danger { border-left-color: #ef4444; }
+
+.custom-toast.hiding {
+    animation: slideOutRight 0.3s ease;
+}
+
+.toast-icon {
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+.toast-message {
+    flex: 1;
+    font-size: 14px;
+    color: #374151;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 12px;
+    transition: color 0.2s ease;
+}
+
+.toast-close:hover {
+    color: #374151;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
 }

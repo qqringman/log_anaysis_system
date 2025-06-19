@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多檔案瀏覽器 - 日誌分析系統</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --sidebar-width: 280px;
+            --tabs-height: 45px;
+        }
+        
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            background: #f0f2f5;
+        }
+        
+        /* 主容器布局 */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+        
+        /* 側邊欄 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .sidebar.collapsed {
+            width: 60px;
+        }
+        
+        .sidebar-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 70px;
+        }
+        
+        .sidebar-header h4 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .sidebar-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .sidebar-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        /* 資料夾樹狀結構 */
+        .folder-tree {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .folder-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .folder-item:hover {
+            background: #f5f7fa;
+        }
+        
+        .folder-item.active {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+        
+        .folder-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #667eea;
+            border-radius: 0 3px 3px 0;
+        }
+        
+        .folder-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .folder-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+        }
+        
+        .folder-count {
+            background: #e0e0e0;
+            color: #666;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .folder-children {
+            margin-left: 20px;
+            display: none;
+        }
+        
+        .folder-children.expanded {
+            display: block;
+        }
+        
+        .folder-toggle {
+            margin-right: 5px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .folder-toggle.expanded {
+            transform: rotate(90deg);
+        }
+        
+        /* 主內容區 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            overflow: hidden;
+        }
+        
+        /* 檔案標籤頁 */
+        .file-tabs {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            min-height: var(--tabs-height);
+            overflow-x: auto;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .file-tabs::-webkit-scrollbar {
+            height: 3px;
+        }
+        
+        .file-tabs::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+        
+        .file-tab {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            border-right: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 150px;
+            max-width: 250px;
+            position: relative;
+            background: white;
+        }
+        
+        .file-tab:hover {
+            background: #f5f7fa;
+        }
+        
+        .file-tab.active {
+            background: #f8f9fa;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .file-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+        
+        .file-tab-icon {
+            margin-right: 8px;
+            color: #666;
+        }
+        
+        .file-tab-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+        }
+        
+        .file-tab-close {
+            margin-left: 10px;
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .file-tab-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+        
+        .add-tab-btn {
+            padding: 10px 15px;
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .add-tab-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        /* 檔案內容區 */
+        .file-content {
+            flex: 1;
+            overflow: hidden;
+            background: white;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .file-viewer-container {
+            height: 100%;
+            overflow: auto;
+            position: relative;
+        }
+        
+        /* 空狀態 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+        }
+        
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .empty-state h5 {
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .empty-state p {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        /* 搜尋框 */
+        .sidebar-search {
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 22px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+        
+        /* 工具列 */
+        .content-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toolbar-btn {
+            background: white;
+            border: 1px solid #e0e0e0;
+            color: #666;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .toolbar-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .toolbar-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* 分割線調整器 */
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 5px;
+            cursor: ew-resize;
+            background: transparent;
+            transition: background 0.2s ease;
+        }
+        
+        .resize-handle:hover {
+            background: rgba(102, 126, 234, 0.3);
+        }
+        
+        /* 快速操作選單 */
+        .quick-actions {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .quick-action-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .quick-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* 載入動畫 */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: absolute;
+                z-index: 1000;
+                height: 100%;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .sidebar-backdrop {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                display: none;
+            }
+            
+            .sidebar-backdrop.show {
+                display: block;
+            }
+            
+            .file-tabs {
+                padding-left: 50px;
+            }
+            
+            .mobile-menu-btn {
+                position: absolute;
+                left: 10px;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 10;
+                background: white;
+                border: 1px solid #e0e0e0;
+                padding: 8px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 側邊欄 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="resize-handle"></div>
+            
+            <div class="sidebar-header">
+                <h4>檔案瀏覽器</h4>
+                <button class="sidebar-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-search">
+                <div style="position: relative;">
+                    <input type="text" class="search-input" placeholder="搜尋檔案...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+            
+            <div class="folder-tree" id="folder-tree">
+                <!-- 資料夾結構將動態載入 -->
+                <div class="folder-item active">
+                    <i class="fas fa-chevron-right folder-toggle"></i>
+                    <i class="fas fa-folder folder-icon"></i>
+                    <span class="folder-name">專案根目錄</span>
+                    <span class="folder-count">12</span>
+                </div>
+                
+                <div class="folder-children">
+                    <div class="folder-item">
+                        <i class="fas fa-chevron-right folder-toggle"></i>
+                        <i class="fas fa-folder folder-icon"></i>
+                        <span class="folder-name">logs</span>
+                        <span class="folder-count">5</span>
+                    </div>
+                    
+                    <div class="folder-item">
+                        <i class="fas fa-chevron-right folder-toggle"></i>
+                        <i class="fas fa-folder folder-icon"></i>
+                        <span class="folder-name">config</span>
+                        <span class="folder-count">3</span>
+                    </div>
+                    
+                    <div class="folder-item">
+                        <i class="fas fa-chevron-right folder-toggle"></i>
+                        <i class="fas fa-folder folder-icon"></i>
+                        <span class="folder-name">data</span>
+                        <span class="folder-count">4</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- 手機版側邊欄背景 -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+        
+        <!-- 主內容區 -->
+        <main class="main-content">
+            <!-- 檔案標籤頁 -->
+            <div class="file-tabs">
+                <button class="mobile-menu-btn d-md-none" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="file-tab active">
+                    <i class="fas fa-file-alt file-tab-icon"></i>
+                    <span class="file-tab-name">system.log</span>
+                    <button class="file-tab-close" onclick="closeTab(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="file-tab">
+                    <i class="fas fa-file-code file-tab-icon"></i>
+                    <span class="file-tab-name">error.log</span>
+                    <button class="file-tab-close" onclick="closeTab(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="file-tab">
+                    <i class="fas fa-file-csv file-tab-icon"></i>
+                    <span class="file-tab-name">access.log</span>
+                    <button class="file-tab-close" onclick="closeTab(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <button class="add-tab-btn" onclick="addNewTab()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <!-- 檔案內容 -->
+            <div class="file-content">
+                <div class="content-toolbar">
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="refreshContent()">
+                            <i class="fas fa-sync-alt"></i>
+                            重新整理
+                        </button>
+                        <button class="toolbar-btn" onclick="searchInFile()">
+                            <i class="fas fa-search"></i>
+                            搜尋
+                        </button>
+                        <button class="toolbar-btn" onclick="showAnalysis()">
+                            <i class="fas fa-chart-line"></i>
+                            分析
+                        </button>
+                    </div>
+                    
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="toggleSplitView()">
+                            <i class="fas fa-columns"></i>
+                            分割檢視
+                        </button>
+                        <button class="toolbar-btn" onclick="exportFile()">
+                            <i class="fas fa-download"></i>
+                            匯出
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="file-viewer-container" id="file-viewer">
+                    <!-- 這裡將載入檔案檢視器內容 -->
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <h5>選擇檔案開始瀏覽</h5>
+                        <p>從左側資料夾樹選擇檔案，或拖放檔案到此處</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 快速操作按鈕 -->
+    <div class="quick-actions">
+        <button class="quick-action-btn" onclick="openFileDialog()" title="開啟檔案">
+            <i class="fas fa-folder-open"></i>
+        </button>
+        <button class="quick-action-btn" onclick="showCommentPanel()" title="評論管理">
+            <i class="fas fa-comments"></i>
+        </button>
+        <button class="quick-action-btn" onclick="showSettings()" title="設定">
+            <i class="fas fa-cog"></i>
+        </button>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 全域變數
+        let activeFileTab = null;
+        let openedFiles = new Map();
+        let sidebarWidth = 280;
+        
+        // 切換側邊欄
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            
+            if (window.innerWidth <= 768) {
+                // 手機版
+                sidebar.classList.toggle('show');
+                backdrop.classList.toggle('show');
+            } else {
+                // 桌面版
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+        
+        // 關閉標籤頁
+        function closeTab(btn) {
+            const tab = btn.closest('.file-tab');
+            const wasActive = tab.classList.contains('active');
+            
+            tab.remove();
+            
+            // 如果關閉的是當前標籤，激活前一個標籤
+            if (wasActive) {
+                const tabs = document.querySelectorAll('.file-tab');
+                if (tabs.length > 0) {
+                    tabs[tabs.length - 1].click();
+                } else {
+                    showEmptyState();
+                }
+            }
+        }
+        
+        // 新增標籤頁
+        function addNewTab() {
+            // 這裡應該打開檔案選擇對話框
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.log,.txt,.csv,.json,.xml';
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    openFileInNewTab(file);
+                }
+            };
+            fileInput.click();
+        }
+        
+        // 在新標籤頁中開啟檔案
+        function openFileInNewTab(file) {
+            const tabsContainer = document.querySelector('.file-tabs');
+            const addBtn = document.querySelector('.add-tab-btn');
+            
+            // 檢查是否已經打開
+            const existingTab = Array.from(document.querySelectorAll('.file-tab')).find(tab => 
+                tab.querySelector('.file-tab-name').textContent === file.name
+            );
+            
+            if (existingTab) {
+                activateTab(existingTab);
+                return;
+            }
+            
+            // 創建新標籤
+            const newTab = document.createElement('div');
+            newTab.className = 'file-tab';
+            newTab.innerHTML = `
+                <i class="fas fa-file-alt file-tab-icon"></i>
+                <span class="file-tab-name">${file.name}</span>
+                <button class="file-tab-close" onclick="closeTab(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            tabsContainer.insertBefore(newTab, addBtn);
+            
+            // 綁定點擊事件
+            newTab.addEventListener('click', function(e) {
+                if (!e.target.closest('.file-tab-close')) {
+                    activateTab(this);
+                }
+            });
+            
+            // 激活新標籤
+            activateTab(newTab);
+            
+            // 載入檔案內容
+            loadFileContent(file);
+        }
+        
+        // 激活標籤頁
+        function activateTab(tab) {
+            // 移除所有標籤的 active 類
+            document.querySelectorAll('.file-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            
+            // 添加 active 類到選中的標籤
+            tab.classList.add('active');
+            activeFileTab = tab;
+            
+            // 載入對應的檔案內容
+            const fileName = tab.querySelector('.file-tab-name').textContent;
+            if (openedFiles.has(fileName)) {
+                displayFileContent(openedFiles.get(fileName));
+            }
+        }
+        
+        // 載入檔案內容
+        async function loadFileContent(file) {
+            const viewer = document.getElementById('file-viewer');
+            
+            // 顯示載入動畫
+            viewer.innerHTML = `
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                </div>
+            `;
+            
+            // 這裡應該調用後端 API 載入檔案內容
+            // 暫時使用模擬內容
+            setTimeout(() => {
+                viewer.innerHTML = `
+                    <iframe src="/file_viewer?path=${encodeURIComponent(file.name)}" 
+                            style="width: 100%; height: 100%; border: none;"></iframe>
+                `;
+                
+                // 儲存已開啟的檔案
+                openedFiles.set(file.name, file);
+            }, 500);
+        }
+        
+        // 顯示空狀態
+        function showEmptyState() {
+            const viewer = document.getElementById('file-viewer');
+            viewer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <h5>選擇檔案開始瀏覽</h5>
+                    <p>從左側資料夾樹選擇檔案，或拖放檔案到此處</p>
+                </div>
+            `;
+        }
+        
+        // 初始化資料夾樹事件
+        function initFolderTree() {
+            // 資料夾展開/收合
+            document.querySelectorAll('.folder-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const folderItem = this.closest('.folder-item');
+                    const children = folderItem.nextElementSibling;
+                    
+                    if (children && children.classList.contains('folder-children')) {
+                        this.classList.toggle('expanded');
+                        children.classList.toggle('expanded');
+                    }
+                });
+            });
+            
+            // 資料夾點擊
+            document.querySelectorAll('.folder-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // 移除所有 active 類
+                    document.querySelectorAll('.folder-item').forEach(f => {
+                        f.classList.remove('active');
+                    });
+                    
+                    // 添加 active 類
+                    this.classList.add('active');
+                    
+                    // 載入資料夾內容
+                    loadFolderContent(this.querySelector('.folder-name').textContent);
+                });
+            });
+        }
+        
+        // 載入資料夾內容
+        async function loadFolderContent(folderName) {
+            // 這裡應該調用後端 API 獲取資料夾內容
+            console.log('載入資料夾:', folderName);
+        }
+        
+        // 初始化拖放功能
+        function initDragAndDrop() {
+            const viewer = document.getElementById('file-viewer');
+            
+            viewer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                viewer.classList.add('drag-over');
+            });
+            
+            viewer.addEventListener('dragleave', () => {
+                viewer.classList.remove('drag-over');
+            });
+            
+            viewer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                viewer.classList.remove('drag-over');
+                
+                const files = Array.from(e.dataTransfer.files);
+                files.forEach(file => {
+                    if (file.type.startsWith('text/') || 
+                        file.name.endsWith('.log') || 
+                        file.name.endsWith('.txt')) {
+                        openFileInNewTab(file);
+                    }
+                });
+            });
+        }
+        
+        // 初始化側邊欄調整大小
+        function initSidebarResize() {
+            const sidebar = document.getElementById('sidebar');
+            const handle = sidebar.querySelector('.resize-handle');
+            let isResizing = false;
+            
+            handle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                const newWidth = e.clientX;
+                if (newWidth > 200 && newWidth < 500) {
+                    sidebar.style.width = newWidth + 'px';
+                    sidebarWidth = newWidth;
+                }
+            });
+            
+            document.addEventListener('mouseup', () => {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            });
+        }
+        
+        // 工具列功能
+        function refreshContent() {
+            if (activeFileTab) {
+                const fileName = activeFileTab.querySelector('.file-tab-name').textContent;
+                loadFileContent({ name: fileName });
+            }
+        }
+        
+        function searchInFile() {
+            // 開啟搜尋面板
+            console.log('搜尋檔案內容');
+        }
+        
+        function showAnalysis() {
+            // 顯示分析面板
+            console.log('顯示分析');
+        }
+        
+        function toggleSplitView() {
+            // 切換分割檢視
+            console.log('切換分割檢視');
+        }
+        
+        function exportFile() {
+            // 匯出檔案
+            console.log('匯出檔案');
+        }
+        
+        function openFileDialog() {
+            // 開啟檔案對話框
+            addNewTab();
+        }
+        
+        function showCommentPanel() {
+            // 顯示評論面板
+            console.log('顯示評論面板');
+        }
+        
+        function showSettings() {
+            // 顯示設定
+            console.log('顯示設定');
+        }
+        
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initFolderTree();
+            initDragAndDrop();
+            initSidebarResize();
+            
+            // 綁定標籤點擊事件
+            document.querySelectorAll('.file-tab').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    if (!e.target.closest('.file-tab-close')) {
+                        activateTab(this);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

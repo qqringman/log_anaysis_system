@@ -1512,8 +1512,63 @@ def serve_chat_file(filename):
     """提供聊天室上傳檔案"""
     return send_from_directory(uploads_dir, filename)
 
-@app.route('/api/export_file')
-def export_file():
+@app.route('/multi_viewer')
+def multi_viewer():
+    """多檔案瀏覽器介面"""
+    return render_template('multi_file_viewer.html')
+
+@app.route('/api/folder_tree')
+def get_folder_tree():
+    """獲取資料夾樹狀結構"""
+    root_path = request.args.get('path', '/home')
+    
+    try:
+        tree = build_folder_tree(root_path, max_depth=3)
+        return jsonify({
+            'success': True,
+            'tree': tree
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'讀取資料夾失敗: {str(e)}'
+        })
+
+def build_folder_tree(path, max_depth=3, current_depth=0):
+    """建立資料夾樹狀結構"""
+    if current_depth >= max_depth:
+        return None
+    
+    try:
+        items = []
+        for item in os.listdir(path):
+            if item.startswith('.'):
+                continue
+                
+            item_path = os.path.join(path, item)
+            
+            if os.path.isdir(item_path):
+                children = build_folder_tree(item_path, max_depth, current_depth + 1)
+                items.append({
+                    'name': item,
+                    'path': item_path,
+                    'type': 'folder',
+                    'children': children if children else [],
+                    'count': len(children) if children else 0
+                })
+            else:
+                # 只顯示日誌相關檔案
+                if any(item.endswith(ext) for ext in ['.log', '.txt', '.csv', '.json', '.xml']):
+                    items.append({
+                        'name': item,
+                        'path': item_path,
+                        'type': 'file',
+                        'size': format_file_size(os.path.getsize(item_path))
+                    })
+        
+        return items
+    except PermissionError:
+        return []
     """匯出檔案"""
     file_path = request.args.get('path')
     
@@ -1679,7 +1734,7 @@ def get_line_range():
             'message': f'處理請求失敗: {str(e)}'
         })
 
-# 修改評論 API 路由
+# 修改評論 API 路由 - 修復 file_comments 問題
 @app.route('/api/comments')
 def get_comments():
     """獲取檔案評論 - 支援巢狀回覆"""
@@ -1867,26 +1922,24 @@ def update_comment():
 def delete_comment(comment_id):
     """刪除評論"""
     try:
-        print("111111111111111111")
-        print(file_comments)
-        print("1111111111111111113")
-        # 在所有檔案中尋找並刪除評論
-        for file_path in file_comments:
-            print(file_path)
-            comments = file_comments[file_path]
-            for i, comment in enumerate(comments):
-                if comment['id'] == comment_id:
-                    # 刪除附件檔案
-                    print("1111111111111111112222")
-                    for attachment in comment.get('attachments', []):
-                        if 'path' in attachment and os.path.exists(attachment['path']):
-                            os.remove(attachment['path'])
-                    
-                    # 刪除評論
-                    comments.pop(i)
-                    return jsonify({'success': True})
+        # 修改為從資料庫刪除評論
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
         
-        return jsonify({'success': False, 'message': '找不到評論'})
+        # 先獲取評論資訊以刪除附件
+        cursor.execute('SELECT file_path FROM user_comments WHERE id = ?', (comment_id,))
+        comment = cursor.fetchone()
+        
+        if comment:
+            # 刪除評論及其所有回覆
+            cursor.execute('DELETE FROM user_comments WHERE id = ? OR parent_comment_id = ?', (comment_id, comment_id))
+            conn.commit()
+            conn.close()
+            
+            return jsonify({'success': True})
+        else:
+            conn.close()
+            return jsonify({'success': False, 'message': '找不到評論'})
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'刪除評論失敗: {str(e)}'})

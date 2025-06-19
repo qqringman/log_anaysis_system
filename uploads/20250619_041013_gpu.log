@@ -1,0 +1,196 @@
+﻿[20250513_11:38:27.414]c/sys/kernel/printk;cat /proc/cma_info;echo 0 > /proc/sys/kernel/printk       <
+[20250513_11:38:27.769][ 5010.904523][ T4185] [N][RMM]  allocation address(0): 0c800000  size:    40000 (     1/     1)(by driver) atomic_pool_init+0xcc/0x194[@NA] (0.016 sec)
+[20250513_11:38:28.432][ 5010.918288][ T4185] [N][RMM]  allocation address(0): 0c840000  size:    20000 (     1/     1)(by driver) mcp_core_init+0x38/0x184[@NA] (0.508 sec)
+[20250513_11:38:28.432][ 5010.931754][ T4185] [N][RMM]  allocation address(0): 0c860000  size:    10000 (     1/     1)(by driver) mcp_cipher_init+0x24/0x6c[@NA] (0.512 sec)
+[20250513_11:38:28.432][ 5010.945306][ T4185] [N][RMM]  allocation address(0): 0c870000  size:     6000 (     1/     1)(by driver) DEMUX_BUF_AllocBuffer+0x98/0x190[@NA] (0.940 sec)
+[20250513_11:38:28.433][ 5010.959482][ T4185] [N][RMM]  allocation address(0): 0c878000  size:     1000 (   448/   448)(by pli buddy for user layer) AUDIOHAL_CLK1[@NA] (23.116 sec)
+[20250513_11:38:28.433][ 5010.973650][ T4185] [N][RMM]  allocation address(0): 0c879000  size:     1000 (   448/   448)(by pli buddy for user layer) AUDIOHAL_CLK2[@NA] (23.116 sec)
+[20250513_11:38:28.433][ 5010.987816][ T4185] [N][RMM]  allocation address(0): 0c87a000  size:     1000 (   448/   448)(by pli buddy for user layer) AUDIOHAL_CLK3[@NA] (23.116 sec)
+[20250513_11:38:28.433][ 5011.001983][ T4185] [N][RMM]  allocation address(0): 0c87c000  size:     3000 (   647/   565)(by pli buddy for user layer) VBIRing[@NA] (23.352 sec)
+[20250513_11:38:28.433][ 5011.015617][ T4185] [N][RMM]  allocation address(0): 0c880000  size:     c000 (     1/     1)(by driver) rtkaudio_dmabuf_preallocate_init+0x2c/0x90[@NA] (0.940 sec)
+[20250513_11:38:28.434][ 5011.030679][ T4185] [N][RMM]  allocation address(0): 0c890000  size:     c000 (     1/     1)(by driver) rtkaudio_dmabuf_preallocate_init+0x44/0x90[@NA] (0.940 sec)
+[20250513_11:38:28.435][ 5011.045738][ T4185] [N][RMM]  allocation address(0): 0c8a0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.435][ 5011.060090][ T4185] [N][RMM]  allocation address(0): 0c8b0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.443][ 5011.074439][ T4185] [N][RMM]  allocation address(0): 0c8c0000  size:    40000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.980 sec)
+[20250513_11:38:28.445][ 5011.088789][ T4185] [N][RMM]  allocation address(0): 0c900000  size:    80000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.956 sec)
+[20250513_11:38:28.452][ 5011.103051][ T4185] [N][RMM]  allocation address(0): 0c980000  size:    80000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.956 sec)
+[20250513_11:38:28.453][ 5011.117310][ T4185] [N][RMM]  allocation address(0): 0ca00000  size:   1a1000 (     1/     1)(by driver) Scaler_InitRPCShareMem+0x114c/0x1a48[@NA] (0.760 sec)
+[20250513_11:38:28.462][ 5011.131841][ T4185] [N][RMM]  allocation address(0): 0cc00000  size:     1000 (     1/     1)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (0.060 sec)
+[20250513_11:38:28.469][ 5011.145748][ T4185] [N][RMM]  allocation address(0): 0cc01000  size:     1000 (     1/     1)(by driver) Scaler_InitRPCShareMem+0x80/0x1a48[@NA] (0.760 sec)
+[20250513_11:38:28.470][ 5011.160101][ T4185] [N][RMM]  allocation address(0): 0cc02000  size:     4000 (     1/     1)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (0.788 sec)
+[20250513_11:38:28.476][ 5011.174004][ T4185] [N][RMM]  allocation address(0): 0cc06000  size:     1000 (     1/     1)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (0.820 sec)
+[20250513_11:38:28.478][ 5011.187909][ T4185] [N][RMM]  allocation address(0): 0cc07000  size:     1000 (     1/     1)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (0.820 sec)
+[20250513_11:38:28.478][ 5011.201812][ T4185] [N][RMM]  allocation address(0): 0cc08000  size:     1000 (     1/     1)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (0.820 sec)
+[20250513_11:38:28.479][ 5011.215715][ T4185] [N][RMM]  allocation address(0): 0cc09000  size:     1000 (     1/     1)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (0.836 sec)
+[20250513_11:38:28.488][ 5011.229619][ T4185] [N][RMM]  allocation address(0): 0cc0a000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.489][ 5011.243257][ T4185] [N][RMM]  allocation address(0): 0cc0b000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.539][ 5011.256896][ T4185] [N][RMM]  allocation address(0): 0cc0c000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.540][ 5011.270534][ T4185] [N][RMM]  allocation address(0): 0cc0d000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.540][ 5011.284172][ T4185] [N][RMM]  allocation address(0): 0cc0e000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.540][ 5011.297810][ T4185] [N][RMM]  allocation address(0): 0cc0f000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.541][ 5011.311451][ T4185] [N][RMM]  allocation address(0): 0cc10000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.541][ 5011.325089][ T4185] [N][RMM]  allocation address(0): 0cc11000  size:     1000 (     1/     1)(by driver) rtk_omxdev_init+0x68/0x2c4[@NA] (0.940 sec)
+[20250513_11:38:28.541][ 5011.338726][ T4185] [N][RMM]  allocation address(0): 0cc12000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.980 sec)
+[20250513_11:38:28.542][ 5011.353079][ T4185] [N][RMM]  allocation address(0): 0cc13000  size:     1000 (     1/     1)(by driver) control_status_init+0x10/0x120[@NA] (0.940 sec)
+[20250513_11:38:28.542][ 5011.367072][ T4185] [N][RMM]  allocation address(0): 0cc14000  size:     1000 (     1/     1)(by driver) init_rpc_mem+0x48/0x150[@NA] (0.940 sec)
+[20250513_11:38:28.542][ 5011.380442][ T4185] [N][RMM]  allocation address(0): 0cc15000  size:     1000 (     1/     1)(by driver) init_rpc_mem+0x74/0x150[@NA] (0.940 sec)
+[20250513_11:38:28.543][ 5011.393811][ T4185] [N][RMM]  allocation address(0): 0cc16000  size:     1000 (     1/     1)(by driver) init_rpc_mem+0xa0/0x150[@NA] (0.940 sec)
+[20250513_11:38:28.544][ 5011.407182][ T4185] [N][RMM]  allocation address(0): 0cc17000  size:     1000 (     1/     1)(by driver) init_rpc_mem+0xcc/0x150[@NA] (0.940 sec)
+[20250513_11:38:28.556][ 5011.420552][ T4185] [N][RMM]  allocation address(0): 0cc18000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.980 sec)
+[20250513_11:38:28.557][ 5011.434904][ T4185] [N][RMM]  allocation address(0): 0cc19000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.980 sec)
+[20250513_11:38:28.564][ 5011.449254][ T4185] [N][RMM]  allocation address(0): 0cc1a000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.565][ 5011.463603][ T4185] [N][RMM]  allocation address(0): 0cc1b000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.572][ 5011.477953][ T4185] [N][RMM]  allocation address(0): 0cc1c000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.573][ 5011.492303][ T4185] [N][RMM]  allocation address(0): 0cc1d000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.580][ 5011.506652][ T4185] [N][RMM]  allocation address(0): 0cc1e000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.582][ 5011.521003][ T4185] [N][RMM]  allocation address(0): 0cc1f000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.589][ 5011.535354][ T4185] [N][RMM]  allocation address(0): 0cc20000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.589][ 5011.549703][ T4185] [N][RMM]  allocation address(0): 0cc21000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.589][ 5011.564053][ T4185] [N][RMM]  allocation address(0): 0cc22000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.589][ 5011.578401][ T4185] [N][RMM]  allocation address(0): 0cc23000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.590][ 5011.592751][ T4185] [N][RMM]  allocation address(0): 0cc24000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.590][ 5011.607102][ T4185] [N][RMM]  allocation address(0): 0cc25000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.590][ 5011.621451][ T4185] [N][RMM]  allocation address(0): 0cc26000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.590][ 5011.635799][ T4185] [N][RMM]  allocation address(0): 0cc27000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.591][ 5011.650149][ T4185] [N][RMM]  allocation address(0): 0cc28000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.591][ 5011.664497][ T4185] [N][RMM]  allocation address(0): 0cc29000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.592][ 5011.676842][ T6435] [N][HDMI] [SCDCF]SCDC STS Port[0]: SCDCCR=ffde0005; CERCR=(2000c814),TMDS_config(reg,FW40x,FWscrb,FWtoggle)=(00,0,0,0); SCDC:0x10=00,00;0x20=00,00;0x30=00,00;0x40=00,00,00;52_58=0,0,0,0,0,0,0;FSM=WAIT_SYNC(0)
+[20250513_11:38:28.601][ 5011.678847][ T4185] [N][RMM]  allocation address(0): 0cc2a000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.602][ 5011.695417][ T6439] RTW: Turbo EDCA =0xa630
+[20250513_11:38:28.602][ 5011.709288][ T4185] [N][RMM]  allocation address(0): 0cc2b000  size:     1000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.008 sec)
+[20250513_11:38:28.609][ 5011.709309][ T4185] [N][RMM]  allocation address(0): 0cc2c000  size:     1000 (   136/   136)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (59.064 sec)
+[20250513_11:38:28.610][ 5011.709329][ T4185] [N][RMM]  allocation address(0): 0cc2d000  size:     2000 (    90/    90)(by driver) rtkvdec_send_sharedmemory+0x38/0x1c4[@NA] (1.056 sec)
+[20250513_11:38:28.621][ 5011.760978][ T4185] [N][RMM]  allocation address(0): 0cc2f000  size:     1000 (     1/     1)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (1.156 sec)
+[20250513_11:38:28.622][ 5011.774884][ T4185] [N][RMM]  allocation address(0): 0cc30000  size:     1000 (    35/    35)(by driver) cma_allocator_alloc+0x34/0x3c[@NA] (1.708 sec)
+[20250513_11:38:28.631][ 5011.788787][ T4185] [N][RMM]  allocation address(0): 0cc31000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.652][ 5011.802427][ T4185] [N][RMM]  allocation address(0): 0cc32000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.652][ 5011.816066][ T4185] [N][RMM]  allocation address(0): 0cc33000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.653][ 5011.829706][ T4185] [N][RMM]  allocation address(0): 0cc34000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.653][ 5011.843345][ T4185] [N][RMM]  allocation address(0): 0cc35000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.653][ 5011.856982][ T4185] [N][RMM]  allocation address(0): 0cc36000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.653][ 5011.870620][ T4185] [N][RMM]  allocation address(0): 0cc37000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.654][ 5011.884257][ T4185] [N][RMM]  allocation address(0): 0cc38000  size:     1000 (   559/   559)(by driver) rtkaudio_alloc+0x20/0x1e0[@NA] (22.188 sec)
+[20250513_11:38:28.661][ 5011.897895][ T4185] [N][RMM]  allocation address(0): 0cc39000  size:     1000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.324 sec)
+[20250513_11:38:28.663][ 5011.911529][ T4185] [N][RMM]  allocation address(0): 0cc3a000  size:     1000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.324 sec)
+[20250513_11:38:28.669][ 5011.925163][ T4185] [N][RMM]  allocation address(0): 0cc3b000  size:     1000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.324 sec)
+[20250513_11:38:28.670][ 5011.938795][ T4185] [N][RMM]  allocation address(0): 0cc3c000  size:     1000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.324 sec)
+[20250513_11:38:28.677][ 5011.952427][ T4185] [N][RMM]  allocation address(0): 0d000000  size:   7b2000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.948 sec)
+[20250513_11:38:28.829][ 5011.966688][ T4185] [N][RMM]  allocation address(0): 0d800000  size:   3c4000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.948 sec)
+[20250513_11:38:28.850][ 5011.980950][ T4185] [N][RMM]  allocation address(0): 0dc00000  size:    64000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.960 sec)
+[20250513_11:38:28.851][ 5011.995213][ T4185] [N][RMM]  allocation address(0): 0dc80000  size:    64000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.960 sec)
+[20250513_11:38:28.851][ 5012.009473][ T4185] [N][RMM]  allocation address(0): 0dd00000  size:    64000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.960 sec)
+[20250513_11:38:28.851][ 5012.023734][ T4185] [N][RMM]  allocation address(0): 0dd80000  size:    55000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.992 sec)
+[20250513_11:38:28.851][ 5012.037995][ T4185] [N][RMM]  allocation address(0): 0de00000  size:    c1000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.960 sec)
+[20250513_11:38:28.852][ 5012.052255][ T4185] [N][RMM]  allocation address(0): 0df00000  size:    81000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.992 sec)
+[20250513_11:38:28.852][ 5012.066515][ T4185] [N][RMM]  allocation address(0): 0e000000  size:    30000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (0.992 sec)
+[20250513_11:38:28.852][ 5012.080775][ T4185] [N][RMM]  allocation address(0): 0e040000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.852][ 5012.095125][ T4185] [N][RMM]  allocation address(0): 0e050000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.853][ 5012.109475][ T4185] [N][RMM]  allocation address(0): 0e060000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.854][ 5012.123825][ T4185] [N][RMM]  allocation address(0): 0e070000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.862][ 5012.138175][ T4185] [N][RMM]  allocation address(0): 0e080000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.863][ 5012.152525][ T4185] [N][RMM]  allocation address(0): 0e090000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.870][ 5012.166873][ T4185] [N][RMM]  allocation address(0): 0e0a0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (0.996 sec)
+[20250513_11:38:28.871][ 5012.181222][ T4185] [N][RMM]  allocation address(0): 0e0b0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.881][ 5012.195573][ T4185] [N][RMM]  allocation address(0): 0e0c0000  size:    1a000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (1.000 sec)
+[20250513_11:38:28.882][ 5012.209834][ T4185] [N][RMM]  allocation address(0): 0e0e0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.888][ 5012.224184][ T4185] [N][RMM]  allocation address(0): 0e0f0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.889][ 5012.238534][ T4185] [N][RMM]  allocation address(0): 0e100000  size:    81000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (1.000 sec)
+[20250513_11:38:28.896][ 5012.252796][ T4185] [N][RMM]  allocation address(0): 0e200000  size:    55000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (1.004 sec)
+[20250513_11:38:28.896][ 5012.267056][ T4185] [N][RMM]  allocation address(0): 0e280000  size:    30000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (1.004 sec)
+[20250513_11:38:28.897][ 5012.281316][ T4185] [N][RMM]  allocation address(0): 0e2c0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.906][ 5012.295668][ T4185] [N][RMM]  allocation address(0): 0e2d0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:28.907][ 5012.310018][ T4185] [N][RMM]  allocation address(0): 0e2e0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:29.184][ 5012.324367][ T4185] [N][RMM]  allocation address(0): 0e2f0000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.004 sec)
+[20250513_11:38:29.184][ 5012.338718][ T4185] [N][RMM]  allocation address(0): 0e300000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.008 sec)
+[20250513_11:38:29.184][ 5012.353069][ T4185] [N][RMM]  allocation address(0): 0e310000  size:    10000 (     1/     1)(by driver) rtkaudio_alloc_uncached+0x34/0x254[@NA] (1.008 sec)
+[20250513_11:38:29.185][ 5012.367420][ T4185] [N][RMM]  allocation address(0): 0e320000  size:     5000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.324 sec)
+[20250513_11:38:29.185][ 5012.381053][ T4185] [N][RMM]  allocation address(0): 0e328000  size:     5000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.324 sec)
+[20250513_11:38:29.185][ 5012.394688][ T4185] [N][RMM]  allocation address(0): 0e330000  size:     c000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.324 sec)
+[20250513_11:38:29.185][ 5012.408322][ T4185] [N][RMM]  allocation address(0): 0e340000  size:     c000 (   647/   565)(by pli buddy for user layer) RHAL_RB[@NA] (23.328 sec)
+[20250513_11:38:29.186][ 5012.421954][ T4185] [N][RMM]  allocation address(0): 0e350000  size:     3000 (   647/   565)(by pli buddy for user layer) VBIRing[@NA] (23.352 sec)
+[20250513_11:38:29.186][ 5012.435587][ T4185] [N][RMM]  allocation address(0): 0e354000  size:     2000 (   647/   565)(by pli buddy for user layer) VBIRing[@NA] (23.352 sec)
+[20250513_11:38:29.186][ 5012.449220][ T4185] [N][RMM]  allocation address(0): 0e360000  size:    1a000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (27.004 sec)
+[20250513_11:38:29.187][ 5012.463572][ T4185] [N][RMM]  allocation address(0): 0e380000  size:    80000 (   294/   265)(by driver) rtdlog_read_panic_msg_init+0x10/0x168[@NA] (4.836 sec)
+[20250513_11:38:29.195][ 5012.478191][ T4185] [N][RMM]  allocation address(0): 0e400000  size:   400000 (     1/     1)(by pli buddy) rtkvdec_remote_malloc+0x40/0x160[@Ve_] (1.024 sec)
+[20250513_11:38:29.196][ 5012.492719][ T4185] [N][RMM]  allocation address(0): 0e800000  size:    81000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (27.004 sec)
+[20250513_11:38:29.203][ 5012.507071][ T4185] [N][RMM]  allocation address(0): 0e900000  size:    55000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (27.012 sec)
+[20250513_11:38:29.204][ 5012.521421][ T4185] [N][RMM]  allocation address(0): 0e980000  size:    30000 (    57/    57)(by driver) rtkaudio_remote_malloc+0x44/0x1f8[@NA] (27.016 sec)
+[20250513_11:38:29.211][ 5012.535770][ T4185] [N][RMM]  allocation address(0): 39400000  size:   393000 (   454/   454)(by driver) DMABUF_0_236[@NA] (4981.724 sec)
+[20250513_11:38:29.213][ 5012.548425][ T4185] [N][RMM]  allocation address(0): 39800000  size:   393000 (   454/   454)(by driver) DMABUF_0_241[@NA] (4996.044 sec)
+[20250513_11:38:29.219][ 5012.561080][ T4185] [N][RMM]  allocation address(0): 39c00000  size:   393000 (   454/   454)(by driver) DMABUF_0_239[@NA] (4984.740 sec)
+[20250513_11:38:29.220][ 5012.573736][ T4185] [N][RMM]  allocation address(0): 3a000000  size:   393000 (   454/   454)(by driver) DMABUF_0_245[@NA] (5008.824 sec)
+[20250513_11:38:29.221][ 5012.586392][ T4185] [N][RMM]  allocation address(0): 3bc00000  size:   393000 (   454/   454)(by driver) DMABUF_0_246[@NA] (5008.888 sec)
+[20250513_11:38:29.222][ 5012.599047][ T4185] [N][RMM]  allocation address(0): 3c400000  size:   393000 (   454/   454)(by driver) DMABUF_0_244[@NA] (5008.068 sec)
+[20250513_11:38:29.222][ 5012.611700][ T4185] [N][RMM]  allocation address(0): 3c800000  size:   393000 (   454/   454)(by driver) DMABUF_0_235[@NA] (4978.676 sec)
+[20250513_11:38:29.222][ 5012.624354][ T4185] [N][RMM]  allocation address(0): 3ec00000  size:   19f000 (   622/   565)(by driver) vpqex_ioctl+0xfc0/0xc728[@NA] (26.080 sec)
+[20250513_11:38:29.231][ 5012.637906][ T4185] [N][RMM]  allocation address(0): 3f000000  size:   393000 (   454/   454)(by driver) DMABUF_0_0[@NA] (27.040 sec)
+[20250513_11:38:29.232][ 5012.650204][ T4185] [N][RMM]  allocation address(0): 3f400000  size:   393000 (   454/   454)(by driver) DMABUF_0_1[@NA] (27.060 sec)
+[20250513_11:38:29.238][ 5012.662505][ T4185] [N][RMM]  allocation address(0): 3f800000  size:   393000 (   454/   454)(by driver) DMABUF_0_2[@NA] (27.072 sec)
+[20250513_11:38:29.501][ 5012.674805][ T4185] [E][RMM] total allocated:  3f7f000 
+[20250513_11:38:29.501][ 5012.680167][ T4185] [I][RMM] current alloc size at cma1:  1a22000 
+[20250513_11:38:29.501][ 5012.686508][ T4185] [I][RMM] current alloc size at cma2:  255d000 
+[20250513_11:38:29.502][ 5012.692847][ T4185] [I][RMM] 
+[20250513_11:38:29.502][ 5012.695894][ T4185] [I][RMM] allocated peak size at cma1:  63e6000 
+[20250513_11:38:29.502][ 5012.702321][ T4185] [I][RMM] allocated peak size at cma2:  8419000 
+[20250513_11:38:29.502][ 5012.708748][ T4185] [I][RMM] allocated peak size at cma-vbm:  23dc000 
+[20250513_11:38:29.502][ 5012.715442][ T4185] [I][RMM] gpu_fast alloc size :        0 
+[20250513_11:38:29.502][ 5012.721246][ T4185] [I][RMM] gpu_fast allocated peak size :  a4ba000 
+[20250513_11:38:29.502][ 5012.729349][ T4185] [E][RMM] 
+[20250513_11:38:29.503][ 5012.729349][ T4185]  cma1:    cache(0cc00000)
+[20250513_11:38:29.503][ 5012.731703][ T2266] RTW: cfg80211_rtw_get_txpower(wlan0) total max: 2501 mbm
+[20250513_11:38:29.503][ 5012.736750][ T4185] [W][RMM]         <<<FREE AREA BASE: 08000000>>>
+[20250513_11:38:29.503][ 5012.750228][ T4185] [W][RMM]         0:      1
+[20250513_11:38:29.503][ 5012.753738][ T4185] [W][RMM]                 Addr: 0c87b000, order: 0 
+[20250513_11:38:29.503][ 5012.759189][ T4185] [W][RMM]         1:      1
+[20250513_11:38:29.504][ 5012.762682][ T4185] [W][RMM]                 Addr: 0e356000, order: 1 
+[20250513_11:38:29.504][ 5012.768132][ T4185] [W][RMM]         2:      0
+[20250513_11:38:29.505][ 5012.771624][ T4185] [W][RMM]         3:      1
+[20250513_11:38:29.505][ 5012.775118][ T4185] [W][RMM]                 Addr: 0e358000, order: 3 
+[20250513_11:38:29.505][ 5012.780567][ T4185] [W][RMM]         4:      0
+[20250513_11:38:29.505][ 5012.784059][ T4185] [W][RMM]         5:      0
+[20250513_11:38:29.506][ 5012.787551][ T4185] [W][RMM]         6:      1
+[20250513_11:38:29.506][ 5012.791045][ T4185] [W][RMM]                 Addr: 0e9c0000, order: 6 
+[20250513_11:38:29.506][ 5012.796495][ T4185] [W][RMM]         7:      0
+[20250513_11:38:29.506][ 5012.799988][ T4185] [W][RMM]         8:      0
+[20250513_11:38:29.506][ 5012.803481][ T4185] [W][RMM]         9:      1
+[20250513_11:38:29.506][ 5012.806974][ T4185] [W][RMM]                 Addr: 0ea00000, order: 9 
+[20250513_11:38:29.507][ 5012.812424][ T4185] [W][RMM]         10:     1
+[20250513_11:38:29.507][ 5012.816008][ T4185] [W][RMM]                 Addr: 0ec00000, order: 10 
+[20250513_11:38:29.507][ 5012.821546][ T4185] [W][RMM]         11:     1
+[20250513_11:38:29.507][ 5012.825127][ T4185] [W][RMM]                 Addr: 0c000000, order: 11 
+[20250513_11:38:29.507][ 5012.830666][ T4185] [W][RMM]         12:     1
+[20250513_11:38:29.507][ 5012.834247][ T4185] [W][RMM]                 Addr: 0f000000, order: 12 
+[20250513_11:38:29.507][ 5012.839784][ T4185] [W][RMM]         13:     0
+[20250513_11:38:29.507][ 5012.843365][ T4185] [W][RMM]         14:     1
+[20250513_11:38:29.508][ 5012.846946][ T4185] [W][RMM]                 Addr: 08000000, order: 14 
+[20250513_11:38:29.508][ 5012.852484][ T4185] [W][RMM]         15:     0
+[20250513_11:38:29.508][ 5012.856403][ T4185] [E][RMM] 
+[20250513_11:38:29.508][ 5012.856403][ T4185]  cma2:    cache(3a400000)
+[20250513_11:38:29.509][ 5012.863831][ T4185] [W][RMM]         <<<FREE AREA BASE: 36c00000>>>
+[20250513_11:38:29.509][ 5012.869723][ T4185] [W][RMM]         0:      0
+[20250513_11:38:29.510][ 5012.873220][ T4185] [W][RMM]         1:      0
+[20250513_11:38:29.510][ 5012.876718][ T4185] [W][RMM]         2:      0
+[20250513_11:38:29.511][ 5012.880212][ T4185] [W][RMM]         3:      0
+[20250513_11:38:29.511][ 5012.883705][ T4185] [W][RMM]         4:      0
+[20250513_11:38:29.511][ 5012.887196][ T4185] [W][RMM]         5:      0
+[20250513_11:38:29.511][ 5012.890689][ T4185] [W][RMM]         6:      0
+[20250513_11:38:29.512][ 5012.894181][ T4185] [W][RMM]         7:      0
+[20250513_11:38:29.512][ 5012.897675][ T4185] [W][RMM]         8:      0
+[20250513_11:38:29.512][ 5012.901168][ T4185] [W][RMM]         9:      1
+[20250513_11:38:29.512][ 5012.904661][ T4185] [W][RMM]                 Addr: 3ee00000, order: 9 
+[20250513_11:38:29.512][ 5012.910110][ T4185] [W][RMM]         10:     1
+[20250513_11:38:29.512][ 5012.913692][ T4185] [W][RMM]                 Addr: 3c000000, order: 10 
+[20250513_11:38:29.513][ 5012.919230][ T4185] [W][RMM]         11:     1
+[20250513_11:38:29.513][ 5012.922814][ T4185] [W][RMM]                 Addr: 38c00000, order: 11 
+[20250513_11:38:29.513][ 5012.928351][ T4185] [W][RMM]         12:     1
+[20250513_11:38:29.514][ 5012.931934][ T4185] [W][RMM]                 Addr: 3ac00000, order: 12 
+[20250513_11:38:29.514][ 5012.937472][ T4185] [W][RMM]         13:     2
+[20250513_11:38:29.514][ 5012.941053][ T4185] [W][RMM]                 Addr: 3cc00000, order: 13 
+[20250513_11:38:29.514][ 5012.946590][ T4185] [W][RMM]                 Addr: 36c00000, order: 13 
+[20250513_11:38:29.514][ 5012.952127][ T4185] [W][RMM]         14:     0
+[20250513_11:38:29.514][ 5012.955710][ T4185] [W][RMM]         15:     0
+[20250513_11:38:29.514][ 5012.959711][ T4185] [E][RMM] 
+[20250513_11:38:29.518][ 5012.959711][ T4185]  cma-vbm:         cache(ffffffff)
+[20250513_11:38:29.521][ 5012.967340][ T4185] [W][RMM] bitmap:base_pfn=0x20000(0x20000000) used=0(0x0) peak=0(0x0) all=9216(0x2400000) free=0(0x0) pages
+[20250513_11:42:29.094]console:/ # 
+[20250513_11:42:29.261]console:/ # 

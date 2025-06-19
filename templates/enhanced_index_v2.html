@@ -1612,18 +1612,31 @@
         window.fileBrowser.getSelectedFiles = function() {
             const selectedFiles = [];
             
-            // 獲取所有選中的檔案項目
-            document.querySelectorAll('.file-item.selected').forEach(item => {
-                const fileName = item.querySelector('.file-name')?.textContent || '';
-                const filePath = item.querySelector('.file-path')?.textContent || item.dataset.path || '';
-                
-                if (fileName && filePath) {
+            // 從 appConfig 中獲取選中的檔案路徑
+            if (window.appConfig && window.appConfig.state && window.appConfig.state.selectedFiles) {
+                window.appConfig.state.selectedFiles.forEach(filePath => {
+                    // 從檔案路徑中提取檔案名稱
+                    const fileName = filePath.split('/').pop() || filePath;
                     selectedFiles.push({
                         name: fileName,
                         path: filePath
                     });
-                }
-            });
+                });
+            } else {
+                // 備用方案：從 DOM 中獲取選中的檔案
+                document.querySelectorAll('.file-item.selected').forEach(item => {
+                    const fileNameElement = item.querySelector('h6');
+                    const fileName = fileNameElement ? fileNameElement.textContent.trim() : '';
+                    const filePath = item.dataset.path || '';
+                    
+                    if (fileName && filePath) {
+                        selectedFiles.push({
+                            name: fileName,
+                            path: filePath
+                        });
+                    }
+                });
+            }
             
             return selectedFiles;
         };

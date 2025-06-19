@@ -18,6 +18,10 @@
             --tabs-height: 45px;
         }
         
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -132,6 +136,41 @@
             font-size: 9px;
         }
         
+        /* 搜尋框 */
+        .sidebar-search {
+            padding: 10px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .search-wrapper {
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            pointer-events: none;
+        }
+        
         /* 群組容器 */
         .groups-container {
             flex: 1;
@@ -139,12 +178,8 @@
             padding: 10px;
         }
         
-        .sidebar.collapsed .groups-container {
-            padding: 5px;
-        }
-        
         .group-item {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background: white;
             border-radius: 10px;
             padding: 10px;
@@ -173,17 +208,9 @@
             color: #667eea;
         }
         
-        .sidebar.collapsed .group-icon {
-            margin-right: 0;
-        }
-        
         .group-name {
             flex: 1;
             font-size: 14px;
-        }
-        
-        .sidebar.collapsed .group-name {
-            display: none;
         }
         
         .group-count {
@@ -195,88 +222,9 @@
             font-weight: normal;
         }
         
-        .sidebar.collapsed .group-count {
-            display: none;
-        }
-        
-        /* 搜尋框 - 美化縮小版本 */
-        .sidebar-search {
-            padding: 10px;
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        .sidebar.collapsed .sidebar-search {
-            padding: 10px 5px;
-        }
-        
-        .search-wrapper {
-            position: relative;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 8px 35px 8px 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 20px;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-        
-        .sidebar.collapsed .search-input {
-            padding: 8px;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            text-align: center;
-            cursor: pointer;
-            background: #f8f9fa;
-        }
-        
-        .sidebar.collapsed .search-input:focus {
-            width: 200px;
-            border-radius: 20px;
-            position: absolute;
-            left: 5px;
-            z-index: 100;
-            background: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .search-icon {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #999;
-            pointer-events: none;
-        }
-        
-        .sidebar.collapsed .search-icon {
-            position: absolute;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        
-        .sidebar.collapsed .search-input:focus ~ .search-icon {
-            right: 12px;
-            left: auto;
-            transform: translateY(-50%);
-        }
-        
-        /* 資料夾樹狀結構 - 美化縮小版本 */
+        /* 資料夾樹狀結構 */
         .folder-tree {
             padding-left: 10px;
-        }
-        
-        .sidebar.collapsed .folder-tree {
-            padding-left: 0;
         }
         
         .folder-item, .file-item {
@@ -289,12 +237,6 @@
             transition: all 0.2s ease;
             position: relative;
             font-size: 13px;
-        }
-        
-        .sidebar.collapsed .folder-item,
-        .sidebar.collapsed .file-item {
-            padding: 8px;
-            justify-content: center;
         }
         
         .folder-item:hover, .file-item:hover {
@@ -313,10 +255,6 @@
             color: #999;
         }
         
-        .sidebar.collapsed .folder-toggle {
-            display: none;
-        }
-        
         .folder-toggle.expanded {
             transform: rotate(90deg);
         }
@@ -327,11 +265,6 @@
             text-align: center;
         }
         
-        .sidebar.collapsed .item-icon {
-            margin-right: 0;
-            font-size: 18px;
-        }
-        
         .item-name {
             flex: 1;
             white-space: nowrap;
@@ -339,34 +272,12 @@
             text-overflow: ellipsis;
         }
         
-        .sidebar.collapsed .item-name {
-            display: none;
-        }
-        
         .folder-children {
             margin-left: 20px;
             display: none;
         }
         
-        .sidebar.collapsed .folder-children {
-            position: absolute;
-            left: 100%;
-            top: 0;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 5px;
-            min-width: 200px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
-            margin-left: 5px;
-        }
-        
         .folder-children.expanded {
-            display: block;
-        }
-        
-        .sidebar.collapsed .folder-item:hover .folder-children.expanded {
             display: block;
         }
         
@@ -403,7 +314,133 @@
             overflow: hidden;
         }
         
-        /* 工具列 - 添加儲存和分享按鈕 */
+        /* 檔案標籤頁 */
+        .file-tabs {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 10px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            min-height: var(--tabs-height);
+            white-space: nowrap;
+        }
+        
+        .file-tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        .file-tabs::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 2px;
+        }
+        
+        /* 標籤按鈕 */
+        .file-tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            padding-right: 32px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 120px;
+            max-width: 200px;
+            position: relative;
+            white-space: nowrap;
+            height: 32px;
+            margin-bottom: -1px;
+            z-index: 1;
+        }
+        
+        .file-tab:hover {
+            background: #e9ecef;
+            z-index: 2;
+        }
+        
+        .file-tab.active {
+            background: white;
+            color: #333;
+            border-color: #e0e0e0;
+            border-bottom-color: white;
+            z-index: 3;
+        }
+        
+        .tab-icon {
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        
+        .tab-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 13px;
+            max-width: 150px;
+        }
+        
+        .tab-close {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tab-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+        
+        .add-tab-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            font-size: 12px;
+            color: #666;
+            margin-left: 5px;
+        }
+        
+        .add-tab-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        /* 檔案內容區域 */
+        .file-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 工具列 */
         .content-toolbar {
             display: flex;
             align-items: center;
@@ -411,12 +448,15 @@
             padding: 15px 20px;
             border-bottom: 1px solid #e0e0e0;
             background: white;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         .toolbar-group {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
         
         .toolbar-btn {
@@ -428,9 +468,10 @@
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
+            white-space: nowrap;
         }
         
         .toolbar-btn:hover {
@@ -439,13 +480,80 @@
             background: rgba(102, 126, 234, 0.05);
         }
         
-        .toolbar-btn.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
+        .toolbar-btn i {
+            font-size: 14px;
         }
         
-        /* 儲存和分享對話框 */
+        /* 檔案檢視器容器 */
+        .file-viewer-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: #f8f9fa;
+        }
+        
+        .file-viewer-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: white;
+            display: block;
+        }
+        
+        /* 空狀態 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+        
+        .empty-state i {
+            font-size: 72px;
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h5 {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            color: #999;
+            margin-bottom: 10px;
+        }
+        
+        /* 載入和錯誤狀態 */
+        .loading-state, .error-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px;
+        }
+        
+        .loading-state {
+            color: #667eea;
+        }
+        
+        .error-state {
+            color: #dc3545;
+        }
+        
+        .loading-state i, .error-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        /* Modal 對話框 */
         .modal {
             display: none;
             position: fixed;
@@ -456,7 +564,6 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(3px);
-            animation: fadeIn 0.3s ease;
         }
         
         .modal.show {
@@ -472,7 +579,6 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-width: 500px;
             width: 90%;
-            animation: slideIn 0.3s ease;
         }
         
         .modal-header {
@@ -495,184 +601,65 @@
             gap: 10px;
         }
         
-        /* QR Code 容器 */
-        .qrcode-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-        
-        .qrcode-container img {
-            max-width: 200px;
-            border: 1px solid #e0e0e0;
-            padding: 10px;
-            border-radius: 10px;
-            background: white;
-        }
-        
-        /* 分享連結容器 */
-        .share-link-container {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .share-link-input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        
-        .copy-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .copy-btn:hover {
-            background: #764ba2;
-        }
-        
-        /* 權限設定 */
-        .permission-settings {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-        }
-        
-        .permission-option {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .permission-option input[type="radio"] {
-            margin-right: 10px;
-        }
-        
-        .password-input {
+        /* 手機版樣式 */
+        .mobile-menu-btn {
             display: none;
-            margin-top: 10px;
-        }
-        
-        .password-input.show {
-            display: block;
-        }
-        
-        /* 工作區列表 */
-        .workspace-list {
-            max-height: 400px;
-            overflow-y: auto;
-            margin: 15px 0;
-        }
-        
-        .workspace-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
+            width: 32px;
+            height: 28px;
             border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 10px;
+            background: white;
+            color: #666;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .workspace-item:hover {
-            background: #f8f9fa;
-            border-color: #667eea;
-        }
-        
-        .workspace-info {
-            flex: 1;
-        }
-        
-        .workspace-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        
-        .workspace-meta {
-            font-size: 12px;
-            color: #999;
-        }
-        
-        .workspace-actions {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .workspace-btn {
-            padding: 6px 12px;
-            border: none;
             border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
+            margin-right: 8px;
             transition: all 0.2s ease;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
         
-        .workspace-btn.load {
-            background: #667eea;
-            color: white;
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+            }
+            
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                z-index: 1100;
+                transition: left 0.3s ease;
+            }
+            
+            .sidebar.show {
+                left: 0;
+            }
+            
+            .toolbar-btn span {
+                display: none;
+            }
         }
         
-        .workspace-btn.share {
-            background: #28a745;
-            color: white;
+        /* 自訂滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
         
-        .workspace-btn.delete {
-            background: #dc3545;
-            color: white;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideIn {
-            from { transform: scale(0.9) translateY(-20px); opacity: 0; }
-            to { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        
-        /* Tooltip */
-        .tooltip-wrapper {
-            position: relative;
-        }
-        
-        .tooltip-content {
-            position: absolute;
-            left: 100%;
-            top: 50%;
-            transform: translateY(-50%);
-            margin-left: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 4px 8px;
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
             border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.2s ease;
-            z-index: 1000;
         }
         
-        .sidebar.collapsed .nav-item:hover .tooltip-content,
-        .sidebar.collapsed .folder-item:hover .tooltip-content,
-        .sidebar.collapsed .file-item:hover .tooltip-content {
-            opacity: 1;
-            visibility: visible;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999;
         }
-        
-        /* 其他樣式保持不變... */
     </style>
 </head>
 <body>
@@ -682,46 +669,20 @@
             <!-- 導航選單 -->
             <div class="sidebar-nav">
                 <div class="nav-item active" onclick="showView('files')">
-                    <div class="tooltip-wrapper">
-                        <i class="fas fa-folder nav-icon"></i>
-                        <span class="nav-text">檔案</span>
-                        <span class="nav-badge" id="files-count">0</span>
-                        <span class="tooltip-content">檔案瀏覽</span>
-                    </div>
+                    <i class="fas fa-folder nav-icon"></i>
+                    <span class="nav-text">檔案</span>
+                    <span class="nav-badge" id="files-count">0</span>
                 </div>
                 
                 <div class="nav-item" onclick="showView('recent')">
-                    <div class="tooltip-wrapper">
-                        <i class="fas fa-clock nav-icon"></i>
-                        <span class="nav-text">最近</span>
-                        <span class="nav-badge" style="background: transparent;"></span>
-                        <span class="tooltip-content">最近檔案</span>
-                    </div>
+                    <i class="fas fa-clock nav-icon"></i>
+                    <span class="nav-text">最近</span>
                 </div>
                 
                 <div class="nav-item" onclick="showView('saved')">
-                    <div class="tooltip-wrapper">
-                        <i class="fas fa-save nav-icon"></i>
-                        <span class="nav-text">已儲存</span>
-                        <span class="nav-badge" id="saved-count" style="background: #28a745;">0</span>
-                        <span class="tooltip-content">已儲存的工作區</span>
-                    </div>
-                </div>
-                
-                <div class="nav-item" onclick="showView('analysis')">
-                    <div class="tooltip-wrapper">
-                        <i class="fas fa-chart-line nav-icon"></i>
-                        <span class="nav-text">分析</span>
-                        <span class="tooltip-content">分析結果</span>
-                    </div>
-                </div>
-                
-                <div class="nav-item" onclick="showView('settings')">
-                    <div class="tooltip-wrapper">
-                        <i class="fas fa-cog nav-icon"></i>
-                        <span class="nav-text">設定</span>
-                        <span class="tooltip-content">設定</span>
-                    </div>
+                    <i class="fas fa-save nav-icon"></i>
+                    <span class="nav-text">已儲存</span>
+                    <span class="nav-badge" id="saved-count" style="background: #28a745;">0</span>
                 </div>
             </div>
             
@@ -745,20 +706,15 @@
             </button>
         </aside>
         
-        <!-- 手機版側邊欄背景 -->
-        <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar()"></div>
-        
         <!-- 主內容區 -->
         <main class="main-content">
             <!-- 檔案標籤頁 -->
             <div class="file-tabs" id="file-tabs">
-                <button class="mobile-menu-btn d-md-none" onclick="toggleSidebar()">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </button>
-                
                 <!-- 標籤將動態載入 -->
-                
-                <button class="add-tab-btn" onclick="addNewTab()">
+                <button class="add-tab-btn" onclick="addNewTab()" title="新增標籤">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
@@ -769,44 +725,31 @@
                     <div class="toolbar-group">
                         <button class="toolbar-btn" onclick="refreshContent()">
                             <i class="fas fa-sync-alt"></i>
-                            重新整理
+                            <span>重新整理</span>
                         </button>
                         <button class="toolbar-btn" onclick="searchInFile()">
                             <i class="fas fa-search"></i>
-                            搜尋
-                        </button>
-                        <button class="toolbar-btn" onclick="showAnalysis()">
-                            <i class="fas fa-chart-line"></i>
-                            分析
+                            <span>搜尋</span>
                         </button>
                     </div>
                     
                     <div class="toolbar-group">
                         <button class="toolbar-btn" onclick="saveWorkspace()">
                             <i class="fas fa-save"></i>
-                            儲存工作區
-                        </button>
-                        <button class="toolbar-btn" onclick="showShareDialog()">
-                            <i class="fas fa-share-alt"></i>
-                            分享
-                        </button>
-                        <button class="toolbar-btn" onclick="toggleSplitView()">
-                            <i class="fas fa-columns"></i>
-                            分割檢視
+                            <span>儲存工作區</span>
                         </button>
                         <button class="toolbar-btn" onclick="exportFile()">
                             <i class="fas fa-download"></i>
-                            匯出
+                            <span>匯出</span>
                         </button>
                     </div>
                 </div>
                 
                 <div class="file-viewer-container" id="file-viewer">
-                    <!-- 這裡將載入檔案檢視器內容 -->
                     <div class="empty-state">
                         <i class="fas fa-file-alt"></i>
                         <h5>選擇檔案開始瀏覽</h5>
-                        <p>從左側資料夾樹選擇檔案，或拖放檔案到此處</p>
+                        <p>從左側檔案樹選擇檔案</p>
                     </div>
                 </div>
             </div>
@@ -828,9 +771,9 @@
                     <input type="text" class="form-control" id="workspace-name" placeholder="輸入工作區名稱">
                 </div>
                 
-                <div class="permission-settings">
+                <div class="permission-settings" style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 15px 0;">
                     <h6 class="mb-3">權限設定</h6>
-                    <div class="permission-option">
+                    <div class="permission-option" style="margin-bottom: 10px;">
                         <input type="radio" name="permission" id="public" value="public" checked onchange="togglePasswordInput()">
                         <label for="public">公開（任何人都可以查看）</label>
                     </div>
@@ -838,73 +781,14 @@
                         <input type="radio" name="permission" id="private" value="private" onchange="togglePasswordInput()">
                         <label for="private">私密（需要密碼）</label>
                     </div>
-                    <div class="password-input" id="password-input">
+                    <div class="password-input" id="password-input" style="display: none; margin-top: 10px;">
                         <input type="password" class="form-control" id="workspace-password" placeholder="設定密碼">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-				<button class="btn btn-secondary" onclick="closeSaveModal()">取消</button>
-                <button class="btn btn-primary" onclick="confirmSave()">
-                    <i class="fas fa-save me-1"></i>儲存
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 分享對話框 -->
-    <div id="share-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5><i class="fas fa-share-alt me-2"></i>分享工作區</h5>
-                <button onclick="closeShareModal()" style="background: none; border: none; font-size: 24px; color: #999;">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="share-options">
-                    <h6 class="mb-3">分享連結</h6>
-                    <div class="share-link-container">
-                        <input type="text" class="share-link-input" id="share-link" readonly>
-                        <button class="copy-btn" onclick="copyShareLink()">
-                            <i class="fas fa-copy"></i>複製
-                        </button>
-                    </div>
-                    
-                    <div class="qrcode-container" id="qrcode-container">
-                        <h6 class="mb-3">QR Code</h6>
-                        <img id="qrcode-img" src="" alt="QR Code">
-                    </div>
-                    
-                    <div class="share-stats">
-                        <small class="text-muted">
-                            <i class="fas fa-eye me-1"></i>瀏覽次數: <span id="view-count">0</span>
-                        </small>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeShareModal()">關閉</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 已儲存工作區對話框 -->
-    <div id="workspace-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5><i class="fas fa-folder-open me-2"></i>已儲存的工作區</h5>
-                <button onclick="closeWorkspaceModal()" style="background: none; border: none; font-size: 24px; color: #999;">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="workspace-list" id="workspace-list">
-                    <!-- 工作區列表將動態載入 -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeWorkspaceModal()">關閉</button>
+                <button class="btn btn-secondary" onclick="closeSaveModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmSave()">儲存</button>
             </div>
         </div>
     </div>
@@ -921,45 +805,86 @@
         document.addEventListener('DOMContentLoaded', function() {
             // 從 URL 參數載入資料
             const urlParams = new URLSearchParams(window.location.search);
-            const stateId = urlParams.get('state');
             const groupsData = urlParams.get('groups');
             
-            if (stateId) {
-                loadWorkspaceState(stateId);
-            } else if (groupsData) {
+            if (groupsData) {
                 try {
                     groups = JSON.parse(decodeURIComponent(groupsData));
+                    console.log('載入的群組資料:', groups);
+                    
+                    // 確保檔案都有正確的名稱
+                    groups.forEach(group => {
+                        if (group.items) {
+                            group.items.forEach(item => {
+                                processFileNames(item);
+                            });
+                        }
+                    });
+                    
                     renderGroups();
+                    
+                    // 自動開啟第一個檔案
+                    setTimeout(() => {
+                        const firstFile = findFirstFile(groups);
+                        if (firstFile) {
+                            openFile(firstFile);
+                        }
+                    }, 500);
+                    
                 } catch (e) {
                     console.error('解析群組資料失敗', e);
+                    alert('無法載入檔案資料，請重新嘗試');
                 }
             } else {
                 // 載入預設資料
                 loadDefaultGroups();
             }
-            
-            // 載入已儲存的工作區數量
-            loadSavedWorkspaces();
-            
-            // 監聽鍵盤快捷鍵
-            document.addEventListener('keydown', handleKeyboardShortcuts);
         });
+        
+        // 處理檔案名稱
+        function processFileNames(item) {
+            if (!item.name && item.path) {
+                item.name = item.path.split('/').pop() || 'Untitled';
+            }
+            
+            if (item.type === 'folder' && item.children) {
+                item.children.forEach(child => {
+                    processFileNames(child);
+                });
+            }
+        }
+        
+        // 找到第一個檔案
+        function findFirstFile(groups) {
+            for (let group of groups) {
+                if (group.items) {
+                    for (let item of group.items) {
+                        if (item.type === 'file') {
+                            return item;
+                        } else if (item.type === 'folder' && item.children) {
+                            for (let child of item.children) {
+                                if (child.type === 'file') {
+                                    return child;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
         
         // 載入預設群組
         function loadDefaultGroups() {
             groups = [
                 {
-                    name: '系統日誌',
-                    icon: 'fa-server',
+                    name: '範例檔案',
+                    icon: 'fa-folder',
                     items: [
                         {
-                            type: 'folder',
-                            name: 'logs',
-                            path: '/var/log',
-                            children: [
-                                { type: 'file', name: 'system.log', path: '/var/log/system.log' },
-                                { type: 'file', name: 'error.log', path: '/var/log/error.log' }
-                            ]
+                            type: 'file',
+                            name: 'example.log',
+                            path: '/var/log/example.log'
                         }
                     ]
                 }
@@ -979,17 +904,26 @@
                 container.appendChild(groupDiv);
                 
                 // 計算檔案總數
-                group.items.forEach(item => {
-                    if (item.type === 'file') {
-                        totalFiles++;
-                    } else if (item.type === 'folder' && item.children) {
-                        totalFiles += item.children.filter(child => child.type === 'file').length;
-                    }
-                });
+                if (group.items) {
+                    totalFiles += countFiles(group.items);
+                }
             });
             
             // 更新檔案計數
             document.getElementById('files-count').textContent = totalFiles;
+        }
+        
+        // 計算檔案數量
+        function countFiles(items) {
+            let count = 0;
+            items.forEach(item => {
+                if (item.type === 'file') {
+                    count++;
+                } else if (item.type === 'folder' && item.children) {
+                    count += countFiles(item.children);
+                }
+            });
+            return count;
         }
         
         // 創建群組元素
@@ -1001,22 +935,36 @@
             header.className = 'group-header';
             header.onclick = () => toggleGroup(groupIndex);
             
-            header.innerHTML = `
-                <i class="fas ${group.icon || 'fa-folder'} group-icon"></i>
-                <span class="group-name">${group.name}</span>
-                <span class="group-count">${group.items.length}</span>
-            `;
+            // 群組圖標
+            const icon = document.createElement('i');
+            icon.className = `fas ${group.icon || 'fa-folder'} group-icon`;
+            header.appendChild(icon);
+            
+            // 群組名稱
+            const name = document.createElement('span');
+            name.className = 'group-name';
+            name.textContent = group.name;
+            header.appendChild(name);
+            
+            // 項目計數
+            const count = document.createElement('span');
+            count.className = 'group-count';
+            count.textContent = group.items ? group.items.length : 0;
+            header.appendChild(count);
             
             groupDiv.appendChild(header);
             
+            // 項目容器
             const itemsContainer = document.createElement('div');
             itemsContainer.className = 'folder-tree';
             itemsContainer.id = `group-${groupIndex}`;
             
-            group.items.forEach(item => {
-                const itemElement = createItemElement(item);
-                itemsContainer.appendChild(itemElement);
-            });
+            if (group.items) {
+                group.items.forEach(item => {
+                    const itemElement = createItemElement(item);
+                    itemsContainer.appendChild(itemElement);
+                });
+            }
             
             groupDiv.appendChild(itemsContainer);
             
@@ -1029,16 +977,44 @@
             
             if (item.type === 'folder') {
                 itemDiv.className = 'folder-item';
-                itemDiv.innerHTML = `
-                    <div class="tooltip-wrapper" style="display: flex; align-items: center; width: 100%;">
-                        <i class="fas fa-chevron-right folder-toggle" onclick="toggleFolder(this)"></i>
-                        <i class="fas fa-folder item-icon"></i>
-                        <span class="item-name">${item.name}</span>
-                        <span class="tooltip-content">${item.name}</span>
-                    </div>
-                `;
+                const hasChildren = item.children && item.children.length > 0;
                 
-                if (item.children && item.children.length > 0) {
+                // 創建主要容器
+                const mainContainer = document.createElement('div');
+                mainContainer.style.display = 'flex';
+                mainContainer.style.alignItems = 'center';
+                mainContainer.style.width = '100%';
+                
+                // 切換按鈕
+                if (hasChildren) {
+                    const toggleBtn = document.createElement('i');
+                    toggleBtn.className = 'fas fa-chevron-right folder-toggle';
+                    toggleBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        toggleFolder(toggleBtn);
+                    };
+                    mainContainer.appendChild(toggleBtn);
+                } else {
+                    const spacer = document.createElement('span');
+                    spacer.style.width = '20px';
+                    mainContainer.appendChild(spacer);
+                }
+                
+                // 資料夾圖標
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-folder item-icon';
+                mainContainer.appendChild(icon);
+                
+                // 資料夾名稱
+                const name = document.createElement('span');
+                name.className = 'item-name';
+                name.textContent = item.name;
+                mainContainer.appendChild(name);
+                
+                itemDiv.appendChild(mainContainer);
+                
+                // 子項目容器
+                if (hasChildren) {
                     const childrenDiv = document.createElement('div');
                     childrenDiv.className = 'folder-children';
                     
@@ -1052,21 +1028,40 @@
             } else {
                 itemDiv.className = 'file-item';
                 itemDiv.onclick = () => openFile(item);
-                itemDiv.innerHTML = `
-                    <div class="tooltip-wrapper" style="display: flex; align-items: center; width: 100%;">
-                        <i class="fas fa-file-alt item-icon"></i>
-                        <span class="item-name">${item.name}</span>
-                        <span class="tooltip-content">${item.name}</span>
-                    </div>
-                `;
+                
+                // 創建主要容器
+                const mainContainer = document.createElement('div');
+                mainContainer.style.display = 'flex';
+                mainContainer.style.alignItems = 'center';
+                mainContainer.style.width = '100%';
+                
+                // 檔案圖標
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-file-alt item-icon';
+                mainContainer.appendChild(icon);
+                
+                // 檔案名稱
+                const name = document.createElement('span');
+                name.className = 'item-name';
+                name.textContent = item.name;
+                mainContainer.appendChild(name);
+                
+                itemDiv.appendChild(mainContainer);
             }
             
             return itemDiv;
         }
         
+        // 切換群組
+        function toggleGroup(groupIndex) {
+            const itemsContainer = document.getElementById(`group-${groupIndex}`);
+            if (itemsContainer) {
+                itemsContainer.style.display = itemsContainer.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
         // 切換資料夾
         function toggleFolder(element) {
-            event.stopPropagation();
             const folderItem = element.closest('.folder-item');
             const childrenDiv = folderItem.querySelector('.folder-children');
             
@@ -1082,14 +1077,13 @@
             const existingTab = currentTabs.find(tab => tab.path === file.path);
             
             if (existingTab) {
-                // 切換到已存在的標籤
                 switchTab(existingTab.id);
             } else {
                 // 創建新標籤
                 const tabId = generateTabId();
                 const tab = {
                     id: tabId,
-                    name: file.name,
+                    name: file.name || file.path.split('/').pop() || 'Untitled',
                     path: file.path,
                     content: null,
                     loading: true
@@ -1107,30 +1101,8 @@
             document.querySelectorAll('.file-item').forEach(item => {
                 item.classList.remove('active');
             });
-            event.currentTarget.classList.add('active');
-        }
-        
-        // 載入檔案內容
-        async function loadFileContent(filePath, tabId) {
-            try {
-                const iframe = document.createElement('iframe');
-                iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
-                iframe.style.border = 'none';
-                
-                const viewerContainer = document.getElementById('file-viewer');
-                viewerContainer.innerHTML = '';
-                viewerContainer.appendChild(iframe);
-                
-                const tab = currentTabs.find(t => t.id === tabId);
-                if (tab) {
-                    tab.loading = false;
-                    tab.content = iframe;
-                }
-            } catch (error) {
-                console.error('載入檔案失敗:', error);
-                showError('無法載入檔案內容');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
             }
         }
         
@@ -1142,20 +1114,28 @@
         // 渲染標籤
         function renderTabs() {
             const tabsContainer = document.getElementById('file-tabs');
+            
             // 保留手機選單按鈕和新增按鈕
             const mobileBtn = tabsContainer.querySelector('.mobile-menu-btn');
             const addBtn = tabsContainer.querySelector('.add-tab-btn');
             
-            tabsContainer.innerHTML = '';
+            // 清空標籤
+            while (tabsContainer.firstChild) {
+                if (tabsContainer.firstChild === mobileBtn || tabsContainer.firstChild === addBtn) {
+                    break;
+                }
+                tabsContainer.removeChild(tabsContainer.firstChild);
+            }
             
-            if (mobileBtn) tabsContainer.appendChild(mobileBtn);
-            
+            // 插入標籤
             currentTabs.forEach(tab => {
                 const tabElement = createTabElement(tab);
-                tabsContainer.appendChild(tabElement);
+                if (addBtn) {
+                    tabsContainer.insertBefore(tabElement, addBtn);
+                } else {
+                    tabsContainer.appendChild(tabElement);
+                }
             });
-            
-            if (addBtn) tabsContainer.appendChild(addBtn);
         }
         
         // 創建標籤元素
@@ -1163,15 +1143,35 @@
             const tabDiv = document.createElement('div');
             tabDiv.className = `file-tab ${tab.id === activeTabId ? 'active' : ''}`;
             tabDiv.onclick = () => switchTab(tab.id);
+            tabDiv.title = tab.path;
             
-            tabDiv.innerHTML = `
-                <i class="fas fa-file-alt tab-icon"></i>
-                <span class="tab-title">${tab.name}</span>
-                ${tab.loading ? '<i class="fas fa-spinner fa-spin ms-1"></i>' : ''}
-                <button class="tab-close" onclick="closeTab('${tab.id}', event)">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
+            // 圖標
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-file-alt tab-icon';
+            tabDiv.appendChild(icon);
+            
+            // 標題
+            const title = document.createElement('span');
+            title.className = 'tab-title';
+            title.textContent = tab.name;
+            tabDiv.appendChild(title);
+            
+            // 載入中圖標
+            if (tab.loading) {
+                const loadingIcon = document.createElement('i');
+                loadingIcon.className = 'fas fa-spinner fa-spin';
+                loadingIcon.style.fontSize = '12px';
+                loadingIcon.style.marginLeft = '6px';
+                tabDiv.appendChild(loadingIcon);
+            }
+            
+            // 關閉按鈕
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'tab-close';
+            closeBtn.onclick = (e) => closeTab(tab.id, e);
+            closeBtn.title = '關閉';
+            closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            tabDiv.appendChild(closeBtn);
             
             return tabDiv;
         }
@@ -1182,10 +1182,16 @@
             renderTabs();
             
             const tab = currentTabs.find(t => t.id === tabId);
-            if (tab && tab.content) {
+            if (tab) {
                 const viewerContainer = document.getElementById('file-viewer');
-                viewerContainer.innerHTML = '';
-                viewerContainer.appendChild(tab.content);
+                
+                if (tab.content) {
+                    viewerContainer.innerHTML = '';
+                    viewerContainer.appendChild(tab.content);
+                } else if (!tab.loading) {
+                    tab.loading = true;
+                    loadFileContent(tab.path, tab.id);
+                }
             }
         }
         
@@ -1198,17 +1204,15 @@
                 currentTabs.splice(index, 1);
                 
                 if (activeTabId === tabId && currentTabs.length > 0) {
-                    // 切換到相鄰的標籤
                     const newIndex = Math.min(index, currentTabs.length - 1);
                     switchTab(currentTabs[newIndex].id);
                 } else if (currentTabs.length === 0) {
-                    // 沒有標籤了，顯示空狀態
                     activeTabId = null;
                     document.getElementById('file-viewer').innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-file-alt"></i>
                             <h5>選擇檔案開始瀏覽</h5>
-                            <p>從左側資料夾樹選擇檔案，或拖放檔案到此處</p>
+                            <p>從左側檔案樹選擇檔案</p>
                         </div>
                     `;
                 }
@@ -1217,11 +1221,62 @@
             }
         }
         
+        // 載入檔案內容
+        async function loadFileContent(filePath, tabId) {
+            try {
+                const viewerContainer = document.getElementById('file-viewer');
+                viewerContainer.innerHTML = `
+                    <div class="loading-state">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>載入中...</p>
+                    </div>
+                `;
+                
+                // 創建 iframe
+                const iframe = document.createElement('iframe');
+                iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                
+                iframe.onload = () => {
+                    const tab = currentTabs.find(t => t.id === tabId);
+                    if (tab) {
+                        tab.loading = false;
+                        tab.content = iframe;
+                        renderTabs();
+                    }
+                };
+                
+                iframe.onerror = () => {
+                    viewerContainer.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>載入檔案失敗</p>
+                        </div>
+                    `;
+                };
+                
+                setTimeout(() => {
+                    viewerContainer.innerHTML = '';
+                    viewerContainer.appendChild(iframe);
+                }, 300);
+                
+            } catch (error) {
+                console.error('載入檔案失敗:', error);
+                document.getElementById('file-viewer').innerHTML = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>載入檔案失敗</p>
+                    </div>
+                `;
+            }
+        }
+        
         // 切換側邊欄
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const toggleIcon = document.getElementById('toggle-icon');
-            const backdrop = document.getElementById('sidebar-backdrop');
             
             sidebarCollapsed = !sidebarCollapsed;
             
@@ -1235,7 +1290,6 @@
             
             // 手機版處理
             if (window.innerWidth <= 768) {
-                backdrop.classList.toggle('show');
                 sidebar.classList.toggle('show');
             }
         }
@@ -1254,12 +1308,48 @@
             });
         }
         
-        // 儲存工作區
-        async function saveWorkspace() {
+        // 顯示視圖
+        function showView(view) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // 這裡可以實作不同視圖的切換邏輯
+            console.log('切換到視圖:', view);
+        }
+        
+        // 工具列功能
+        function refreshContent() {
+            if (activeTabId) {
+                const tab = currentTabs.find(t => t.id === activeTabId);
+                if (tab) {
+                    loadFileContent(tab.path, tab.id);
+                }
+            }
+        }
+        
+        function searchInFile() {
+            console.log('搜尋功能待實作');
+        }
+        
+        function saveWorkspace() {
             document.getElementById('save-modal').classList.add('show');
         }
         
-        // 確認儲存
+        function closeSaveModal() {
+            document.getElementById('save-modal').classList.remove('show');
+        }
+        
+        function togglePasswordInput() {
+            const passwordInput = document.getElementById('password-input');
+            if (document.getElementById('private').checked) {
+                passwordInput.style.display = 'block';
+            } else {
+                passwordInput.style.display = 'none';
+            }
+        }
+        
         async function confirmSave() {
             const name = document.getElementById('workspace-name').value;
             const isPublic = document.getElementById('public').checked;
@@ -1297,9 +1387,8 @@
                 
                 if (result.success) {
                     currentWorkspaceId = result.state_id;
-                    alert('工作區已儲存！');
+                    alert('工作區已儲存！\n\n分享連結：' + result.share_url);
                     closeSaveModal();
-                    loadSavedWorkspaces();
                 } else {
                     alert('儲存失敗：' + result.message);
                 }
@@ -1307,217 +1396,6 @@
                 console.error('儲存錯誤:', error);
                 alert('儲存失敗');
             }
-        }
-        
-        // 顯示分享對話框
-        async function showShareDialog() {
-            if (!currentWorkspaceId) {
-                alert('請先儲存工作區');
-                return;
-            }
-            
-            document.getElementById('share-modal').classList.add('show');
-            
-            // 生成分享連結
-            const shareUrl = `${window.location.origin}/multi_viewer?state=${currentWorkspaceId}`;
-            document.getElementById('share-link').value = shareUrl;
-            
-            // 生成 QR Code
-            const qrcodeImg = document.getElementById('qrcode-img');
-            qrcodeImg.src = `/api/multi_viewer/qrcode/${currentWorkspaceId}`;
-        }
-        
-        // 複製分享連結
-        function copyShareLink() {
-            const shareLink = document.getElementById('share-link');
-            shareLink.select();
-            document.execCommand('copy');
-            
-            // 顯示複製成功提示
-            const copyBtn = event.target.closest('.copy-btn');
-            const originalHTML = copyBtn.innerHTML;
-            copyBtn.innerHTML = '<i class="fas fa-check"></i>已複製';
-            copyBtn.style.background = '#28a745';
-            
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHTML;
-                copyBtn.style.background = '#667eea';
-            }, 2000);
-        }
-        
-        // 載入已儲存的工作區
-        async function loadSavedWorkspaces() {
-            try {
-                const response = await fetch('/api/multi_viewer/list');
-                const workspaces = await response.json();
-                
-                document.getElementById('saved-count').textContent = workspaces.length;
-                
-                // 儲存到全域變數以便後續使用
-                window.savedWorkspaces = workspaces;
-            } catch (error) {
-                console.error('載入工作區失敗:', error);
-            }
-        }
-        
-        // 顯示已儲存的工作區
-        function showView(view) {
-            // 更新導航選中狀態
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
-            
-            if (view === 'saved') {
-                showSavedWorkspaces();
-            }
-        }
-        
-        // 顯示已儲存的工作區列表
-        function showSavedWorkspaces() {
-            document.getElementById('workspace-modal').classList.add('show');
-            
-            const listContainer = document.getElementById('workspace-list');
-            listContainer.innerHTML = '';
-            
-            if (!window.savedWorkspaces || window.savedWorkspaces.length === 0) {
-                listContainer.innerHTML = '<p class="text-center text-muted">尚無已儲存的工作區</p>';
-                return;
-            }
-            
-            window.savedWorkspaces.forEach(workspace => {
-                const item = document.createElement('div');
-                item.className = 'workspace-item';
-                
-                item.innerHTML = `
-                    <div class="workspace-info">
-                        <div class="workspace-name">${workspace.name}</div>
-                        <div class="workspace-meta">
-                            建立者: ${workspace.created_by} | 
-                            建立時間: ${new Date(workspace.created_at).toLocaleString()} |
-                            瀏覽次數: ${workspace.view_count}
-                        </div>
-                    </div>
-                    <div class="workspace-actions">
-                        <button class="workspace-btn load" onclick="loadWorkspace('${workspace.id}')">
-                            <i class="fas fa-folder-open"></i> 載入
-                        </button>
-                        <button class="workspace-btn share" onclick="shareWorkspace('${workspace.id}')">
-                            <i class="fas fa-share"></i> 分享
-                        </button>
-                        <button class="workspace-btn delete" onclick="deleteWorkspace('${workspace.id}')">
-                            <i class="fas fa-trash"></i> 刪除
-                        </button>
-                    </div>
-                `;
-                
-                listContainer.appendChild(item);
-            });
-        }
-        
-        // 載入工作區
-        async function loadWorkspace(workspaceId) {
-            window.location.href = `/multi_viewer?state=${workspaceId}`;
-        }
-        
-        // 載入工作區狀態
-        async function loadWorkspaceState(stateId) {
-            try {
-                // 狀態資料會從伺服器端模板傳入
-                if (window.stateData) {
-                    const state = JSON.parse(window.stateData);
-                    groups = state.groups || [];
-                    renderGroups();
-                    
-                    // 恢復開啟的標籤
-                    if (state.tabs) {
-                        state.tabs.forEach(tab => {
-                            openFile(tab);
-                        });
-                    }
-                    
-                    currentWorkspaceId = stateId;
-                }
-            } catch (error) {
-                console.error('載入工作區狀態失敗:', error);
-            }
-        }
-        
-        // 關閉對話框
-        function closeSaveModal() {
-            document.getElementById('save-modal').classList.remove('show');
-        }
-        
-        function closeShareModal() {
-            document.getElementById('share-modal').classList.remove('show');
-        }
-        
-        function closeWorkspaceModal() {
-            document.getElementById('workspace-modal').classList.remove('show');
-        }
-        
-        // 切換密碼輸入
-        function togglePasswordInput() {
-            const passwordInput = document.getElementById('password-input');
-            if (document.getElementById('private').checked) {
-                passwordInput.classList.add('show');
-            } else {
-                passwordInput.classList.remove('show');
-            }
-        }
-        
-        // 鍵盤快捷鍵
-        function handleKeyboardShortcuts(event) {
-            // Ctrl/Cmd + S: 儲存
-            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-                event.preventDefault();
-                saveWorkspace();
-            }
-            
-            // Ctrl/Cmd + O: 開啟
-            if ((event.ctrlKey || event.metaKey) && event.key === 'o') {
-                event.preventDefault();
-                showView('saved');
-            }
-            
-            // Ctrl/Cmd + W: 關閉當前標籤
-            if ((event.ctrlKey || event.metaKey) && event.key === 'w') {
-                event.preventDefault();
-                if (activeTabId) {
-                    closeTab(activeTabId, event);
-                }
-            }
-        }
-        
-        // 顯示錯誤訊息
-        function showError(message) {
-            // 這裡可以實作更優雅的錯誤提示
-            alert(message);
-        }
-        
-        // 其他工具函數...
-        function refreshContent() {
-            if (activeTabId) {
-                const tab = currentTabs.find(t => t.id === activeTabId);
-                if (tab) {
-                    loadFileContent(tab.path, tab.id);
-                }
-            }
-        }
-        
-        function searchInFile() {
-            // 實作檔案內搜尋功能
-            console.log('搜尋功能待實作');
-        }
-        
-        function showAnalysis() {
-            // 實作分析功能
-            console.log('分析功能待實作');
-        }
-        
-        function toggleSplitView() {
-            // 實作分割檢視功能
-            console.log('分割檢視功能待實作');
         }
         
         function exportFile() {
@@ -1530,16 +1408,8 @@
         }
         
         function addNewTab() {
-            // 實作新增標籤功能
             console.log('新增標籤功能待實作');
         }
     </script>
-    
-    <!-- 添加模板資料注入 -->
-    {% if state_data %}
-    <script>
-        window.stateData = '{{ state_data | tojson | safe }}';
-    </script>
-    {% endif %}
 </body>
 </html>

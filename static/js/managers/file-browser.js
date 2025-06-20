@@ -93,11 +93,11 @@ window.fileBrowser = {
         
         if (!pathInput || !suggestionsList) return;
         
-        // 輸入時顯示建議
-        pathInput.addEventListener('input', utils.debounce((e) => {
+        // 輸入時顯示建議 - 修改為即時載入
+        pathInput.addEventListener('input', (e) => {
             const value = e.target.value;
             this.showPathSuggestions(value);
-        }, 300));
+        });
         
         // 焦點時顯示建議
         pathInput.addEventListener('focus', () => {
@@ -111,23 +111,32 @@ window.fileBrowser = {
                 suggestionsList.style.display = 'none';
             }, 200);
         });
+        
+        // Enter 鍵立即隱藏建議並導航
+        pathInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                suggestionsList.style.display = 'none';
+                this.navigateToPath();
+            }
+        });
     },
     
-    // 顯示路徑建議
+    // 顯示路徑建議 - 修改為即時載入
     showPathSuggestions: async function(currentPath) {
         const suggestionsList = document.getElementById('path-suggestions');
         if (!suggestionsList) return;
         
         suggestionsList.innerHTML = '';
         
-        // 從快取獲取或載入
-        let suggestions = [];
-        if (this.pathSuggestions.has(currentPath)) {
-            suggestions = this.pathSuggestions.get(currentPath);
-        } else {
-            suggestions = await this.loadPathSuggestions(currentPath);
-            this.pathSuggestions.set(currentPath, suggestions);
+        // 如果路徑為空，不顯示建議
+        if (!currentPath || currentPath.trim() === '') {
+            suggestionsList.style.display = 'none';
+            return;
         }
+        
+        // 每次都載入新的建議
+        const suggestions = await this.loadPathSuggestions(currentPath);
         
         if (suggestions.length === 0) {
             suggestionsList.style.display = 'none';
@@ -256,7 +265,7 @@ window.fileBrowser = {
                     <div class="d-flex align-items-center">
                         ${!isParent ? 
                             `<input type="checkbox" class="form-check-input me-3" ${isSelected ? 'checked' : ''}>` : 
-                            '<div class="me-3" style="width: 20px;"></div>'
+                            '<div style="width: 38px;"></div>'
                         }
                         <div class="file-icon me-3">
                             ${this.getItemIcon(item)}
@@ -341,29 +350,33 @@ window.fileBrowser = {
         return `<i class="fas ${fileType.icon}" style="color: ${fileType.color};"></i>`;
     },
     
-    // 綁定檔案項目事件
+    // 綁定檔案項目事件 - 修改為只有點擊 checkbox 才選擇
     bindFileItemEvents: function(fileItem, item) {
         const isParent = item.is_parent || item.name === '..';
         
-        // 點擊事件
+        // 點擊項目事件 - 只處理目錄導航，不處理選擇
         fileItem.on('click', (e) => {
+            // 如果點擊的是 checkbox，不做任何處理
+            if ($(e.target).is('input[type="checkbox"]')) {
+                return;
+            }
+            
             console.log('👆 點擊項目:', item.name, item.type);
             
+            // 只處理目錄的導航
             if (item.type === 'directory') {
                 this.loadDirectory(item.path);
-            } else if (item.type === 'file' && !isParent) {
-                // 如果點擊的不是 checkbox，則切換選擇狀態
-                if (e.target.type !== 'checkbox') {
-                    const checkbox = fileItem.find('input[type="checkbox"]');
-                    checkbox.prop('checked', !checkbox.prop('checked'));
-                    checkbox.trigger('change');
-                }
             }
+            // 檔案點擊不做任何事情
         });
         
-        // Checkbox 變更事件
+        // Checkbox 變更事件 - 只有這裡處理選擇邏輯
         if (!isParent) {
             const checkbox = fileItem.find('input[type="checkbox"]');
+            checkbox.on('click', (e) => {
+                e.stopPropagation(); // 防止觸發父元素的點擊事件
+            });
+            
             checkbox.on('change', (e) => {
                 e.stopPropagation();
                 
@@ -390,6 +403,8 @@ window.fileBrowser = {
             e.preventDefault();
             if (item.type === 'file' && !isParent) {
                 window.open(`/file_viewer?path=${encodeURIComponent(item.path)}`, '_blank');
+            } else if (item.type === 'directory') {
+                this.loadDirectory(item.path);
             }
         });
         
@@ -525,7 +540,7 @@ window.fileBrowser = {
         console.log('🧭 面包屑導航已更新:', appConfig.state.currentPath);
     },
     
-    // 導航到路徑
+    // 導航到路徑 - 修復此函數
     navigateToPath: function() {
         const path = $('#path-input').val().trim();
         if (path) {
@@ -605,12 +620,7 @@ window.fileBrowser = {
     
     // 設置事件監聽器
     setupEventListeners: function() {
-        // 路徑輸入框 Enter 鍵
-        $('#path-input').on('keypress', (e) => {
-            if (e.which === 13) {
-                this.navigateToPath();
-            }
-        });
+        // 路徑輸入框 Enter 鍵已在 initPathSuggestions 中處理
         
         // 快捷鍵
         $(document).on('keydown', (e) => {

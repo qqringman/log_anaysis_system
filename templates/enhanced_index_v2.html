@@ -466,16 +466,19 @@
     <script src="{{ url_for('static', filename='js/managers/broadcast-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/room-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/share-manager.js') }}"></script>
-    
+    <!-- 新增缺失的管理器 -->
+    <script src="{{ url_for('static', filename='js/managers/layout-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/managers/block-manager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/managers/wheel-manager.js') }}"></script>
+
     <!-- Main app initialization -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
-    <!-- Page specific scripts -->
     <script>
         // 全域變數來管理選中的檔案
         window.selectedFilesMap = new Map();
         window.droppedFilesMap = new Map();
-
+    
         // 初始化手機版 FAB
         document.addEventListener('DOMContentLoaded', function() {
             const fabMain = document.getElementById('fab-main');
@@ -514,192 +517,46 @@
                     });
                 });
             }
-
+    
             // Load modals
             $('#modals-container').load("{{ url_for('static', filename='modals.html') }}");
-
+    
             // 初始化時載入預設路徑
             setTimeout(() => {
-                if (window.fileBrowser && window.fileBrowser.navigateToPath) {
-                    fileBrowser.navigateToPath();
+                if (window.fileBrowser && window.fileBrowser.loadDirectory) {
+                    // 從歷史記錄載入最後一個路徑，如果沒有則使用預設 /home
+                    const lastPath = window.fileBrowser.history[window.fileBrowser.history.length - 1] || '/home';
+                    fileBrowser.loadDirectory(lastPath);
                 }
             }, 500);
         });
-
-        // 修復 checkbox 直接操作的問題
-        window.toggleFileSelection = function(path, name, type, fromCheckbox = false) {
-            const fileKey = path;
-            const fileItem = document.querySelector(`[data-path="${path}"]`);
-            const checkbox = fileItem ? fileItem.querySelector('input[type="checkbox"]') : null;
-            
-            if (window.selectedFilesMap.has(fileKey)) {
-                // 取消選中
-                window.selectedFilesMap.delete(fileKey);
-                if (fileItem) {
-                    fileItem.classList.remove('selected');
-                    if (checkbox && !fromCheckbox) checkbox.checked = false;
-                }
-            } else {
-                // 選中
-                window.selectedFilesMap.set(fileKey, {
-                    name: name,
-                    path: path,
-                    type: type
-                });
-                if (fileItem) {
-                    fileItem.classList.add('selected');
-                    if (checkbox && !fromCheckbox) checkbox.checked = true;
-                }
-            }
-            
-            updateSelectionCount();
-        };
-
-        // 修改 renderFileList 函數
-        window.fileBrowser.renderFileList = function(items, currentPath) {
-            const fileList = document.getElementById('file-list');
-            fileList.innerHTML = '';
-            
-            if (!items || items.length === 0) {
-                fileList.innerHTML = `
-                    <div class="text-center py-5 text-muted">
-                        <i class="fas fa-folder-open fa-3x mb-3"></i>
-                        <p>此資料夾是空的</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            items.forEach(item => {
-                const fileItem = document.createElement('div');
-                fileItem.className = 'file-item';
-                fileItem.dataset.path = item.path;
-                fileItem.dataset.type = item.type;
-                fileItem.dataset.name = item.name;
-                
-                const isSelected = window.selectedFilesMap.has(item.path);
-                if (isSelected) {
-                    fileItem.classList.add('selected');
-                }
-                
-                let icon = 'fa-file';
-                let iconColor = '#6c757d';
-                
-                if (item.type === 'directory') {
-                    icon = item.is_parent ? 'fa-level-up-alt' : 'fa-folder';
-                    iconColor = '#f39c12';
-                } else {
-                    const ext = item.name.split('.').pop().toLowerCase();
-                    switch(ext) {
-                        case 'log':
-                        case 'txt':
-                            icon = 'fa-file-alt';
-                            iconColor = '#667eea';
-                            break;
-                        case 'csv':
-                            icon = 'fa-file-csv';
-                            iconColor = '#28a745';
-                            break;
-                        case 'json':
-                            icon = 'fa-file-code';
-                            iconColor = '#e83e8c';
-                            break;
-                        case 'xml':
-                            icon = 'fa-file-code';
-                            iconColor = '#fd7e14';
-                            break;
-                    }
-                }
-                
-                fileItem.innerHTML = `
-                    <div class="file-item-content">
-                        <div class="file-checkbox">
-                            <input type="checkbox" ${isSelected ? 'checked' : ''}>
-                        </div>
-                        <div class="file-icon" style="background-color: ${iconColor}15;">
-                            <i class="fas ${icon}" style="color: ${iconColor};"></i>
-                        </div>
-                        <div class="file-info">
-                            <h6 class="file-name mb-1">${item.name}</h6>
-                            <div class="file-meta">
-                                ${item.size ? `<span class="me-3"><i class="fas fa-hdd me-1"></i>${item.size}</span>` : ''}
-                                ${item.modified ? `<span><i class="fas fa-clock me-1"></i>${item.modified}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // 修復 checkbox 事件
-                const checkbox = fileItem.querySelector('input[type="checkbox"]');
-                checkbox.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-                
-                checkbox.addEventListener('change', function(e) {
-                    e.stopPropagation();
-                    toggleFileSelection(item.path, item.name, item.type, true);
-                });
-                
-                // 雙擊行為
-                fileItem.ondblclick = function(e) {
-                    e.preventDefault();
-                    if (item.type === 'directory' && !item.is_parent) {
-                        fileBrowser.navigateTo(item.path);
-                    } else if (item.type === 'file') {
-                        openSingleFile(item);
-                    }
-                };
-                
-                // 單擊選擇（點擊除了 checkbox 以外的區域）
-                fileItem.onclick = function(e) {
-                    if (!e.target.closest('.file-checkbox')) {
-                        e.preventDefault();
-                        toggleFileSelection(item.path, item.name, item.type);
-                    }
-                };
-                
-                fileList.appendChild(fileItem);
-            });
-            
-            updateSelectionCount();
-        };
-
-        // 更新選中計數
-        function updateSelectionCount() {
-            const count = window.selectedFilesMap.size;
-            const selectedItems = Array.from(window.selectedFilesMap.values());
-            const fileCount = selectedItems.filter(item => item.type === 'file').length;
-            const folderCount = selectedItems.filter(item => item.type === 'directory').length;
-            
-            let countText = `${count}`;
-            if (count > 0) {
-                const parts = [];
-                if (fileCount > 0) parts.push(`${fileCount} 個檔案`);
-                if (folderCount > 0) parts.push(`${folderCount} 個資料夾`);
-                countText = parts.join('，');
-            }
-            
-            document.getElementById('selected-count').innerHTML = `<strong>${count}</strong> <small>(${countText})</small>`;
-            document.getElementById('analyze-btn').disabled = count === 0;
-            updateFileCountsDisplay();
-        }
-
+    
+        // 移除所有原本的 fileBrowser 相關函數定義，因為已經在 file-browser.js 中定義
+        
         // 開啟單個檔案
         function openSingleFile(file) {
             const url = `/file_viewer?path=${encodeURIComponent(file.path)}`;
             window.open(url, '_blank');
         }
-
+    
         // 開啟多檔案瀏覽器
         function openMultiViewer(type = 'selected') {
+            // 這個函數保持不變
             let itemsToOpen = [];
             
             try {
                 if (type === 'selected' || type === 'all') {
-                    // 獲取瀏覽器選擇的項目
-                    const selectedItems = Array.from(window.selectedFilesMap.values());
+                    // 獲取選中的檔案
+                    const selectedFiles = appConfig.state.selectedFiles.map(path => {
+                        const fileItem = $(`.file-item[data-path="${path}"]`);
+                        return {
+                            type: fileItem.data('type'),
+                            name: fileItem.data('name'),
+                            path: path
+                        };
+                    });
                     
-                    if (selectedItems.length === 0) {
+                    if (selectedFiles.length === 0) {
                         if (window.utils && window.utils.showAlert) {
                             utils.showAlert('請先選擇檔案或資料夾', 'warning');
                         } else {
@@ -709,8 +566,8 @@
                     }
                     
                     // 按類型分組
-                    const folders = selectedItems.filter(item => item.type === 'directory');
-                    const files = selectedItems.filter(item => item.type === 'file');
+                    const folders = selectedFiles.filter(item => item.type === 'directory');
+                    const files = selectedFiles.filter(item => item.type === 'file');
                     
                     // 處理資料夾
                     folders.forEach(folder => {
@@ -798,92 +655,8 @@
                 }
             }
         }
-
-        // 其他原有的函數保持不變...
-        window.fileBrowser.navigateTo = function(path) {
-            document.getElementById('path-input').value = path;
-            fileBrowser.navigateToPath();
-        };
-
-        window.fileBrowser.navigateToPath = function() {
-            const path = document.getElementById('path-input').value;
-            
-            fetch(`/api/browse?path=${encodeURIComponent(path)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        if (window.utils && window.utils.showAlert) {
-                            utils.showAlert(data.error, 'danger');
-                        } else {
-                            alert(data.error);
-                        }
-                        return;
-                    }
-                    
-                    // 更新麵包屑
-                    const breadcrumb = document.getElementById('breadcrumb');
-                    breadcrumb.innerHTML = `<li class="breadcrumb-item active">${path}</li>`;
-                    
-                    // 渲染檔案列表
-                    fileBrowser.renderFileList(data.items, path);
-                })
-                .catch(error => {
-                    console.error('瀏覽失敗:', error);
-                    if (window.utils && window.utils.showAlert) {
-                        utils.showAlert('瀏覽目錄失敗', 'danger');
-                    } else {
-                        alert('瀏覽目錄失敗');
-                    }
-                });
-        };
-
-        window.fileBrowser.refreshBrowser = function() {
-            const currentPath = document.getElementById('path-input').value;
-            fileBrowser.navigateTo(currentPath);
-        };
-
-        window.fileBrowser.getSelectedFiles = function() {
-            const selectedFiles = Array.from(window.selectedFilesMap.values());
-            console.log('獲取選中的檔案:', selectedFiles);
-            return selectedFiles;
-        };
-
-        window.fileBrowser.toggleSelectAll = function() {
-            const allItems = document.querySelectorAll('.file-item');
-            const allSelected = window.selectedFilesMap.size === allItems.length;
-            
-            if (allSelected) {
-                // 取消全選
-                window.selectedFilesMap.clear();
-                allItems.forEach(item => {
-                    item.classList.remove('selected');
-                    const checkbox = item.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = false;
-                });
-            } else {
-                // 全選
-                window.selectedFilesMap.clear();
-                allItems.forEach(item => {
-                    const path = item.dataset.path;
-                    const name = item.dataset.name;
-                    const type = item.dataset.type;
-                    
-                    if (path && name && type && !item.querySelector('.fa-level-up-alt')) {
-                        window.selectedFilesMap.set(path, {
-                            name: name,
-                            path: path,
-                            type: type
-                        });
-                        item.classList.add('selected');
-                        const checkbox = item.querySelector('input[type="checkbox"]');
-                        if (checkbox) checkbox.checked = true;
-                    }
-                });
-            }
-            
-            updateSelectionCount();
-        };
-        
+    
+        // 其他輔助函數保持不變
         if (!window.quickAnalysis) {
             window.quickAnalysis = {};
         }
@@ -907,7 +680,7 @@
         };
         
         function updateFileCountsDisplay() {
-            const browserCount = window.selectedFilesMap.size;
+            const browserCount = appConfig.state.selectedFiles.length;
             const droppedCount = window.droppedFilesMap.size;
             const totalCount = browserCount + droppedCount;
             
@@ -921,5 +694,6 @@
             }
         }
     </script>
+    
 </body>
 </html>

@@ -7,8 +7,9 @@ window.fileBrowser = {
     historyIndex: -1,
     maxHistory: 50,
     
-    // 路徑建議快取
-    pathSuggestions: new Map(),
+    // 路徑建議快取 - 改為儲存完整的目錄內容
+    pathCache: new Map(),
+    currentDirectoryItems: [], // 當前目錄的所有項目
     
     init: function() {
         console.log('📁 初始化檔案瀏覽器');
@@ -93,7 +94,7 @@ window.fileBrowser = {
         
         if (!pathInput || !suggestionsList) return;
         
-        // 輸入時顯示建議 - 修改為即時載入
+        // 輸入時顯示建議 - 使用本地過濾
         pathInput.addEventListener('input', (e) => {
             const value = e.target.value;
             this.showPathSuggestions(value);
@@ -122,41 +123,57 @@ window.fileBrowser = {
         });
     },
     
-    // 顯示路徑建議 - 修改為即時載入
-    showPathSuggestions: async function(currentPath) {
+    // 顯示路徑建議 - 改為智能判斷是否需要載入
+    showPathSuggestions: async function(inputPath) {
         const suggestionsList = document.getElementById('path-suggestions');
         if (!suggestionsList) return;
         
         suggestionsList.innerHTML = '';
         
         // 如果路徑為空，不顯示建議
-        if (!currentPath || currentPath.trim() === '') {
+        if (!inputPath || inputPath.trim() === '') {
             suggestionsList.style.display = 'none';
             return;
         }
         
-        // 每次都載入新的建議
-        const suggestions = await this.loadPathSuggestions(currentPath);
+        // 判斷是否需要載入新的目錄內容
+        const parentPath = this.getParentPath(inputPath);
+        const searchTerm = this.getSearchTerm(inputPath);
+        
+        // 如果父路徑已經在快取中，使用快取
+        let items = [];
+        if (this.pathCache.has(parentPath)) {
+            items = this.pathCache.get(parentPath);
+        } else {
+            // 需要從後端載入
+            items = await this.loadPathItems(parentPath);
+            if (items.length > 0) {
+                this.pathCache.set(parentPath, items);
+            }
+        }
+        
+        // 過濾符合的項目（包含檔案和目錄）
+        const suggestions = this.filterSuggestions(items, searchTerm, parentPath);
         
         if (suggestions.length === 0) {
             suggestionsList.style.display = 'none';
             return;
         }
         
-        // 顯示建議
+        // 顯示所有符合的建議
         suggestions.forEach(suggestion => {
             const item = document.createElement('div');
             item.className = 'path-suggestion-item';
             item.innerHTML = `
-                <i class="fas ${suggestion.type === 'directory' ? 'fa-folder' : 'fa-file'} me-2"></i>
-                ${suggestion.name}
-                <span class="text-muted ms-2">${suggestion.path}</span>
+                <i class="fas ${suggestion.icon} me-2"></i>
+                ${suggestion.displayName}
+                <span class="text-muted ms-2">${suggestion.fullPath}</span>
             `;
             
             item.addEventListener('click', () => {
-                document.getElementById('path-input').value = suggestion.path;
+                document.getElementById('path-input').value = suggestion.fullPath;
                 if (suggestion.type === 'directory') {
-                    this.loadDirectory(suggestion.path);
+                    this.loadDirectory(suggestion.fullPath);
                 }
                 suggestionsList.style.display = 'none';
             });
@@ -167,24 +184,73 @@ window.fileBrowser = {
         suggestionsList.style.display = 'block';
     },
     
-    // 載入路徑建議
-    loadPathSuggestions: async function(basePath) {
+    // 獲取父路徑
+    getParentPath: function(inputPath) {
+        // 如果輸入路徑以 / 結尾，則當前路徑就是父路徑
+        if (inputPath.endsWith('/')) {
+            return inputPath.slice(0, -1) || '/';
+        }
+        
+        // 否則獲取上一層路徑
+        const lastSlashIndex = inputPath.lastIndexOf('/');
+        if (lastSlashIndex <= 0) {
+            return '/';
+        }
+        return inputPath.substring(0, lastSlashIndex);
+    },
+    
+    // 獲取搜尋詞
+    getSearchTerm: function(inputPath) {
+        if (inputPath.endsWith('/')) {
+            return '';
+        }
+        
+        const lastSlashIndex = inputPath.lastIndexOf('/');
+        return inputPath.substring(lastSlashIndex + 1);
+    },
+    
+    // 載入路徑項目
+    loadPathItems: async function(basePath) {
         try {
             const response = await $.get(appConfig.api.browse, { path: basePath });
             if (response.error || !response.items) return [];
             
+            // 返回所有項目，不限制數量
             return response.items
-                .filter(item => !item.is_parent && item.type === 'directory')
-                .slice(0, 10)
+                .filter(item => !item.is_parent && item.name !== '.')
                 .map(item => ({
                     name: item.name,
                     path: item.path,
                     type: item.type
                 }));
         } catch (error) {
-            console.error('載入路徑建議失敗:', error);
+            console.error('載入路徑項目失敗:', error);
             return [];
         }
+    },
+    
+    // 過濾建議
+    filterSuggestions: function(items, searchTerm, parentPath) {
+        if (!searchTerm) {
+            // 如果沒有搜尋詞，顯示所有項目
+            return items.map(item => ({
+                displayName: item.name,
+                fullPath: item.path,
+                type: item.type,
+                icon: item.type === 'directory' ? 'fa-folder' : 'fa-file'
+            }));
+        }
+        
+        // 過濾符合搜尋詞的項目（不區分大小寫）
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        return items
+            .filter(item => item.name.toLowerCase().includes(lowerSearchTerm))
+            .map(item => ({
+                displayName: item.name,
+                fullPath: item.path,
+                type: item.type,
+                icon: item.type === 'directory' ? 'fa-folder' : 'fa-file'
+            }));
     },
     
     // 載入目錄
@@ -213,27 +279,23 @@ window.fileBrowser = {
                 this.updateBreadcrumb();
                 this.renderFileList(response.items);
                 
-                // 更新路徑建議快取
-                this.updatePathSuggestionsCache(path, response.items);
+                // 更新當前目錄項目快取
+                this.currentDirectoryItems = response.items;
+                
+                // 更新路徑快取
+                const items = response.items
+                    .filter(item => !item.is_parent && item.name !== '.')
+                    .map(item => ({
+                        name: item.name,
+                        path: item.path,
+                        type: item.type
+                    }));
+                this.pathCache.set(path, items);
             })
             .fail((xhr, status, error) => {
                 console.error('❌ 載入目錄失敗:', status, error);
                 utils.showError('#file-list', '載入失敗，請檢查網路連接', `fileBrowser.loadDirectory('${appConfig.state.currentPath}')`);
             });
-    },
-    
-    // 更新路徑建議快取
-    updatePathSuggestionsCache: function(path, items) {
-        const directories = items
-            .filter(item => !item.is_parent && item.type === 'directory')
-            .slice(0, 10)
-            .map(item => ({
-                name: item.name,
-                path: item.path,
-                type: item.type
-            }));
-        
-        this.pathSuggestions.set(path, directories);
     },
     
     // 渲染檔案列表

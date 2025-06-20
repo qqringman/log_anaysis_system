@@ -310,5 +310,174 @@ window.utils = {
             console.error('清除本地資料失敗:', e);
             return false;
         }
-    }
+    },
+
+    // 美化的確認對話框
+    showConfirm: function(options) {
+        const defaults = {
+            title: '確認',
+            message: '確定要執行此操作嗎？',
+            confirmText: '確定',
+            cancelText: '取消',
+            confirmClass: 'btn-primary',
+            icon: 'fa-question-circle',
+            iconColor: '#667eea',
+            onConfirm: () => {},
+            onCancel: () => {}
+        };
+        
+        const settings = Object.assign({}, defaults, options);
+        
+        // 創建對話框 HTML
+        const modalId = this.generateId('confirm-modal');
+        const modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="border-radius: 20px; overflow: hidden;">
+                        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                            <h5 class="modal-title">
+                                <i class="fas ${settings.icon} me-2" style="color: ${settings.iconColor};"></i>
+                                ${settings.title}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" style="padding: 30px;">
+                            <p class="mb-0" style="font-size: 1.05rem; color: #495057;">
+                                ${settings.message}
+                            </p>
+                        </div>
+                        <div class="modal-footer" style="border: none; padding: 20px;">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 10px;">
+                                ${settings.cancelText}
+                            </button>
+                            <button type="button" class="btn ${settings.confirmClass}" id="${modalId}-confirm" style="border-radius: 10px;">
+                                ${settings.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 添加到頁面
+        $('body').append(modalHtml);
+        
+        // 創建 modal 實例
+        const modalElement = document.getElementById(modalId);
+        const modal = new bootstrap.Modal(modalElement);
+        
+        // 綁定事件
+        $(`#${modalId}-confirm`).on('click', function() {
+            modal.hide();
+            settings.onConfirm();
+        });
+        
+        // 清理
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            $(modalElement).remove();
+            settings.onCancel();
+        });
+        
+        // 顯示對話框
+        modal.show();
+    },
+
+    // 美化的提示對話框
+    showPrompt: function(options) {
+        const defaults = {
+            title: '請輸入',
+            message: '請輸入內容：',
+            placeholder: '',
+            defaultValue: '',
+            confirmText: '確定',
+            cancelText: '取消',
+            inputType: 'text',
+            validator: null,
+            onConfirm: (value) => {},
+            onCancel: () => {}
+        };
+        
+        const settings = Object.assign({}, defaults, options);
+        
+        const modalId = this.generateId('prompt-modal');
+        const inputId = this.generateId('prompt-input');
+        
+        const modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content" style="border-radius: 20px; overflow: hidden;">
+                        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                            <h5 class="modal-title">
+                                <i class="fas fa-edit me-2"></i>
+                                ${settings.title}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" style="padding: 30px;">
+                            <p class="mb-3">${settings.message}</p>
+                            <input type="${settings.inputType}" 
+                                class="form-control" 
+                                id="${inputId}"
+                                placeholder="${settings.placeholder}"
+                                value="${settings.defaultValue}"
+                                style="border-radius: 10px;">
+                            <div class="invalid-feedback"></div>
+                        </div>
+                        <div class="modal-footer" style="border: none; padding: 20px;">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 10px;">
+                                ${settings.cancelText}
+                            </button>
+                            <button type="button" class="btn btn-primary" id="${modalId}-confirm" style="border-radius: 10px;">
+                                ${settings.confirmText}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('body').append(modalHtml);
+        
+        const modalElement = document.getElementById(modalId);
+        const modal = new bootstrap.Modal(modalElement);
+        const input = document.getElementById(inputId);
+        
+        // 確認按鈕事件
+        $(`#${modalId}-confirm`).on('click', function() {
+            const value = input.value;
+            
+            // 驗證
+            if (settings.validator) {
+                const validationResult = settings.validator(value);
+                if (validationResult !== true) {
+                    $(input).addClass('is-invalid');
+                    $(input).siblings('.invalid-feedback').text(validationResult);
+                    return;
+                }
+            }
+            
+            modal.hide();
+            settings.onConfirm(value);
+        });
+        
+        // Enter 鍵確認
+        $(input).on('keypress', function(e) {
+            if (e.which === 13) {
+                $(`#${modalId}-confirm`).click();
+            }
+        });
+        
+        // 清理
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            $(modalElement).remove();
+            settings.onCancel();
+        });
+        
+        // 顯示對話框並聚焦
+        modal.show();
+        modalElement.addEventListener('shown.bs.modal', function() {
+            input.focus();
+            input.select();
+        });
+    }    
 };

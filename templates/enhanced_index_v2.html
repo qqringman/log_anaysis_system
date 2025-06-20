@@ -11,1206 +11,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <!-- Animate.css -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
-    <!-- jQuery UI -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.min.css" rel="stylesheet">
     
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            --warning-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-            --info-gradient: linear-gradient(135deg, #3742fa 0%, #2f3542 100%);
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            position: relative;
-            padding-bottom: 60px;
-        }
-
-        /* Layout modes */
-        .layout-default .dashboard-container {
-            display: block;
-        }
-
-        .layout-grid .dashboard-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 25px;
-            padding: 20px;
-            background-image: 
-                linear-gradient(rgba(102, 126, 234, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(102, 126, 234, 0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-            border-radius: 15px;
-            margin-top: 20px;
-        }
-
-        .layout-grid .dashboard-block {
-            background: rgba(255, 255, 255, 0.98);
-            border: 1px solid rgba(102, 126, 234, 0.2);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-
-        .layout-masonry {
-            margin-top: 20px;
-        }
-
-        .layout-masonry .dashboard-container {
-            column-count: 3;
-            column-gap: 25px;
-            padding: 20px;
-        }
-
-        .layout-masonry .dashboard-block {
-            break-inside: avoid;
-            margin-bottom: 25px;
-            display: inline-block;
-            width: 100%;
-        }
-
-        @media (max-width: 1200px) {
-            .layout-masonry .dashboard-container {
-                column-count: 2;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .layout-masonry .dashboard-container {
-                column-count: 1;
-            }
-        }
-
-        /* Draggable blocks - Improved spacing */
-        .dashboard-block {
-            position: relative;
-            margin-bottom: 25px;
-            transition: all 0.3s ease;
-            padding: 10px; /* Increased padding for better spacing */
-        }
-
-        .dashboard-block.ui-draggable-dragging {
-            opacity: 0.9;
-            transform: scale(0.98);
-            z-index: 1000;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            cursor: move;
-        }
-
-        .dashboard-block .drag-handle {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            cursor: move;
-            color: rgba(102, 126, 234, 0.6);
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 10;
-            font-size: 1.1rem;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 5px;
-            border-radius: 6px;
-        }
-
-        .dashboard-block:hover .drag-handle {
-            opacity: 1;
-        }
-
-        .dashboard-block .drag-handle:hover {
-            color: #667eea;
-            transform: scale(1.1);
-        }
-
-        .hero-section {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 3rem 0 2rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
-        }
-
-        .card-modern {
-            border: none;
-            border-radius: 20px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            background: rgba(255,255,255,0.98);
-            position: relative;
-            overflow: hidden;
-            margin: 5px; /* Better spacing */
-        }
-
-        .card-modern:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-        }
-
-        .collapsible-card {
-            position: relative;
-        }
-
-        .collapse-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 10;
-            background: rgba(255,255,255,0.9);
-            border: 1px solid #e9ecef;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: #6c757d;
-        }
-
-        .collapse-btn:hover {
-            background: #ff6b6b;
-            color: white;
-            border-color: #ff6b6b;
-            transform: rotate(360deg);			
-        }
-
-        /* Floating action buttons - improved positioning */
-        .floating-actions {
-            position: fixed;
-            bottom: 80px;
-            right: 30px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .floating-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: none;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            color: white;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .floating-btn:hover {
-            transform: scale(1.1);
-            color: white;
-        }
-
-        .floating-btn-primary {
-            background: var(--primary-gradient);
-        }
-
-        .floating-btn-success {
-            background: var(--success-gradient);
-        }
-
-        .floating-btn-chat {
-            background: var(--warning-gradient);
-        }
-
-        .floating-btn-broadcast {
-            background: var(--info-gradient);
-        }
-
-        .floating-btn-wheel {
-            background: var(--danger-gradient);
-        }
-
-        .floating-btn-share {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        /* Minimized blocks container - improved positioning */
-        .minimized-blocks {
-            position: fixed;
-            bottom: 80px;
-            right: 110px;
-            z-index: 999;
-            display: flex;
-            flex-direction: column-reverse;
-            gap: 5px;
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 10px;
-        }
-
-        .minimized-block {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: all 0.3s ease;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .minimized-block:hover {
-            transform: translateX(-5px) scale(1.05);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.25);
-        }
-
-        .minimized-block i {
-            font-size: 1rem;
-        }
-
-        /* Enhanced Top Controls Bar - Modern Glass Design */
-        .top-controls-bar {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 25px;
-            padding: 16px 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .controls-group {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-        }
-
-        .control-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: #667eea;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        /* Enhanced Layout Controls */
-        .layout-controls {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .layout-buttons {
-            display: flex;
-            gap: 0;
-            background: #f0f2f5;
-            padding: 4px;
-            border-radius: 16px;
-            position: relative;
-        }
-
-        .layout-btn {
-            background: transparent;
-            border: none;
-            padding: 10px 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            color: #6c757d;
-            position: relative;
-            z-index: 2;
-        }
-
-        .layout-btn:hover {
-            color: #667eea;
-        }
-
-        .layout-btn.active {
-            color: #667eea;
-        }
-
-        /* Sliding background for active button */
-        .layout-slider {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            height: calc(100% - 8px);
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1;
-        }
-
-        /* Enhanced Device Toggle - iOS Style */
-        .device-toggle {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .device-selector {
-            position: relative;
-            display: flex;
-            gap: 0;
-            background: #f0f2f5;
-            padding: 4px;
-            border-radius: 16px;
-            height: 44px;
-        }
-
-        .device-selector input[type="radio"] {
-            display: none;
-        }
-
-        .device-selector label {
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-radius: 12px;
-            color: #6c757d;
-            z-index: 2;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-
-        .device-selector label:hover {
-            color: #667eea;
-        }
-
-        .device-selector input[type="radio"]:checked + label {
-            color: #667eea;
-        }
-
-        .selector-bg {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            width: calc(50% - 6px);
-            height: calc(100% - 8px);
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        #mobile-view:checked ~ .selector-bg {
-            transform: translateX(calc(100% + 4px));
-        }
-
-        /* Enhanced drag and drop zone */
-        .upload-zone {
-            border: 2px dashed #dee2e6;
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            background: #f8f9fa;
-        }
-
-        .upload-zone:hover,
-        .upload-zone.dragover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        /* File browser improvements */
-        .file-browser {
-            max-height: 650px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            background: #fafbfc;
-        }
-
-        .file-browser-header {
-            padding: 25px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-bottom: 2px solid #e3e8ee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .breadcrumb-modern {
-            background: transparent;
-            padding: 0;
-            margin: 0;
-        }
-
-        .breadcrumb-modern .breadcrumb-item {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .breadcrumb-modern .breadcrumb-item.active {
-            color: #667eea;
-            font-weight: 500;
-        }
-
-        .breadcrumb-modern .breadcrumb-item + .breadcrumb-item::before {
-            content: '/';
-            color: #dee2e6;
-        }
-
-        .file-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background: #fafbfc;
-        }
-
-        /* 檔案瀏覽器增強樣式 */
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: white;
-            border: 1px solid #e3e8ee;
-            position: relative;
-        }
-
-        .file-item-content {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            gap: 12px;
-        }
-
-        .file-checkbox {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            flex-shrink: 0;
-        }
-
-        .file-checkbox input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #667eea;
-        }
-
-        .file-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .file-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .file-name {
-            font-weight: 500;
-            color: #2d3436;
-            margin: 0;
-            font-size: 14px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .file-meta {
-            font-size: 12px;
-            color: #6c757d;
-            display: flex;
-            align-items: center;
-            margin-top: 2px;
-        }
-
-        .file-meta i {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .file-item:hover {
-            background: #f8f9fa;
-            transform: translateX(5px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        }
-
-        .file-item.selected {
-            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
-            border-color: #667eea;
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
-        }
-
-        .file-item.selected .file-name {
-            color: #667eea;
-            font-weight: 600;
-        }
-
-        .file-item.selected .file-icon {
-            transform: scale(1.1);
-        }
-
-        /* 選擇計數樣式 */
-        #selected-count small {
-            color: #6c757d;
-            font-weight: normal;
-            margin-left: 5px;
-        }
-
-        /* Stats cards */
-        .stats-card {
-            border-radius: 15px;
-            padding: 20px;
-            height: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .stats-card:hover {
-            transform: translateY(-5px);
-        }
-
-        /* Chat interface improvements */
-        .chat-interface {
-            height: 500px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            border: 1px solid #dee2e6;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-
-        .chat-message {
-            margin-bottom: 15px;
-            padding: 10px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .chat-message .user-name {
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-
-        .chat-message .timestamp {
-            font-size: 0.8rem;
-            color: #6c757d;
-            float: right;
-        }
-
-        .chat-message.mention {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-        }
-
-        /* Responsive improvements */
-        @media (max-width: 768px) {
-            .floating-actions {
-                bottom: 70px;
-                right: 15px;
-                flex-direction: row;
-                flex-wrap: wrap;
-                max-width: 150px;
-            }
-            
-            .floating-btn {
-                width: 45px;
-                height: 45px;
-                font-size: 1rem;
-            }
-            
-            .minimized-blocks {
-                bottom: 130px;
-                right: 15px;
-                left: 15px;
-                flex-direction: row;
-                flex-wrap: wrap;
-                max-height: 100px;
-                overflow-x: auto;
-                overflow-y: hidden;
-            }
-            
-            .top-controls-bar {
-                top: 10px;
-                right: 10px;
-                left: 10px;
-                padding: 12px 16px;
-            }
-            
-            .controls-group {
-                gap: 20px;
-            }
-            
-            .hero-section {
-                padding: 2rem 0 1rem;
-            }
-            
-            .card-modern {
-                margin-bottom: 15px;
-            }
-            
-            .layout-masonry .dashboard-container {
-                column-count: 1;
-            }
-            
-            .layout-grid .dashboard-container {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* iOS style toggle */
-        .ios-toggle {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 28px;
-        }
-
-        .ios-toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .ios-toggle .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 28px;
-        }
-
-        .ios-toggle .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        .ios-toggle input:checked + .slider {
-            background-color: #4cd964;
-        }
-
-        .ios-toggle input:checked + .slider:before {
-            transform: translateX(22px);
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-gradient);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-
-        /* Sortable placeholder */
-        .ui-sortable-placeholder {
-            border: 3px dashed #667eea;
-            background: rgba(102, 126, 234, 0.1);
-            visibility: visible !important;
-            border-radius: 20px;
-            min-height: 100px;
-            margin: 10px;
-            box-shadow: inset 0 0 20px rgba(102, 126, 234, 0.2);
-        }
-
-        /* Enhanced Login Modal Styles */
-        .login-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s ease;
-        }
-
-        .login-backdrop.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .login-container {
-            width: 100%;
-            max-width: 440px;
-            padding: 20px;
-        }
-
-        .login-box {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: 30px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.2);
-            overflow: hidden;
-            transform: translateY(30px) scale(0.95);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .login-backdrop.show .login-box {
-            transform: translateY(0) scale(1);
-        }
-
-        .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 50px 40px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .login-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 3s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-
-        .login-logo {
-            width: 90px;
-            height: 90px;
-            background: rgba(255,255,255,0.2);
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 25px;
-            font-size: 3rem;
-            position: relative;
-            z-index: 1;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .login-header h2 {
-            margin: 0 0 10px;
-            font-size: 2rem;
-            font-weight: 300;
-            letter-spacing: 1px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .login-header p {
-            margin: 0;
-            opacity: 0.9;
-            font-size: 1rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .login-body {
-            padding: 40px;
-        }
-
-        .form-floating {
-            position: relative;
-        }
-
-        .form-floating .form-control {
-            border: 2px solid #e9ecef;
-            border-radius: 15px;
-            padding: 1.5rem 1rem 0.5rem;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
-        }
-
-        .form-floating .form-control:focus {
-            border-color: #667eea;
-            background: white;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
-        }
-
-        .form-floating label {
-            color: #6c757d;
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-floating .form-control:focus ~ label,
-        .form-floating .form-control:not(:placeholder-shown) ~ label {
-            color: #667eea;
-        }
-
-        .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 15px;
-            padding: 14px 30px;
-            font-size: 1.1rem;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-login::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .btn-login:hover::before {
-            left: 100%;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        }
-
-        .login-footer {
-            padding: 0 40px 40px;
-            text-align: center;
-        }
-
-        .login-divider {
-            position: relative;
-            text-align: center;
-            margin: 25px 0;
-        }
-
-        .login-divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e9ecef;
-        }
-
-        .login-divider span {
-            background: white;
-            padding: 0 15px;
-            position: relative;
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
-
-        .btn-guest {
-            background: white;
-            border: 2px solid #e9ecef;
-            color: #6c757d;
-            border-radius: 15px;
-            padding: 12px 25px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-guest:hover {
-            border-color: #667eea;
-            color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        /* Copyright footer position adjustment when login modal is shown */
-        .copyright-footer {
-            z-index: 50;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            padding: 15px 0;
-            text-align: center;
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-        }
-
-        .copyright-footer i {
-            color: #e74c3c;
-            margin: 0 5px;
-        }
-
-        /* Ensure proper z-index layering */
-        .modal {
-            z-index: 1050;
-        }
-
-        .modal-backdrop {
-            z-index: 1040;
-        }
-
-        /* Dashboard blocks with proper spacing */
-        .dashboard-block {
-            position: relative;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .dashboard-container {
-            padding: 0 15px;
-        }
-
-        /* Stats cards with proper spacing */
-        .stats-card {
-            border-radius: 15px;
-            padding: 20px;
-            height: 100%;
-            transition: all 0.3s ease;
-            margin-bottom: 10px;
-        }
-
-        /* Stream results styling with proper spacing */
-        .stream-results {
-            max-height: 600px;
-            overflow-y: auto;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-
-        .module-result {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-            border: 1px solid #e9ecef;
-        }
-
-        .module-result h5 {
-            color: #2d3436;
-            font-weight: 600;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f3f7;
-        }
-
-        .file-matches {
-            margin-top: 20px;
-        }
-
-        .match-item {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            padding: 16px 20px;
-            margin-bottom: 12px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .match-item:hover {
-            background: linear-gradient(135deg, #e3f2fd 0%, #f3f4f6 100%);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.15);
-            transform: translateX(5px);
-            border-left-color: #764ba2;
-        }
-
-        .match-item:hover::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
-            pointer-events: none;
-        }
-
-        /* Highlighted keyword in context */
-        .match-content {
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #2d3436;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            max-width: 100%;
-        }
-
-        .match-content .highlight {
-            background: linear-gradient(135deg, #fff59d 0%, #ffeb3b 100%);
-            padding: 3px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-            color: #2d3436;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: inline-block;
-            margin: 0 2px;
-        }
-
-        /* Line number link styling */
-        .line-number-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-            margin-right: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .line-number-link:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        /* File link styling */
-        .file-link {
-            color: #667eea;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .file-link:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-
-        /* Progress bar styling */
-        .progress-modern {
-            height: 10px;
-            border-radius: 5px;
-            background: #e9ecef;
-        }
-
-        .progress-bar {
-            background: var(--primary-gradient);
-            border-radius: 5px;
-        }
-
-        /* Analysis results block spacing */
-        .analysis-results {
-            margin-top: 20px;
-            padding: 10px;
-        }
-
-        .result-stats {
-            margin-bottom: 20px;
-        }
-
-        #detailed-results {
-            padding: 10px;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/enhanced_index.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/enhanced_index_mobile.css') }}" rel="stylesheet">
 </head>
 <body>
-    <!-- Enhanced Top Controls Bar -->
-    <div class="top-controls-bar">
-        <div class="controls-group">
-            <!-- Layout Controls -->
-            <div class="layout-controls">
-                <div class="control-label">佈局模式</div>
-                <div class="layout-buttons">
-                    <div class="layout-slider"></div>
-                    <button class="layout-btn active" onclick="layoutManager.setLayout('default')" title="預設佈局" data-layout="default">
-                        <i class="fas fa-th-large"></i>
-                    </button>
-                    <button class="layout-btn" onclick="layoutManager.setLayout('grid')" title="網格佈局" data-layout="grid">
-                        <i class="fas fa-th"></i>
-                    </button>
-                    <button class="layout-btn" onclick="layoutManager.setLayout('masonry')" title="瀑布流佈局" data-layout="masonry">
-                        <i class="fas fa-grip-vertical"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Device Toggle -->
-            <div class="device-toggle">
-                <div class="control-label">檢視模式</div>
-                <div class="device-selector">
-                    <input type="radio" name="device" id="desktop-view" checked onchange="layoutManager.setDeviceView('desktop')">
-                    <label for="desktop-view" title="桌面版">
-                        <i class="fas fa-desktop"></i>
-                    </label>
-                    <input type="radio" name="device" id="mobile-view" onchange="layoutManager.setDeviceView('mobile')">
-                    <label for="mobile-view" title="手機版">
-                        <i class="fas fa-mobile-alt"></i>
-                    </label>
-                    <div class="selector-bg"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Hero Section -->
     <div class="hero-section">
         <div class="container">
@@ -1220,17 +26,16 @@
                         <i class="fas fa-search-plus me-3"></i>Enhanced Log 分析平台 v6
                     </h1>
                     <p class="lead mb-4 animate__animated animate__fadeInLeft animate__delay-1s">
-                        完整功能升級版：拖動區塊、多種佈局、完整聊天系統、分享功能
+                        完整功能升級版：完整聊天系統、分享功能、多檔案瀏覽
                     </p>
                     <div class="d-flex flex-wrap gap-2 animate__animated animate__fadeInLeft animate__delay-2s">
-                        <span class="badge bg-light text-dark fs-6">可拖動區塊</span>
                         <span class="badge bg-success fs-6">完整聊天室</span>
-                        <span class="badge bg-warning text-dark fs-6">自定義轉盤</span>
                         <span class="badge bg-info fs-6">結果分享</span>
                         <span class="badge bg-danger fs-6">響應式設計</span>
+                        <span class="badge bg-warning text-dark fs-6">多檔案瀏覽</span>
                     </div>
                 </div>
-                <div class="col-lg-4 text-end">
+                <div class="col-lg-4 text-end d-none d-lg-block">
                     <div class="animate__animated animate__fadeInRight animate__delay-1s">
                         <i class="fas fa-stream fa-5x opacity-75"></i>
                     </div>
@@ -1239,49 +44,13 @@
         </div>
     </div>
 
-    <div class="container mt-4 dashboard-container layout-default" id="dashboard-container">
+    <div class="container mt-4 dashboard-container" id="dashboard-container">
         <!-- 警告訊息區域 -->
         <div id="alert-container"></div>
 
-        <!-- 統計圖表區塊 -->
-        <div class="dashboard-block" id="statistics-block">
-            <div class="card-modern collapsible-card statistics-chart">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-vertical"></i>
-                </div>
-                <div class="collapse-btn" onclick="blockManager.minimizeBlock('statistics-block', '統計圖表')">
-                    <i class="fas fa-times"></i>
-                </div>
-                <div class="card-body p-4">
-                    <h4 class="card-title mb-3">
-                        <i class="fas fa-chart-bar text-primary me-2"></i>分析統計
-                    </h4>
-                    <div class="row">
-                        <div class="col-md-8">
-                            <canvas id="moduleChart" width="400" height="200"></canvas>
-                        </div>
-                        <div class="col-md-4">
-                            <div id="chart-summary">
-                                <h6>統計摘要</h6>
-                                <p>總模組數: <span id="total-modules">0</span></p>
-                                <p>總匹配數: <span id="total-matches-chart">0</span></p>
-                                <p>分析檔案: <span id="total-files-chart">0</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- 關鍵字管理區塊 -->
         <div class="dashboard-block" id="keywords-block">
-            <div class="card-modern collapsible-card">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-vertical"></i>
-                </div>
-                <div class="collapse-btn" onclick="blockManager.minimizeBlock('keywords-block', '關鍵字管理')">
-                    <i class="fas fa-times"></i>
-                </div>
+            <div class="card-modern">
                 <div class="card-body p-4">
                     <h4 class="card-title mb-4">
                         <i class="fas fa-tags me-2" style="color: #e74c3c;"></i>關鍵字管理
@@ -1318,16 +87,10 @@
 
         <!-- 檔案瀏覽器區塊 -->
         <div class="dashboard-block" id="browser-block">
-            <div class="card-modern collapsible-card file-browser">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-vertical"></i>
-                </div>
-                <div class="collapse-btn" onclick="blockManager.minimizeBlock('browser-block', '檔案瀏覽器')">
-                    <i class="fas fa-times"></i>
-                </div>
+            <div class="card-modern file-browser">
                 <div class="file-browser-header">
                     <div>
-                        <h4 class="card-title mb-4">
+                        <h4 class="card-title mb-3">
                             <i class="fas fa-folder-open me-2" style="color: #f39c12;"></i>檔案選擇
                             <button id="multi-viewer-btn-browser" class="btn btn-sm btn-outline-primary ms-3" onclick="openMultiViewer('selected')">
                                 <i class="fas fa-window-restore me-1"></i>多檔案瀏覽器
@@ -1339,8 +102,17 @@
                             </ol>
                         </nav>
                     </div>
-                    <div>
-                        <button class="btn btn-light btn-sm me-2" onclick="fileBrowser.refreshBrowser()" title="重新整理">
+                    <div class="d-flex gap-2">
+                        <!-- 導航按鈕 -->
+                        <div class="nav-buttons">
+                            <button class="nav-btn" id="nav-back-btn" onclick="fileBrowser.goBack()" title="返回" disabled>
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <button class="nav-btn" id="nav-forward-btn" onclick="fileBrowser.goForward()" title="前進" disabled>
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-light btn-sm" onclick="fileBrowser.refreshBrowser()" title="重新整理">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                         <button class="btn btn-success btn-sm" onclick="fileBrowser.toggleSelectAll()">
@@ -1350,7 +122,7 @@
                 </div>
                 
                 <!-- 路徑輸入 -->
-                <div class="p-3 border-bottom">
+                <div class="p-3 border-bottom position-relative">
                     <div class="input-group">
                         <span class="input-group-text">
                             <i class="fas fa-map-marker-alt"></i>
@@ -1360,6 +132,8 @@
                             <i class="fas fa-arrow-right"></i>
                         </button>
                     </div>
+                    <!-- 路徑建議下拉框 -->
+                    <div class="path-suggestions" id="path-suggestions"></div>
                 </div>
 
                 <!-- 檔案列表 -->
@@ -1374,7 +148,7 @@
 
                 <!-- 選擇檔案統計 -->
                 <div class="p-3 border-top bg-light">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <span class="text-muted">
                             已選擇 <span id="selected-count" class="fw-bold text-primary">0</span> 個檔案
                         </span>
@@ -1388,13 +162,7 @@
 
         <!-- 快速分析區塊 -->
         <div class="dashboard-block" id="quick-analysis-block">
-            <div class="card-modern collapsible-card">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-vertical"></i>
-                </div>
-                <div class="collapse-btn" onclick="blockManager.minimizeBlock('quick-analysis-block', '快速分析')">
-                    <i class="fas fa-times"></i>
-                </div>
+            <div class="card-modern">
                 <div class="card-body p-4">
                     <h4 class="card-title mb-3">
                         <i class="fas fa-bolt me-2" style="color: #9b59b6;"></i>快速分析
@@ -1484,13 +252,7 @@
 
         <!-- 分析結果區塊 -->
         <div class="dashboard-block" id="results-block" style="display: block;">
-            <div class="card-modern collapsible-card analysis-results">
-                <div class="drag-handle">
-                    <i class="fas fa-grip-vertical"></i>
-                </div>
-                <div class="collapse-btn" onclick="blockManager.minimizeBlock('results-block', '分析結果')">
-                    <i class="fas fa-times"></i>
-                </div>
+            <div class="card-modern analysis-results">
                 <div class="card-body p-4">
                     <h4 class="mb-4">
                         <i class="fas fa-chart-line me-2" style="color: #27ae60;"></i>即時分析結果
@@ -1523,18 +285,39 @@
                 </div>
             </div>
         </div>
+
+        <!-- 統計圖表區塊 (移到最下方) -->
+        <div class="dashboard-block" id="statistics-block">
+            <div class="card-modern statistics-chart">
+                <div class="card-body p-4">
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>分析統計
+                    </h4>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="moduleChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div id="chart-summary">
+                                <h6>統計摘要</h6>
+                                <p>總模組數: <span id="total-modules">0</span></p>
+                                <p>總匹配數: <span id="total-matches-chart">0</span></p>
+                                <p>分析檔案: <span id="total-files-chart">0</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 浮動操作按鈕 -->
-    <div class="floating-actions">
+    <!-- 浮動操作按鈕 - 桌面版 -->
+    <div class="floating-actions d-none d-md-flex flex-column gap-2" id="desktop-floating-actions">
         <button class="floating-btn floating-btn-primary" onclick="utils.scrollToTop()" title="回到頂部">
             <i class="fas fa-arrow-up"></i>
         </button>
         <button class="floating-btn floating-btn-success" onclick="chatManager.openChat()" title="聊天室">
             <i class="fas fa-comments"></i>
-        </button>
-        <button class="floating-btn floating-btn-wheel" onclick="wheelManager.openLottery()" title="幸運轉盤">
-            <i class="fas fa-dice"></i>
         </button>
         <button class="floating-btn floating-btn-broadcast" onclick="broadcastManager.openBroadcast()" title="廣播系統">
             <i class="fas fa-broadcast-tower"></i>
@@ -1547,8 +330,37 @@
         </button>
     </div>
 
-    <!-- 最小化區塊容器 -->
-    <div class="minimized-blocks" id="minimized-blocks"></div>
+    <!-- 浮動操作按鈕 - 手機版 -->
+    <div class="floating-actions d-md-none" id="mobile-floating-actions">
+        <div class="fab-backdrop" id="fab-backdrop"></div>
+        <div class="fab-container">
+            <div class="fab-options" id="fab-options">
+                <div class="fab-option primary" onclick="utils.scrollToTop()">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>回到頂部</span>
+                </div>
+                <div class="fab-option success" onclick="chatManager.openChat()">
+                    <i class="fas fa-comments"></i>
+                    <span>聊天室</span>
+                </div>
+                <div class="fab-option broadcast" onclick="broadcastManager.openBroadcast()">
+                    <i class="fas fa-broadcast-tower"></i>
+                    <span>廣播系統</span>
+                </div>
+                <div class="fab-option chat" id="room-manager-mobile" onclick="roomManager.openRoomManager()" style="display: none;">
+                    <i class="fas fa-cog"></i>
+                    <span>聊天室管理</span>
+                </div>
+                <div class="fab-option share" onclick="shareManager.openShareManager()">
+                    <i class="fas fa-share-alt"></i>
+                    <span>分享管理</span>
+                </div>
+            </div>
+            <button class="fab-main" id="fab-main">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
 
     <!-- 版權聲明 -->
     <div class="copyright-footer">
@@ -1636,7 +448,6 @@
 
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
@@ -1646,15 +457,12 @@
     <script src="{{ url_for('static', filename='js/core/utils.js') }}"></script>
     
     <!-- Manager modules -->
-    <script src="{{ url_for('static', filename='js/managers/layout-manager.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/managers/block-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/keyword-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/file-browser.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/analysis-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/results-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/quick-analysis.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/chat-manager.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/managers/wheel-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/broadcast-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/room-manager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/managers/share-manager.js') }}"></script>
@@ -1662,16 +470,92 @@
     <!-- Main app initialization -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 
-    <!-- Layout controls enhancement script -->
+    <!-- Page specific scripts -->
     <script>
         // 全域變數來管理選中的檔案
         window.selectedFilesMap = new Map();
         window.droppedFilesMap = new Map();
 
-        // 擴展 fileBrowser 對象
-        window.fileBrowser = window.fileBrowser || {};
+        // 初始化手機版 FAB
+        document.addEventListener('DOMContentLoaded', function() {
+            const fabMain = document.getElementById('fab-main');
+            const fabOptions = document.getElementById('fab-options');
+            const fabBackdrop = document.getElementById('fab-backdrop');
+            
+            if (fabMain) {
+                fabMain.addEventListener('click', function() {
+                    const isOpen = fabOptions.classList.contains('show');
+                    
+                    if (isOpen) {
+                        fabOptions.classList.remove('show');
+                        fabBackdrop.classList.remove('show');
+                        fabMain.classList.remove('active');
+                    } else {
+                        fabOptions.classList.add('show');
+                        fabBackdrop.classList.add('show');
+                        fabMain.classList.add('active');
+                    }
+                });
+                
+                fabBackdrop.addEventListener('click', function() {
+                    fabOptions.classList.remove('show');
+                    fabBackdrop.classList.remove('show');
+                    fabMain.classList.remove('active');
+                });
+                
+                // 點擊選項後關閉選單
+                document.querySelectorAll('.fab-option').forEach(option => {
+                    option.addEventListener('click', function() {
+                        setTimeout(() => {
+                            fabOptions.classList.remove('show');
+                            fabBackdrop.classList.remove('show');
+                            fabMain.classList.remove('active');
+                        }, 200);
+                    });
+                });
+            }
 
-        // 渲染檔案列表（支援資料夾選擇）
+            // Load modals
+            $('#modals-container').load("{{ url_for('static', filename='modals.html') }}");
+
+            // 初始化時載入預設路徑
+            setTimeout(() => {
+                if (window.fileBrowser && window.fileBrowser.navigateToPath) {
+                    fileBrowser.navigateToPath();
+                }
+            }, 500);
+        });
+
+        // 修復 checkbox 直接操作的問題
+        window.toggleFileSelection = function(path, name, type, fromCheckbox = false) {
+            const fileKey = path;
+            const fileItem = document.querySelector(`[data-path="${path}"]`);
+            const checkbox = fileItem ? fileItem.querySelector('input[type="checkbox"]') : null;
+            
+            if (window.selectedFilesMap.has(fileKey)) {
+                // 取消選中
+                window.selectedFilesMap.delete(fileKey);
+                if (fileItem) {
+                    fileItem.classList.remove('selected');
+                    if (checkbox && !fromCheckbox) checkbox.checked = false;
+                }
+            } else {
+                // 選中
+                window.selectedFilesMap.set(fileKey, {
+                    name: name,
+                    path: path,
+                    type: type
+                });
+                if (fileItem) {
+                    fileItem.classList.add('selected');
+                    if (checkbox && !fromCheckbox) checkbox.checked = true;
+                }
+            }
+            
+            updateSelectionCount();
+        };
+
+        // 修改 renderFileList 函數
         window.fileBrowser.renderFileList = function(items, currentPath) {
             const fileList = document.getElementById('file-list');
             fileList.innerHTML = '';
@@ -1705,7 +589,6 @@
                     icon = item.is_parent ? 'fa-level-up-alt' : 'fa-folder';
                     iconColor = '#f39c12';
                 } else {
-                    // 根據檔案類型設置圖標
                     const ext = item.name.split('.').pop().toLowerCase();
                     switch(ext) {
                         case 'log':
@@ -1730,8 +613,8 @@
                 
                 fileItem.innerHTML = `
                     <div class="file-item-content">
-                        <div class="file-checkbox" onclick="event.stopPropagation(); toggleFileSelection('${item.path}', '${item.name}', '${item.type}')">
-                            <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();">
+                        <div class="file-checkbox">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''}>
                         </div>
                         <div class="file-icon" style="background-color: ${iconColor}15;">
                             <i class="fas ${icon}" style="color: ${iconColor};"></i>
@@ -1745,6 +628,17 @@
                         </div>
                     </div>
                 `;
+                
+                // 修復 checkbox 事件
+                const checkbox = fileItem.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+                
+                checkbox.addEventListener('change', function(e) {
+                    e.stopPropagation();
+                    toggleFileSelection(item.path, item.name, item.type, true);
+                });
                 
                 // 雙擊行為
                 fileItem.ondblclick = function(e) {
@@ -1770,35 +664,6 @@
             updateSelectionCount();
         };
 
-        // 切換檔案/資料夾選擇
-        window.toggleFileSelection = function(path, name, type) {
-            const fileKey = path;
-            const fileItem = document.querySelector(`[data-path="${path}"]`);
-            const checkbox = fileItem ? fileItem.querySelector('input[type="checkbox"]') : null;
-            
-            if (window.selectedFilesMap.has(fileKey)) {
-                // 取消選中
-                window.selectedFilesMap.delete(fileKey);
-                if (fileItem) {
-                    fileItem.classList.remove('selected');
-                    if (checkbox) checkbox.checked = false;
-                }
-            } else {
-                // 選中
-                window.selectedFilesMap.set(fileKey, {
-                    name: name,
-                    path: path,
-                    type: type
-                });
-                if (fileItem) {
-                    fileItem.classList.add('selected');
-                    if (checkbox) checkbox.checked = true;
-                }
-            }
-            
-            updateSelectionCount();
-        };
-
         // 更新選中計數
         function updateSelectionCount() {
             const count = window.selectedFilesMap.size;
@@ -1819,50 +684,13 @@
             updateFileCountsDisplay();
         }
 
-        // 全選/取消全選（包含資料夾）
-        window.fileBrowser.toggleSelectAll = function() {
-            const allItems = document.querySelectorAll('.file-item');
-            const allSelected = window.selectedFilesMap.size === allItems.length;
-            
-            if (allSelected) {
-                // 取消全選
-                window.selectedFilesMap.clear();
-                allItems.forEach(item => {
-                    item.classList.remove('selected');
-                    const checkbox = item.querySelector('input[type="checkbox"]');
-                    if (checkbox) checkbox.checked = false;
-                });
-            } else {
-                // 全選
-                window.selectedFilesMap.clear();
-                allItems.forEach(item => {
-                    const path = item.dataset.path;
-                    const name = item.dataset.name;
-                    const type = item.dataset.type;
-                    
-                    if (path && name && type && !item.querySelector('.fa-level-up-alt')) { // 排除返回上級
-                        window.selectedFilesMap.set(path, {
-                            name: name,
-                            path: path,
-                            type: type
-                        });
-                        item.classList.add('selected');
-                        const checkbox = item.querySelector('input[type="checkbox"]');
-                        if (checkbox) checkbox.checked = true;
-                    }
-                });
-            }
-            
-            updateSelectionCount();
-        };
-
         // 開啟單個檔案
         function openSingleFile(file) {
             const url = `/file_viewer?path=${encodeURIComponent(file.path)}`;
             window.open(url, '_blank');
         }
 
-        // 修改開啟多檔案瀏覽器的功能
+        // 開啟多檔案瀏覽器
         function openMultiViewer(type = 'selected') {
             let itemsToOpen = [];
             
@@ -1894,9 +722,8 @@
                         });
                     });
                     
-                    // 處理單獨的檔案（沒有在已選資料夾中的檔案）
+                    // 處理單獨的檔案
                     if (files.length > 0) {
-                        // 創建一個"單獨檔案"群組
                         const standaloneFiles = {
                             type: 'group',
                             name: '單獨檔案',
@@ -1972,13 +799,12 @@
             }
         }
 
-        // 導航到指定路徑
+        // 其他原有的函數保持不變...
         window.fileBrowser.navigateTo = function(path) {
             document.getElementById('path-input').value = path;
             fileBrowser.navigateToPath();
         };
 
-        // 導航到路徑
         window.fileBrowser.navigateToPath = function() {
             const path = document.getElementById('path-input').value;
             
@@ -2011,38 +837,68 @@
                 });
         };
 
-        // 重新整理瀏覽器
         window.fileBrowser.refreshBrowser = function() {
             const currentPath = document.getElementById('path-input').value;
             fileBrowser.navigateTo(currentPath);
         };
 
-        // 添加獲取選中檔案的方法
         window.fileBrowser.getSelectedFiles = function() {
             const selectedFiles = Array.from(window.selectedFilesMap.values());
             console.log('獲取選中的檔案:', selectedFiles);
             return selectedFiles;
         };
+
+        window.fileBrowser.toggleSelectAll = function() {
+            const allItems = document.querySelectorAll('.file-item');
+            const allSelected = window.selectedFilesMap.size === allItems.length;
+            
+            if (allSelected) {
+                // 取消全選
+                window.selectedFilesMap.clear();
+                allItems.forEach(item => {
+                    item.classList.remove('selected');
+                    const checkbox = item.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = false;
+                });
+            } else {
+                // 全選
+                window.selectedFilesMap.clear();
+                allItems.forEach(item => {
+                    const path = item.dataset.path;
+                    const name = item.dataset.name;
+                    const type = item.dataset.type;
+                    
+                    if (path && name && type && !item.querySelector('.fa-level-up-alt')) {
+                        window.selectedFilesMap.set(path, {
+                            name: name,
+                            path: path,
+                            type: type
+                        });
+                        item.classList.add('selected');
+                        const checkbox = item.querySelector('input[type="checkbox"]');
+                        if (checkbox) checkbox.checked = true;
+                    }
+                });
+            }
+            
+            updateSelectionCount();
+        };
         
-        // 添加快速分析的方法
         if (!window.quickAnalysis) {
             window.quickAnalysis = {};
         }
         
-        // 獲取拖放的檔案
         window.quickAnalysis.getDroppedFiles = function() {
             const droppedFiles = Array.from(window.droppedFilesMap.values());
             console.log('獲取拖放的檔案:', droppedFiles);
             return droppedFiles;
         };
         
-        // 添加拖放檔案
         window.quickAnalysis.addDroppedFile = function(file) {
             window.droppedFilesMap.set(file.path, file);
             updateFileCountsDisplay();
         };
         
-        // 清除拖放檔案
         window.quickAnalysis.clearDroppedFiles = function() {
             window.droppedFilesMap.clear();
             document.getElementById('dropped-files-container').innerHTML = '';
@@ -2050,7 +906,6 @@
             updateFileCountsDisplay();
         };
         
-        // 更新檔案數量顯示
         function updateFileCountsDisplay() {
             const browserCount = window.selectedFilesMap.size;
             const droppedCount = window.droppedFilesMap.size;
@@ -2065,50 +920,6 @@
                 quickAnalyzeBtn.disabled = totalCount === 0;
             }
         }
-
-        // Enhanced layout controls with sliding animation
-        $(document).ready(function() {
-            // Load modals
-            $('#modals-container').load("{{ url_for('static', filename='modals.html') }}");
-
-            // 初始化時載入預設路徑
-            setTimeout(() => {
-                if (window.fileBrowser && window.fileBrowser.navigateToPath) {
-                    fileBrowser.navigateToPath();
-                }
-            }, 500);
-                        
-            // Initialize layout slider
-            const updateLayoutSlider = () => {
-                const activeBtn = $('.layout-btn.active');
-                const slider = $('.layout-slider');
-                
-                if (activeBtn.length) {
-                    const btnWidth = activeBtn.outerWidth();
-                    const btnLeft = activeBtn.position().left;
-                    
-                    slider.css({
-                        width: btnWidth + 'px',
-                        left: btnLeft + 'px'
-                    });
-                }
-            };
-            
-            // Update slider on button click
-            $('.layout-btn').on('click', function() {
-                $('.layout-btn').removeClass('active');
-                $(this).addClass('active');
-                updateLayoutSlider();
-            });
-            
-            // Initialize slider position
-            setTimeout(updateLayoutSlider, 100);
-            
-            // Update on window resize
-            $(window).on('resize', updateLayoutSlider);
-        });
-
-    </script>    
-
+    </script>
 </body>
 </html>

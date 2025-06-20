@@ -12,36 +12,42 @@ window.quickAnalysis = {
         this.setupEventListeners();
     },
     
-    // 設置拖放區域
+    // 在 quick-analysis.js 中修改 setupDropZone 函數
     setupDropZone: function() {
         const dropZone = document.getElementById('drop-analysis-zone');
-        const quickAnalysisFile = document.getElementById('quick-analysis-file');
+        if (!dropZone) return;
         
-        if (!dropZone || !quickAnalysisFile) return;
-        
-        // 拖曳事件
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            $(dropZone).addClass('dragover');
+        // 防止默認拖放行為
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
         });
         
-        dropZone.addEventListener('dragleave', (e) => {
+        function preventDefaults(e) {
             e.preventDefault();
-            if (!dropZone.contains(e.relatedTarget)) {
-                $(dropZone).removeClass('dragover');
-            }
+            e.stopPropagation();
+        }
+        
+        // 拖曳效果
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            });
         });
         
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            });
+        });
+        
+        // 處理拖放
         dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            $(dropZone).removeClass('dragover');
-            
             const files = Array.from(e.dataTransfer.files);
             this.handleDroppedFiles(files);
         });
         
-        // 檔案選擇器事件
-        quickAnalysisFile.addEventListener('change', (e) => {
+        // 檔案選擇
+        $('#quick-analysis-file').on('change', (e) => {
             const files = Array.from(e.target.files);
             this.handleDroppedFiles(files);
         });

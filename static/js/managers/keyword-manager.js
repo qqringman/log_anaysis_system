@@ -33,28 +33,45 @@ window.keywordManager = {
         const uploadZone = document.getElementById('upload-zone');
         if (!uploadZone) return;
         
-        // 拖曳進入
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            $(uploadZone).addClass('dragover');
+        // 防止默認拖放行為
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
         });
         
-        // 拖曳離開
-        uploadZone.addEventListener('dragleave', (e) => {
+        function preventDefaults(e) {
             e.preventDefault();
-            $(uploadZone).removeClass('dragover');
+            e.stopPropagation();
+        }
+        
+        // 拖曳進入和離開
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, highlight, false);
         });
         
-        // 拖曳放下
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            $(uploadZone).removeClass('dragover');
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadZone.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight(e) {
+            uploadZone.classList.add('dragover');
+        }
+        
+        function unhighlight(e) {
+            uploadZone.classList.remove('dragover');
+        }
+        
+        // 處理拖放
+        uploadZone.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
             
-            const files = e.dataTransfer.files;
             if (files.length > 0) {
-                this.uploadKeywords(files[0]);
+                keywordManager.uploadKeywords(files[0]);
             }
-        });
+        }
         
         // 點擊上傳
         uploadZone.addEventListener('click', () => {
@@ -183,56 +200,64 @@ window.keywordManager = {
     
     // 刪除關鍵字模組
     deleteKeywordModule: function(module) {
-        if (!confirm(`確定要刪除模組 "${module}" 嗎？`)) {
-            return;
-        }
-        
-        $.ajax({
-            url: `${appConfig.api.deleteKeyword}${encodeURIComponent(module)}`,
-            type: 'DELETE',
-            success: (response) => {
-                if (response.success) {
-                    delete appConfig.state.keywords[module];
-                    this.updateKeywordPreview();
-                    utils.showAlert(`✅ 已刪除模組: ${module}`, 'success');
-                    utils.playNotificationSound('success');
-                    
-                    // 更新分析按鈕狀態
-                    this.updateAnalysisButtons();
-                } else {
-                    utils.showAlert(`❌ ${response.message}`, 'danger');
-                }
-            },
-            error: () => {
-                utils.showAlert('❌ 刪除失敗', 'danger');
+        utils.showConfirm({
+            title: '刪除模組',
+            message: `確定要刪除模組「${module}」嗎？此操作無法復原。`,
+            icon: 'fa-trash',
+            iconColor: '#dc3545',
+            confirmText: '確定刪除',
+            confirmClass: 'btn-danger',
+            onConfirm: () => {
+                $.ajax({
+                    url: `${appConfig.api.deleteKeyword}${encodeURIComponent(module)}`,
+                    type: 'DELETE',
+                    success: (response) => {
+                        if (response.success) {
+                            delete appConfig.state.keywords[module];
+                            this.updateKeywordPreview();
+                            utils.showAlert(`✅ 已刪除模組: ${module}`, 'success');
+                            utils.playNotificationSound('success');
+                            this.updateAnalysisButtons();
+                        } else {
+                            utils.showAlert(`❌ ${response.message}`, 'danger');
+                        }
+                    },
+                    error: () => {
+                        utils.showAlert('❌ 刪除失敗', 'danger');
+                    }
+                });
             }
         });
     },
     
     // 復原所有關鍵字
     restoreKeywords: function() {
-        if (!confirm('確定要復原所有關鍵字模組嗎？')) {
-            return;
-        }
-        
-        $.ajax({
-            url: appConfig.api.restoreKeywords,
-            type: 'POST',
-            success: (response) => {
-                if (response.success) {
-                    appConfig.state.keywords = response.keywords;
-                    this.updateKeywordPreview();
-                    utils.showAlert(`✅ ${response.message}`, 'success');
-                    utils.playNotificationSound('success');
-                    
-                    // 更新分析按鈕狀態
-                    this.updateAnalysisButtons();
-                } else {
-                    utils.showAlert(`❌ ${response.message}`, 'danger');
-                }
-            },
-            error: () => {
-                utils.showAlert('❌ 復原失敗', 'danger');
+        utils.showConfirm({
+            title: '復原關鍵字',
+            message: '確定要復原所有關鍵字模組嗎？這將恢復到上次儲存的狀態。',
+            icon: 'fa-undo',
+            iconColor: '#ff9800',
+            confirmText: '確定復原',
+            confirmClass: 'btn-warning',
+            onConfirm: () => {
+                $.ajax({
+                    url: appConfig.api.restoreKeywords,
+                    type: 'POST',
+                    success: (response) => {
+                        if (response.success) {
+                            appConfig.state.keywords = response.keywords;
+                            this.updateKeywordPreview();
+                            utils.showAlert(`✅ ${response.message}`, 'success');
+                            utils.playNotificationSound('success');
+                            this.updateAnalysisButtons();
+                        } else {
+                            utils.showAlert(`❌ ${response.message}`, 'danger');
+                        }
+                    },
+                    error: () => {
+                        utils.showAlert('❌ 復原失敗', 'danger');
+                    }
+                });
             }
         });
     },

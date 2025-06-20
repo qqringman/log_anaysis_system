@@ -10,6 +10,7 @@ window.fileBrowser = {
     // 路徑建議快取 - 改為儲存完整的目錄內容
     pathCache: new Map(),
     currentDirectoryItems: [], // 當前目錄的所有項目
+    selectedSuggestionIndex: -1, // 當前選中的建議索引
     
     init: function() {
         console.log('📁 初始化檔案瀏覽器');
@@ -97,12 +98,14 @@ window.fileBrowser = {
         // 輸入時顯示建議 - 使用本地過濾
         pathInput.addEventListener('input', (e) => {
             const value = e.target.value;
+            this.selectedSuggestionIndex = -1; // 重置選中索引
             this.showPathSuggestions(value);
         });
         
         // 焦點時顯示建議
         pathInput.addEventListener('focus', () => {
             const value = pathInput.value;
+            this.selectedSuggestionIndex = -1;
             this.showPathSuggestions(value);
         });
         
@@ -110,17 +113,90 @@ window.fileBrowser = {
         pathInput.addEventListener('blur', () => {
             setTimeout(() => {
                 suggestionsList.style.display = 'none';
+                this.selectedSuggestionIndex = -1;
             }, 200);
         });
         
-        // Enter 鍵立即隱藏建議並導航
+        // 鍵盤導航
         pathInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                suggestionsList.style.display = 'none';
-                this.navigateToPath();
+            const suggestionItems = suggestionsList.querySelectorAll('.path-suggestion-item');
+            const visibleSuggestions = suggestionsList.style.display !== 'none' && suggestionItems.length > 0;
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    if (visibleSuggestions) {
+                        e.preventDefault();
+                        this.selectedSuggestionIndex = Math.min(this.selectedSuggestionIndex + 1, suggestionItems.length - 1);
+                        this.updateSelectedSuggestion(suggestionItems);
+                    }
+                    break;
+                    
+                case 'ArrowUp':
+                    if (visibleSuggestions) {
+                        e.preventDefault();
+                        this.selectedSuggestionIndex = Math.max(this.selectedSuggestionIndex - 1, -1);
+                        this.updateSelectedSuggestion(suggestionItems);
+                    }
+                    break;
+                    
+                case 'Enter':
+                    e.preventDefault();
+                    if (visibleSuggestions && this.selectedSuggestionIndex >= 0) {
+                        // 選中了建議項目
+                        const selectedItem = suggestionItems[this.selectedSuggestionIndex];
+                        if (selectedItem) {
+                            selectedItem.click();
+                        }
+                    } else {
+                        // 沒有選中建議，正常導航
+                        suggestionsList.style.display = 'none';
+                        this.navigateToPath();
+                    }
+                    break;
+                    
+                case 'Escape':
+                    if (visibleSuggestions) {
+                        e.preventDefault();
+                        suggestionsList.style.display = 'none';
+                        this.selectedSuggestionIndex = -1;
+                    }
+                    break;
             }
         });
+    },
+    
+    // 更新選中的建議項目
+    updateSelectedSuggestion: function(suggestionItems) {
+        // 移除所有選中狀態
+        suggestionItems.forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // 添加選中狀態
+        if (this.selectedSuggestionIndex >= 0 && this.selectedSuggestionIndex < suggestionItems.length) {
+            const selectedItem = suggestionItems[this.selectedSuggestionIndex];
+            selectedItem.classList.add('selected');
+            
+            // 確保選中項目在可視範圍內
+            const suggestionsList = document.getElementById('path-suggestions');
+            const itemTop = selectedItem.offsetTop;
+            const itemBottom = itemTop + selectedItem.offsetHeight;
+            const scrollTop = suggestionsList.scrollTop;
+            const scrollBottom = scrollTop + suggestionsList.clientHeight;
+            
+            if (itemTop < scrollTop) {
+                suggestionsList.scrollTop = itemTop;
+            } else if (itemBottom > scrollBottom) {
+                suggestionsList.scrollTop = itemBottom - suggestionsList.clientHeight;
+            }
+            
+            // 更新輸入框的值為選中項目的路徑
+            const pathInput = document.getElementById('path-input');
+            const fullPath = selectedItem.dataset.fullPath;
+            if (fullPath) {
+                pathInput.value = fullPath;
+            }
+        }
     },
     
     // 顯示路徑建議 - 改為智能判斷是否需要載入
@@ -161,14 +237,22 @@ window.fileBrowser = {
         }
         
         // 顯示所有符合的建議
-        suggestions.forEach(suggestion => {
+        suggestions.forEach((suggestion, index) => {
             const item = document.createElement('div');
             item.className = 'path-suggestion-item';
+            item.dataset.fullPath = suggestion.fullPath;
+            item.dataset.type = suggestion.type;
             item.innerHTML = `
                 <i class="fas ${suggestion.icon} me-2"></i>
                 ${suggestion.displayName}
                 <span class="text-muted ms-2">${suggestion.fullPath}</span>
             `;
+            
+            // 滑鼠懸停效果
+            item.addEventListener('mouseenter', () => {
+                this.selectedSuggestionIndex = index;
+                this.updateSelectedSuggestion(suggestionsList.querySelectorAll('.path-suggestion-item'));
+            });
             
             item.addEventListener('click', () => {
                 document.getElementById('path-input').value = suggestion.fullPath;
@@ -176,6 +260,7 @@ window.fileBrowser = {
                     this.loadDirectory(suggestion.fullPath);
                 }
                 suggestionsList.style.display = 'none';
+                this.selectedSuggestionIndex = -1;
             });
             
             suggestionsList.appendChild(item);

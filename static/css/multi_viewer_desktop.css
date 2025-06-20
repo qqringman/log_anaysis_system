@@ -3,18 +3,27 @@
     --sidebar-width: 280px;
     --sidebar-collapsed-width: 60px;
     --tabs-height: 45px;
+    /* 安全區域變數 */
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
 }
 
-* {
-    box-sizing: border-box;
-}
-
+/* 確保 body 考慮安全區域 */
 body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     overflow: hidden;
     height: 100vh;
+    /* 使用 CSS 環境變數處理安全區域 */
+    padding-top: var(--safe-area-top);
+    padding-bottom: var(--safe-area-bottom);
     background: #f0f2f5;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 /* 主容器布局 */
@@ -206,7 +215,6 @@ body {
     font-weight: 600;
     color: #495057;
     background: #f8f9fa;
-    margin-bottom: 5px;
 }
 
 .group-header:hover {
@@ -481,28 +489,43 @@ body {
     padding: 1px 4px;
 }
 
-/* 切換按鈕 */
+/* 切換按鈕 - 改進版 */
 .sidebar-toggle {
     position: absolute;
-    top: 15px;
-    right: -12px;
+    top: 50%;
+    right: -16px;
+    transform: translateY(-50%);
     background: white;
-    border: 1px solid #e0e0e0;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
+    border: 2px solid #e0e0e0;
+    width: 32px;
+    height: 48px;
+    border-radius: 8px 8px 8px 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
 .sidebar-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: #f8f9fa;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-toggle i {
+    font-size: 14px;
+    color: #666;
+    transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+    right: -16px;
+}
+
+.sidebar.collapsed .sidebar-toggle i {
+    transform: rotate(180deg);
 }
 
 /* 主內容區 */
@@ -1517,47 +1540,6 @@ input:checked + .toggle-slider:before {
     display: block;
 }
 
-@media (max-width: 768px) {
-    .mobile-menu-btn {
-        display: flex;
-    }
-    
-    .sidebar {
-        position: fixed;
-        left: -100%;
-        top: 0;
-        height: 100vh;
-        z-index: 1100;
-        transition: left 0.3s ease;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    .sidebar.show {
-        left: 0;
-    }
-    
-    .sidebar-toggle {
-        display: none;
-    }
-    
-    .toolbar-btn span {
-        display: none;
-    }
-    
-    .split-pane-toolbar {
-        padding: 6px 10px;
-    }
-    
-    .split-pane-title {
-        font-size: 12px;
-    }
-    
-    .split-pane-btn {
-        padding: 3px 6px;
-        font-size: 11px;
-    }
-}
-
 /* 自訂滾動條 */
 ::-webkit-scrollbar {
     width: 8px;
@@ -1593,4 +1575,32 @@ input:checked + .toggle-slider:before {
 
 .iframe-loaded {
     display: none !important;
+}
+
+/* 確保桌面版也沒有間隙 */
+.sidebar-content-wrapper {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+}
+
+/* 群組容器在桌面版 */
+.groups-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
+    margin: 0;
+}
+
+/* 設定區域在桌面版 */
+.sidebar-settings {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    margin: 0;
+    flex-shrink: 0;
 }

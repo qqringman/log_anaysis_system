@@ -3,6 +3,7 @@
     :root {
         --sidebar-width: 85%;
         --tabs-height: 40px;
+        --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     }
     
     /* 側邊欄手機版樣式 */
@@ -238,5 +239,651 @@
     .modal-header,
     .modal-footer {
         border-color: #3a3a3a;
+    }
+}
+
+/* 手機版側邊欄過渡效果 */
+@media (max-width: 768px) {
+    .sidebar {
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar-settings {
+        transition: left 0.3s ease;
+    }
+    
+    /* 防止內容溢出 */
+    .sidebar.show {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; /* iOS 平滑滾動 */
+    }
+    
+    /* 調整切換按鈕在手機版隱藏 */
+    .sidebar-toggle {
+        display: none;
+    }
+    
+    /* 手機版使用漢堡選單按鈕 */
+    .mobile-menu-btn {
+        display: flex !important;
+    }
+}
+
+/* 確保設定按鈕在所有情況下都可點擊 */
+.settings-btn {
+    position: relative;
+    z-index: 101;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 手機版樣式 */
+@media (max-width: 768px) {
+    /* ... 現有的樣式 ... */
+    
+    /* 側邊欄設定區域修復 */
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    /* 群組容器需要可滾動 */
+    .groups-container {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 10px;
+        /* 確保內容不會被設定按鈕擋住 */
+        padding-bottom: 80px;
+    }
+    
+    /* 設定區域固定在底部 */
+    .sidebar-settings {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        padding: 15px;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        /* 確保在側邊欄顯示時，設定按鈕也顯示 */
+        width: var(--sidebar-width);
+        transition: all 0.3s ease;
+    }
+    
+    /* 當側邊欄顯示時，設定區域的寬度 */
+    .sidebar.show .sidebar-settings {
+        left: 0;
+    }
+    
+    /* 設定按鈕樣式優化 */
+    .settings-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    /* 確保側邊欄內容不會被設定按鈕擋住 */
+    .sidebar {
+        padding-bottom: 70px;
+    }
+}
+
+/* iPhone 特定修復 */
+@supports (-webkit-touch-callout: none) {
+    /* iOS Safari 修復 */
+    .sidebar-settings {
+        /* 使用 sticky 定位替代 fixed，避免 iOS 問題 */
+        position: sticky;
+        bottom: 0;
+        margin-top: auto;
+    }
+    
+    .sidebar {
+        /* 確保使用 flexbox 佈局 */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .groups-container {
+        /* 移除固定的 padding-bottom */
+        padding-bottom: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-btn {
+        display: flex;
+    }
+    
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        height: 100vh;
+        z-index: 1100;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    .sidebar-toggle {
+        display: none;
+    }
+    
+    .toolbar-btn span {
+        display: none;
+    }
+    
+    .split-pane-toolbar {
+        padding: 6px 10px;
+    }
+    
+    .split-pane-title {
+        font-size: 12px;
+    }
+    
+    .split-pane-btn {
+        padding: 3px 6px;
+        font-size: 11px;
+    }
+}
+
+/* 側邊欄內容包裝器 */
+.sidebar-content-wrapper {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 確保桌面版正常運作 */
+@media (min-width: 769px) {
+    .sidebar-settings {
+        position: relative;
+        bottom: auto;
+        width: auto;
+    }
+}
+
+/* 手機版樣式 - 加入安全區域支援 */
+@media (max-width: 768px) {
+    :root {
+        --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    /* ... 現有的樣式 ... */
+    
+    /* 側邊欄設定區域修復 - 考慮 iPhone 安全區域 */
+    .sidebar-settings {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        padding: 15px;
+        /* 加入底部安全區域的 padding */
+        padding-bottom: calc(15px + var(--safe-area-bottom));
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        width: var(--sidebar-width);
+        transition: all 0.3s ease;
+    }
+    
+    /* 群組容器需要考慮安全區域 */
+    .groups-container {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 10px;
+        /* 調整底部 padding 以避免被設定按鈕擋住 */
+        padding-bottom: calc(80px + var(--safe-area-bottom));
+    }
+    
+    /* 側邊欄整體也需要考慮安全區域 */
+    .sidebar {
+        padding-bottom: calc(70px + var(--safe-area-bottom));
+    }
+}
+
+/* iPhone 特定修復 - 使用 supports 檢測 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    @media (max-width: 768px) {
+        /* 使用 sticky 定位替代 fixed，更好地處理安全區域 */
+        .sidebar-settings {
+            position: sticky;
+            bottom: 0;
+            margin-top: auto;
+            /* 確保有足夠的底部空間 */
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+        }
+        
+        /* 調整側邊欄結構 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            /* 移除固定的 padding-bottom */
+            padding-bottom: 0;
+            /* 確保內容不會超出視窗 */
+            max-height: 100vh;
+            max-height: -webkit-fill-available;
+        }
+        
+        /* 內容包裝器 */
+        .sidebar-content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            /* 為設定按鈕預留空間 */
+            padding-bottom: 20px;
+        }
+        
+        /* 群組容器調整 */
+        .groups-container {
+            /* 移除固定的 padding-bottom */
+            padding-bottom: 20px;
+        }
+    }
+}
+
+/* 針對有瀏海的 iPhone (iPhone X 及以上) */
+@media (max-width: 768px) and (display-mode: standalone) {
+    .sidebar-settings {
+        /* 在 PWA 模式下可能需要更多空間 */
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+}
+
+/* 橫向模式優化 */
+@media (max-width: 768px) and (orientation: landscape) {
+    .sidebar-settings {
+        /* 橫向時減少 padding */
+        padding: 10px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+    
+    .settings-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}
+
+/* 確保在所有 iPhone 型號上都能正常顯示 */
+@supports (-webkit-touch-callout: none) {
+    /* iOS 特定調整 */
+    .sidebar {
+        /* 使用 100vh 的替代方案 */
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+    
+    .sidebar-settings {
+        /* 強制背景色和邊框，避免透明問題 */
+        background-color: white;
+        -webkit-backdrop-filter: none;
+    }
+    
+    /* 設定按鈕增加可點擊區域 */
+    .settings-btn {
+        min-height: 44px; /* iOS 推薦的最小觸控目標 */
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* 手機版樣式 - 修復設定按鈕對齊問題 */
+@media (max-width: 768px) {
+    :root {
+        --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    /* 側邊欄基本樣式 */
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        height: 100vh;
+        height: -webkit-fill-available;
+        z-index: 1100;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        width: var(--sidebar-width);
+        /* 移除任何 padding 避免影響寬度 */
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    /* 側邊欄內容包裝器 */
+    .sidebar-content-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        /* 底部預留空間給設定按鈕 */
+        padding-bottom: calc(70px + var(--safe-area-bottom));
+    }
+    
+    /* 側邊欄設定區域修復 */
+    .sidebar-settings {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        /* 確保寬度與側邊欄一致 */
+        width: 100%;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        padding: 15px;
+        padding-bottom: calc(15px + var(--safe-area-bottom));
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        /* 移除之前的寬度設定 */
+        transition: none;
+        box-sizing: border-box;
+    }
+    
+    /* 當側邊欄顯示時 */
+    .sidebar.show .sidebar-settings {
+        left: 0;
+        width: 100%;
+    }
+    
+    /* 群組容器調整 */
+    .groups-container {
+        padding: 10px;
+        /* 不需要設定 padding-bottom，由 wrapper 處理 */
+    }
+    
+    /* 設定按鈕樣式 */
+    .settings-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+}
+
+/* iPhone 特定修復 */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        /* 確保側邊欄使用正確的盒模型 */
+        .sidebar,
+        .sidebar * {
+            box-sizing: border-box;
+        }
+        
+        /* 側邊欄設定區域使用 sticky 定位 */
+        .sidebar-settings {
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            margin-top: auto;
+            /* 確保背景不透明 */
+            background-color: white;
+            /* 移除任何可能的 margin */
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        /* 調整側邊欄結構 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 確保內容區域正確滾動 */
+        .groups-container {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            /* 預留底部空間 */
+            padding-bottom: 20px;
+        }
+    }
+}
+
+/* 修復寬度計算問題 */
+@media (max-width: 768px) {
+    /* 確保所有子元素都使用 border-box */
+    .sidebar * {
+        box-sizing: border-box;
+    }
+    
+    /* 導航選單寬度修正 */
+    .sidebar-nav {
+        width: 100%;
+        padding: 10px 0;
+    }
+    
+    /* 搜尋框寬度修正 */
+    .sidebar-search {
+        width: 100%;
+        padding: 10px;
+    }
+    
+    /* 確保設定區域填滿整個寬度 */
+    .sidebar-settings {
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
+
+/* 針對小螢幕的額外調整 */
+@media (max-width: 375px) {
+    .sidebar-settings {
+        padding: 12px;
+        padding-bottom: calc(12px + var(--safe-area-bottom));
+    }
+    
+    .settings-btn {
+        padding: 10px;
+        font-size: 13px;
+    }
+}
+
+/* 手機版樣式 - 修復容器間隙問題 */
+@media (max-width: 768px) {
+    :root {
+        --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    /* 側邊欄基本樣式 */
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        height: 100vh;
+        height: -webkit-fill-available;
+        z-index: 1100;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        width: var(--sidebar-width);
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .sidebar.show {
+        left: 0;
+    }
+    
+    /* 側邊欄內容包裝器 - 移除底部間隙 */
+    .sidebar-content-wrapper {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        /* 移除任何 margin 或 padding */
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* 群組容器 - 填滿剩餘空間 */
+    .groups-container {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding: 10px;
+        /* 移除底部 padding，改用內部最後一個元素的 margin */
+        padding-bottom: 0;
+        /* 確保沒有 margin */
+        margin: 0;
+    }
+    
+    /* 群組容器內最後一個元素加上底部間距 */
+    .groups-container > *:last-child {
+        margin-bottom: 10px;
+    }
+    
+    /* 側邊欄設定區域 - 緊貼底部 */
+    .sidebar-settings {
+        /* 使用 relative 定位 */
+        position: relative;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        border-top: 1px solid #e0e0e0;
+        padding: 15px;
+        padding-bottom: calc(15px + var(--safe-area-bottom));
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        box-sizing: border-box;
+        /* 確保沒有 margin */
+        margin: 0;
+        /* 不需要 margin-top: auto */
+        flex-shrink: 0;
+    }
+    
+    /* 設定按鈕樣式 */
+    .settings-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-sizing: border-box;
+        margin: 0;
+    }
+}
+
+/* iPhone 特定修復 */
+@supports (-webkit-touch-callout: none) {
+    @media (max-width: 768px) {
+        /* 確保側邊欄使用正確的盒模型 */
+        .sidebar,
+        .sidebar * {
+            box-sizing: border-box;
+        }
+        
+        /* 側邊欄結構優化 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* 內容包裝器確保填滿空間 */
+        .sidebar-content-wrapper {
+            flex: 1;
+            min-height: 0; /* 重要：允許 flex 子元素收縮 */
+            overflow: hidden;
+        }
+        
+        /* 群組容器滾動優化 */
+        .groups-container {
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            /* 使用內部 padding 而不是 margin */
+            padding: 10px;
+            padding-bottom: 10px;
+        }
+        
+        /* 設定區域確保緊貼底部 */
+        .sidebar-settings {
+            flex-shrink: 0;
+            margin-top: 0;
+            background-color: white;
+        }
+    }
+}
+
+/* 修復可能的間隙問題 */
+@media (max-width: 768px) {
+    /* 確保沒有預設的 margin 造成間隙 */
+    .sidebar > * {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+    
+    /* 導航和搜尋框之間的間隙使用 border 而不是 margin */
+    .sidebar-nav {
+        border-bottom: 1px solid #e0e0e0;
+        margin: 0;
+    }
+    
+    .sidebar-search {
+        border-bottom: 1px solid #e0e0e0;
+        margin: 0;
+    }
+    
+    /* 確保 flex 容器正確運作 */
+    .sidebar {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* 內容區域應該佔據所有剩餘空間 */
+    .sidebar-content-wrapper {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+    
+    /* 設定區域應該保持固定高度 */
+    .sidebar-settings {
+        flex: 0 0 auto;
+    }
+}
+
+/* 針對小螢幕的額外調整 */
+@media (max-width: 375px) {
+    .groups-container {
+        padding: 8px;
+    }
+    
+    .sidebar-settings {
+        padding: 12px;
+        padding-bottom: calc(12px + var(--safe-area-bottom));
+    }
+    
+    .settings-btn {
+        padding: 10px;
+        font-size: 13px;
     }
 }

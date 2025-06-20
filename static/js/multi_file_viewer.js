@@ -275,7 +275,6 @@ function createGroupElement(group, groupIndex) {
     count.className = 'group-count';
     const fileCount = group.items ? countFiles(group.items) : 0;
     count.textContent = fileCount;
-    header.appendChild(count);
     
     groupDiv.appendChild(header);
     
@@ -1129,11 +1128,21 @@ function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const toggleIcon = document.getElementById('toggle-icon');
     const backdrop = document.getElementById('sidebar-backdrop');
+    const settings = document.querySelector('.sidebar-settings');
     
     // 手機版處理
     if (window.innerWidth <= 768) {
         sidebar.classList.toggle('show');
         backdrop.classList.toggle('show');
+        
+        // 確保設定區域跟隨側邊欄
+        if (settings) {
+            if (sidebar.classList.contains('show')) {
+                settings.style.left = '0';
+            } else {
+                settings.style.left = '-100%';
+            }
+        }
     } else {
         // 桌面版處理
         sidebarCollapsed = !sidebarCollapsed;

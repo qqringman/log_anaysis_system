@@ -1,0 +1,378 @@
+/* Enhanced Log 分析平台 v6 - 手機版樣式 */
+
+@media (max-width: 768px) {
+    /* 基本佈局調整 */
+    body {
+        padding-bottom: 80px;
+    }
+    
+    /* Hero Section */
+    .hero-section {
+        padding: 1.5rem 0 1rem;
+    }
+    
+    .hero-section h1 {
+        font-size: 1.8rem;
+    }
+    
+    .hero-section p {
+        font-size: 0.9rem;
+    }
+    
+    .hero-section .badge {
+        font-size: 0.75rem !important;
+        margin: 2px;
+    }
+    
+    /* Dashboard Container */
+    .dashboard-container {
+        padding: 0 10px;
+    }
+    
+    .dashboard-block {
+        margin-bottom: 15px;
+    }
+    
+    /* Cards */
+    .card-modern {
+        margin: 3px;
+        border-radius: 15px;
+    }
+    
+    .card-body {
+        padding: 15px !important;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+    }
+    
+    /* Upload Zone */
+    .upload-zone {
+        padding: 20px;
+    }
+    
+    /* File Browser */
+    .file-browser {
+        max-height: 500px;
+    }
+    
+    .file-browser-header {
+        padding: 15px;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch !important;
+    }
+    
+    .file-browser-header > div {
+        width: 100%;
+    }
+    
+    .breadcrumb-modern {
+        font-size: 0.8rem;
+    }
+    
+    /* File List */
+    .file-list {
+        padding: 10px;
+    }
+    
+    .file-item {
+        padding: 10px;
+        margin-bottom: 5px;
+    }
+    
+    .file-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+    }
+    
+    .file-name {
+        font-size: 13px;
+    }
+    
+    .file-meta {
+        font-size: 11px;
+    }
+    
+    /* Floating Action Button - Mobile Version */
+    .floating-actions {
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    /* 隱藏桌面版的個別按鈕 */
+    .floating-actions .floating-btn {
+        display: none !important;
+    }
+    
+    /* FAB 容器樣式 */
+    .fab-container {
+        position: relative;
+    }
+    
+    .fab-main {
+        width: 56px;
+        height: 56px;
+        font-size: 1.2rem;
+        position: relative;
+        z-index: 1001;
+    }
+    
+    .fab-main.active {
+        transform: rotate(45deg);
+        background: var(--danger-gradient);
+    }
+    
+    /* FAB 選項面板 */
+    .fab-options {
+        position: absolute;
+        bottom: 65px;
+        right: 0;
+        background: white;
+        border-radius: 15px;
+        padding: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        min-width: 200px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px) scale(0.9);
+        transition: all 0.3s ease;
+    }
+    
+    .fab-options.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+    }
+    
+    .fab-option {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #333;
+    }
+    
+    .fab-option:hover {
+        background: #f8f9fa;
+    }
+    
+    .fab-option i {
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: white;
+        margin-right: 12px;
+        font-size: 16px;
+    }
+    
+    .fab-option.primary i { background: var(--primary-gradient); }
+    .fab-option.success i { background: var(--success-gradient); }
+    .fab-option.chat i { background: var(--warning-gradient); }
+    .fab-option.broadcast i { background: var(--info-gradient); }
+    .fab-option.share i { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    
+    .fab-option span {
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    /* Backdrop for FAB */
+    .fab-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.3);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .fab-backdrop.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    /* Form Elements */
+    .form-control,
+    .form-select {
+        font-size: 16px; /* 防止 iOS 自動縮放 */
+    }
+    
+    /* Buttons */
+    .btn {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+    
+    .btn-sm {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+    
+    /* Path Input */
+    #path-input {
+        font-size: 14px;
+    }
+    
+    /* Quick Analysis */
+    .quick-analysis-options {
+        margin-top: 15px;
+    }
+    
+    .analysis-summary {
+        font-size: 0.85rem;
+    }
+    
+    /* Stats */
+    .stats-card {
+        margin-bottom: 10px;
+    }
+    
+    /* Results */
+    .module-result {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .match-item {
+        padding: 12px 15px;
+    }
+    
+    /* Login Modal */
+    .login-container {
+        padding: 10px;
+    }
+    
+    .login-box {
+        border-radius: 20px;
+    }
+    
+    .login-header {
+        padding: 30px 20px;
+    }
+    
+    .login-logo {
+        width: 70px;
+        height: 70px;
+        font-size: 2.5rem;
+    }
+    
+    .login-body {
+        padding: 20px;
+    }
+    
+    /* Copyright Footer */
+    .copyright-footer {
+        font-size: 0.75rem;
+        padding: 10px 0;
+    }
+    
+    /* Responsive Tables */
+    table {
+        font-size: 0.85rem;
+    }
+    
+    /* Modal Adjustments */
+    .modal-dialog {
+        margin: 10px;
+    }
+    
+    .modal-content {
+        border-radius: 15px;
+    }
+    
+    /* Row & Column Adjustments */
+    .row {
+        margin-left: -5px;
+        margin-right: -5px;
+    }
+    
+    .col, [class*="col-"] {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+    
+    /* 選擇計數 */
+    #selected-count small {
+        display: block;
+        font-size: 0.7rem;
+    }
+    
+    /* 分析按鈕 */
+    #analyze-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+    
+    #quick-analyze-btn {
+        margin-top: 15px;
+    }
+}
+
+/* 超小螢幕調整 */
+@media (max-width: 480px) {
+    .hero-section h1 {
+        font-size: 1.5rem;
+    }
+    
+    .file-item {
+        padding: 8px;
+    }
+    
+    .file-checkbox {
+        margin-right: 8px;
+    }
+    
+    .file-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+}
+
+/* 觸控優化 */
+@media (hover: none) {
+    .file-item:active {
+        background: #e9ecef;
+    }
+    
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    .fab-option:active {
+        background: #e9ecef;
+    }
+}
+
+/* 橫向模式 */
+@media (max-width: 768px) and (orientation: landscape) {
+    .hero-section {
+        padding: 1rem 0;
+    }
+    
+    .file-browser {
+        max-height: 400px;
+    }
+    
+    .floating-actions {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .fab-main {
+        width: 48px;
+        height: 48px;
+    }
+}

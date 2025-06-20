@@ -311,6 +311,10 @@
             </div>
         </div>
     </div>
+    <script>
+        // 將伺服器端變數渲染到客戶端 JS 變數
+        window.initialStateData = {{ state_data|tojson|safe }};
+    </script>    
     <script src="{{ url_for('static', filename='js/multi_file_viewer.js') }}"></script>
 </body>
 </html>

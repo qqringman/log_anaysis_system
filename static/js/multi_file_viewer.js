@@ -18,18 +18,8 @@ let currentUploadPane = null;
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     // 檢查是否有儲存的狀態
-    let stateData = null;
-    try {
-        // 使用更安全的方式處理模板變數
-        {% if state_data %}
-        stateData = {{ state_data|tojson|safe }};
-        {% else %}
-        stateData = null;
-        {% endif %}
-    } catch (e) {
-        console.error('處理 state_data 時發生錯誤:', e);
-        stateData = null;
-    }
+    // 從 HTML 中定義的全域變數讀取 stateData
+    let stateData = window.initialStateData || null;
     
     if (stateData) {
         try {

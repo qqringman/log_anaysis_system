@@ -617,9 +617,6 @@ function openFile(file, switchToTab = true) {
     
     renderTabs();
     
-    // 載入檔案內容（優化版本）
-    loadFileContentOptimized(file.path, tabId, file.isLocal);
-    
     if (switchToTab) {
         // 顯示載入中狀態
         const viewerContainer = document.getElementById('file-viewer');
@@ -633,7 +630,10 @@ function openFile(file, switchToTab = true) {
             </div>
         `;
     }
-    
+
+    // 載入檔案內容（優化版本）
+    loadFileContentOptimized(file.path, tabId, file.isLocal);
+
     // 添加到最近檔案
     addToRecentFiles(file);
     

@@ -1814,18 +1814,28 @@
             }
             
             if (state.tabs) {
-                state.tabs.forEach(tab => {
-                    openFile({name: tab.name, path: tab.path}, false);
+                state.tabs.forEach((tab, index) => {
+                    const shouldSwitch = index === 0; // 只有第一個檔案切換到它
+                    openFile({name: tab.name, path: tab.path, color: tab.color}, shouldSwitch);
                 });
             }
             
-            if (state.activeTab) {
+            if (state.activeTabPath || state.activeTab) {
                 setTimeout(() => {
+                    // 優先使用 path 來匹配
+                    if (state.activeTabPath) {
+                        const tab = currentTabs.find(t => t.path === state.activeTabPath);
+                        if (tab) {
+                            switchTab(tab.id);
+                            return;
+                        }
+                    }
+                    // 舊的邏輯作為備用
                     const tab = currentTabs.find(t => t.id === state.activeTab);
                     if (tab) {
                         switchTab(tab.id);
                     }
-                }, 100);
+                }, 500); // 增加延遲確保所有檔案都載入完成
             }
         }
         
@@ -1916,7 +1926,7 @@
                             totalFolders++;
                         } else if (item.type === 'group') {
                             // 群組（如單獨檔案）
-                            const groupDiv = createGroupElement(item, `group-${groupIndex}-${item.name}`);
+                            const groupDiv = createGroupElement(item, `${groupIndex}-${item.name}`);
                             container.appendChild(groupDiv);
                             if (item.items) {
                                 totalFiles += item.items.length;
@@ -1992,7 +2002,7 @@
             // 項目容器
             const itemsContainer = document.createElement('div');
             itemsContainer.className = 'folder-tree';
-            itemsContainer.id = `group-${groupIndex}`;
+            itemsContainer.id = `group-${typeof groupIndex === 'string' ? groupIndex : `group-${groupIndex}`}`;
             
             if (group.items) {
                 group.items.forEach(item => {
@@ -2261,7 +2271,7 @@
         
         // 切換群組
         function toggleGroup(groupIndex) {
-            const itemsContainer = document.getElementById(`group-${groupIndex}`);
+            const itemsContainer = document.getElementById(`group-${typeof groupIndex === 'string' ? groupIndex : `group-${groupIndex}`}`);
             if (itemsContainer) {
                 itemsContainer.style.display = itemsContainer.style.display === 'none' ? 'block' : 'none';
             }
@@ -2301,14 +2311,14 @@
             
             // 創建新標籤
             const tabId = generateTabId();
-            const colorIndex = tabCounter % tabColors.length;
+            const colorIndex = file.color ? tabColors.indexOf(file.color) : tabCounter % tabColors.length;
             const tab = {
                 id: tabId,
                 name: file.name || file.path.split('/').pop() || 'Untitled',
                 path: file.path,
                 content: null,
                 loading: true,
-                color: tabColors[colorIndex],
+                color: file.color || tabColors[colorIndex >= 0 ? colorIndex : tabCounter % tabColors.length],
                 isLocal: file.isLocal || false
             };
             
@@ -3035,9 +3045,11 @@
                 tabs: currentTabs.map(tab => ({
                     name: tab.name,
                     path: tab.path,
-                    color: tab.color
+                    color: tab.color,
+                    id: tab.id
                 })),
-                activeTab: activeTabId
+                activeTab: activeTabId,
+                activeTabPath: currentTabs.find(t => t.id === activeTabId)?.path
             };
             
             try {

@@ -35,34 +35,49 @@ class IframeSearch {
         if (!keyword) return;
         
         this.searchKeyword = keyword;
-        const content = document.getElementById(`split-${pane}-content`);
+        const content = pane ? document.getElementById(`split-${pane}-content`) : document.getElementById('file-viewer');
         const iframe = content?.querySelector('iframe');
         
-        if (!iframe || !iframe.contentDocument) {
-            window.showToast('無法存取檔案內容', 'error');
+        if (!iframe) {
+            window.showToast('無法找到檔案內容', 'error');
             return;
         }
         
         try {
-            // 清除之前的高亮
-            this.clearHighlights(iframe.contentDocument);
+            // 發送搜尋請求到 iframe
+            iframe.contentWindow.postMessage({
+                type: 'search',
+                options: {
+                    keyword: keyword,
+                    caseSensitive: options.caseSensitive || false,
+                    wholeWord: options.wholeWord || false,
+                    regex: options.regex || false
+                }
+            }, '*');
             
-            // 執行搜尋
-            const results = this.searchInDocument(iframe.contentDocument, keyword, options);
-            this.searchResults[pane] = results;
-            this.currentSearchIndex[pane] = 0;
+            // 監聽搜尋結果
+            const handleSearchResults = (event) => {
+                if (event.source !== iframe.contentWindow) return;
+                
+                if (event.data.type === 'search-results') {
+                    const { count, keyword: resultKeyword } = event.data;
+                    
+                    if (resultKeyword === keyword) {
+                        if (count > 0) {
+                            window.showToast(`找到 ${count} 個結果`, 'success');
+                            this.updateSearchCount(pane || 'main', count);
+                        } else {
+                            window.showToast('沒有找到匹配的內容', 'info');
+                        }
+                        
+                        window.removeEventListener('message', handleSearchResults);
+                    }
+                } else if (event.data.type === 'search-position') {
+                    this.updateSearchPosition(pane || 'main', event.data.current, event.data.total);
+                }
+            };
             
-            // 高亮搜尋結果
-            if (results.length > 0) {
-                this.highlightResults(iframe.contentDocument, results);
-                this.scrollToResult(iframe.contentDocument, results[0]);
-                window.showToast(`找到 ${results.length} 個結果`, 'success');
-            } else {
-                window.showToast('沒有找到匹配的內容', 'info');
-            }
-            
-            // 更新搜尋結果計數
-            this.updateSearchCount(pane, results.length);
+            window.addEventListener('message', handleSearchResults);
             
         } catch (error) {
             console.error('搜尋失敗:', error);
@@ -175,31 +190,31 @@ class IframeSearch {
     }
     
     nextResult(pane) {
-        const results = this.searchResults[pane];
-        if (!results || results.length === 0) return;
+        const content = pane ? document.getElementById(`split-${pane}-content`) : document.getElementById('file-viewer');
+        const iframe = content?.querySelector('iframe');
         
-        this.currentSearchIndex[pane] = (this.currentSearchIndex[pane] + 1) % results.length;
-        this.scrollToResult(
-            document.getElementById(`split-${pane}-content`).querySelector('iframe').contentDocument,
-            results[this.currentSearchIndex[pane]]
-        );
-        
-        this.updateSearchCount(pane, results.length);
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'next-result' }, '*');
+        }
     }
-    
+
     prevResult(pane) {
-        const results = this.searchResults[pane];
-        if (!results || results.length === 0) return;
+        const content = pane ? document.getElementById(`split-${pane}-content`) : document.getElementById('file-viewer');
+        const iframe = content?.querySelector('iframe');
         
-        this.currentSearchIndex[pane] = (this.currentSearchIndex[pane] - 1 + results.length) % results.length;
-        this.scrollToResult(
-            document.getElementById(`split-${pane}-content`).querySelector('iframe').contentDocument,
-            results[this.currentSearchIndex[pane]]
-        );
-        
-        this.updateSearchCount(pane, results.length);
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({ type: 'prev-result' }, '*');
+        }
     }
-    
+
+    updateSearchPosition(pane, current, total) {
+        const selector = pane === 'main' ? '.search-result-count' : '.search-result-count';
+        const countElement = document.querySelector(selector);
+        if (countElement) {
+            countElement.textContent = `${current} / ${total}`;
+        }
+    }
+
     updateSearchCount(pane, total) {
         const countElement = document.querySelector('.search-result-count');
         if (countElement) {

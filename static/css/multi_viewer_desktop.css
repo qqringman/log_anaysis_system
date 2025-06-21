@@ -226,6 +226,11 @@ body {
     color: #667eea;
 }
 
+.group-icon-orange {
+    margin-right: 10px;
+    color: #f39c12;
+}
+
 .group-name {
     flex: 1;
     font-size: 14px;
@@ -1768,4 +1773,242 @@ input:checked + .toggle-slider:before {
     width: 3px;
     background: #667eea;
     border-radius: 2px;
+}
+
+/* 側邊欄縮合時的搜尋框樣式 */
+.sidebar.collapsed .sidebar-search {
+    padding: 10px 5px;
+    display: flex;
+    justify-content: center;
+}
+
+.sidebar.collapsed .search-wrapper {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+/* 隱藏輸入框，但保留功能 */
+.sidebar.collapsed .search-input {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    opacity: 0; /* 完全透明 */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.sidebar.collapsed .search-input:hover ~ .search-icon {
+    background: #e9ecef;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+/* 放大鏡圖標作為按鈕背景 */
+.sidebar.collapsed .search-icon {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #666;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* 點擊搜尋圖標時展開 */
+.sidebar.collapsed .search-input:focus {
+    width: 200px;
+    opacity: 1;
+    border-radius: 20px;
+    padding: 8px 35px 8px 12px;
+    background: white;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.sidebar.collapsed .search-input:focus ~ .search-icon {
+    width: auto;
+    height: auto;
+    left: auto;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #667eea;
+}
+
+/* 添加工具提示 */
+.sidebar.collapsed .search-wrapper:hover::after {
+    content: "搜尋檔案";
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 10px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.sidebar.collapsed .search-wrapper:hover::before {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 6px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 4px 4px 4px 0;
+    border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent;
+}
+
+/* 點擊時展開搜尋框 */
+.sidebar.collapsed .search-input:focus {
+    width: 90%;
+    border-radius: 20px;
+    padding: 8px 35px 8px 12px;
+    font-size: 14px;
+    color: #495057;
+    text-align: left;
+}
+
+.sidebar.collapsed .search-input:focus + .search-icon {
+    left: auto;
+    right: 12px;
+    transform: translateY(-50%);
+}
+
+/* 側邊欄縮合時的群組樣式 */
+.sidebar.collapsed .group-item {
+    margin-bottom: 8px;
+    padding: 0;
+}
+
+.sidebar.collapsed .group-header {
+    padding: 12px;
+    justify-content: center;
+    background: white;
+    border-radius: 8px;
+    margin: 0;
+}
+
+.sidebar.collapsed .group-icon {
+    margin: 0;
+    font-size: 20px;
+}
+
+.sidebar.collapsed .group-name {
+    display: none;
+}
+
+/* 隱藏縮合時的檔案樹 */
+.sidebar.collapsed .folder-tree {
+    display: none !important;
+}
+
+/* 資料夾圖標樣式 */
+.sidebar.collapsed .folder-header {
+    padding: 12px;
+    justify-content: center;
+}
+
+.sidebar.collapsed .folder-header .folder-tree-toggle {
+    display: none;
+}
+
+.sidebar.collapsed .folder-header .group-icon-orange {
+    margin: 0;
+    font-size: 20px;
+    color: #f39c12;
+}
+
+.sidebar.collapsed .folder-header .group-name {
+    display: none;
+}
+
+.sidebar.collapsed .folder-header .group-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #e74c3c;
+    color: white;
+    font-size: 10px;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+}
+
+/* 單獨檔案項目在縮合時的樣式 */
+.sidebar.collapsed .single-file-item .standalone-file {
+    padding: 12px;
+    justify-content: center;
+}
+
+.sidebar.collapsed .standalone-file .item-icon {
+    margin: 0;
+    font-size: 20px;
+}
+
+.sidebar.collapsed .standalone-file .item-name {
+    display: none;
+}
+
+/* 為縮合的項目添加工具提示 */
+.sidebar.collapsed .group-header:hover::after,
+.sidebar.collapsed .folder-header:hover::after,
+.sidebar.collapsed .standalone-file:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 100%;
+    top: 29%;
+    transform: translateY(-50%);
+    margin-left: 10px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.sidebar.collapsed .group-header:hover::before,
+.sidebar.collapsed .folder-header:hover::before,
+.sidebar.collapsed .standalone-file:hover::before {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 29%;
+    transform: translateY(-50%);
+    margin-left: 6px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 4px 4px 4px 0;
+    z-index: 1000;
+    border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent;
 }

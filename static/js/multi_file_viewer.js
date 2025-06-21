@@ -26,6 +26,18 @@ let isProcessingDrop = false; // 防止重複處理拖放
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
+
+    document.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('sidebar');
+        const searchInput = document.getElementById('search-input');
+        
+        // 如果側邊欄是縮合狀態，且點擊了搜尋框
+        if (sidebar.classList.contains('collapsed') && e.target === searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+
     // 等待一下確保所有元素都載入
     setTimeout(() => {
         // 檢查是否有儲存的狀態
@@ -525,7 +537,8 @@ function createGroupElement(group, groupIndex) {
     const header = document.createElement('div');
     header.className = 'group-header';
     header.onclick = () => toggleGroup(groupIndex);
-    
+    header.setAttribute('data-tooltip', group.name);
+
     const icon = document.createElement('i');
     icon.className = `fas ${group.icon || 'fa-folder'} group-icon`;
     header.appendChild(icon);
@@ -567,13 +580,14 @@ function createFolderTreeElement(folder) {
     const header = document.createElement('div');
     header.className = 'group-header folder-header';
     header.onclick = () => toggleFolderTree(folder.path);
-    
+    header.setAttribute('data-tooltip', folder.name);
+
     const toggleIcon = document.createElement('i');
     toggleIcon.className = `fas fa-chevron-${folder.expanded ? 'down' : 'right'} folder-tree-toggle`;
     header.appendChild(toggleIcon);
     
     const icon = document.createElement('i');
-    icon.className = 'fas fa-folder group-icon';
+    icon.className = 'fas fa-folder group-icon-orange';
     header.appendChild(icon);
     
     const name = document.createElement('span');
@@ -585,7 +599,7 @@ function createFolderTreeElement(folder) {
     const count = document.createElement('span');
     count.className = 'group-count';
     count.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 10px;"></i>';
-    header.appendChild(count);
+    //header.appendChild(count);
     
     folderDiv.appendChild(header);
     
@@ -611,7 +625,8 @@ function createSingleFileElement(file) {
     const fileItem = document.createElement('div');
     fileItem.className = 'file-item standalone-file';
     fileItem.onclick = () => openFile(file);
-    
+    fileItem.setAttribute('data-tooltip', file.name);
+
     const mainContainer = document.createElement('div');
     mainContainer.style.display = 'flex';
     mainContainer.style.alignItems = 'center';

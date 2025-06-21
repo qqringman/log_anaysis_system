@@ -1,0 +1,177 @@
+/* 分割視窗修復樣式 */
+
+/* 確保空狀態可以接收拖放 */
+.split-pane-content .empty-state {
+    height: 100%;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.3s ease;
+}
+
+/* 雙擊視覺反饋 */
+.split-pane-content .empty-state:active {
+    transform: scale(0.98);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+/* 修復拖放時的視覺效果 */
+.split-pane-content.drag-over .empty-state {
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px dashed #667eea;
+}
+
+/* 確保刪除按鈕可見且可點擊 */
+.split-pane-close {
+    background: none;
+    border: none;
+    color: #dc3545;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 5px;
+    z-index: 10;
+    position: relative;
+}
+
+.split-pane-close:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* 標籤拖曳時的樣式 */
+.file-tab.dragging {
+    opacity: 0.5;
+    cursor: move;
+}
+
+/* 分割視窗內容區域優化 */
+.split-pane-content {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 確保 iframe 填滿整個容器 */
+.split-pane-content iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* 載入狀態置中 */
+.split-pane-content .loading-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+/* 拖曳指示器改進 */
+.drag-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    pointer-events: none;
+    z-index: 1000;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.drag-indicator.show {
+    display: flex;
+}
+
+.drag-indicator i {
+    font-size: 48px;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+/* 修復分割線的觸控區域 */
+.split-divider {
+    position: relative;
+    width: 4px;
+    background: #e0e0e0;
+    cursor: col-resize;
+    transition: all 0.2s ease;
+    /* 增加觸控區域 */
+    padding: 0 8px;
+    margin: 0 -8px;
+    box-sizing: content-box;
+}
+
+.split-divider:hover,
+.split-divider:active {
+    background: #667eea;
+    width: 6px;
+}
+
+.split-divider::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -4px;
+    right: -4px;
+    cursor: col-resize;
+}
+
+/* 空狀態按鈕改進 */
+.empty-state-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.empty-state-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+/* 手機版優化 */
+@media (max-width: 768px) {
+    .split-pane-toolbar {
+        padding: 8px 10px;
+        flex-wrap: wrap;
+    }
+    
+    .split-pane-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .split-pane-close {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    
+    .drag-indicator {
+        font-size: 18px;
+    }
+    
+    .drag-indicator i {
+        font-size: 36px;
+    }
+}

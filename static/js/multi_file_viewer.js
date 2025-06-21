@@ -319,6 +319,26 @@ function setupTabDragAndDrop() {
             tabsContainer.insertBefore(draggingTab, afterElement);
         }
     });
+    
+    // 設置標籤拖曳結束事件
+    tabsContainer.addEventListener('dragend', (e) => {
+        if (e.target.classList.contains('file-tab')) {
+            e.target.classList.remove('dragging');
+        }
+    });
+}
+
+// 處理分割視窗的雙擊事件
+function handleSplitPaneDoubleClick(pane) {
+    // 檢查是否有檔案
+    const content = document.getElementById(`split-${pane}-content`);
+    const emptyState = content.querySelector('.empty-state');
+    
+    if (emptyState && emptyState.style.display !== 'none') {
+        // 開啟檔案上傳對話框
+        currentUploadPane = pane;
+        openUploadModal();
+    }
 }
 
 // 允許標籤拖曳到分割視窗
@@ -1872,6 +1892,9 @@ function createSplitView() {
     // 設置分割視窗的拖放事件
     setupSplitPaneDragDrop();
 
+    // 設置雙擊事件
+    setupSplitPaneDoubleClick();
+
     // 加入拖曳指示器
     addDragIndicators();    
 }
@@ -1909,6 +1932,27 @@ function setupSplitPaneDragDrop() {
         
         // 處理拖放
         content.addEventListener('drop', (e) => handleDropForPane(e, pane), false);
+
+        // 確保空狀態也能接收拖放
+        const emptyState = content.querySelector('.empty-state');
+        if (emptyState) {
+            ['dragenter', 'dragover'].forEach(eventName => {
+                emptyState.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    content.classList.add('drag-over');
+                    showDragIndicator(pane);
+                }, false);
+            });
+            
+            emptyState.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                content.classList.remove('drag-over');
+                hideDragIndicator(pane);
+                handleDropForPane(e, pane);
+            }, false);
+        }        
     });
 }
 
@@ -1940,6 +1984,20 @@ function hideDragIndicator(pane) {
     if (indicator) {
         indicator.classList.remove('show');
     }
+}
+
+// 設置分割視窗雙擊事件
+function setupSplitPaneDoubleClick() {
+    ['left', 'right'].forEach(pane => {
+        const content = document.getElementById(`split-${pane}-content`);
+        if (content) {
+            content.addEventListener('dblclick', (e) => {
+                if (e.target.closest('.empty-state')) {
+                    handleSplitPaneDoubleClick(pane);
+                }
+            });
+        }
+    });
 }
 
 // 設置分割線拖動
@@ -2012,7 +2070,9 @@ window.closeSplitPane = function(pane) {
     divider.style.display = 'none';
     
     // 讓另一側填滿整個空間
-    oppositeContent.parentElement.style.flex = '1 1 100%';
+    if (oppositeContent && oppositeContent.parentElement) {
+        oppositeContent.parentElement.style.flex = '1 1 100%';
+    }
     
     // 更新狀態
     splitViewState[pane] = null;
@@ -2266,13 +2326,17 @@ window.refreshPane = function(pane) {
 function handleDropForPane(event, pane) {
     event.preventDefault();
     event.stopPropagation();
-    
+
+    // 確保 currentUploadPane 設置正確
+    currentUploadPane = pane;
+
     // 先檢查是否是內部拖曳（從檔案樹拖曳）
     const jsonData = event.dataTransfer.getData('application/json');
     if (jsonData) {
         try {
             const draggedItem = JSON.parse(jsonData);
             if (draggedItem.type === 'file') {
+                // 從檔案樹拖曳
                 const virtualFile = {
                     name: draggedItem.name,
                     path: draggedItem.path,
@@ -2284,10 +2348,29 @@ function handleDropForPane(event, pane) {
                 // 處理從標籤拖曳
                 const tab = currentTabs.find(t => t.id === draggedItem.tabId);
                 if (tab) {
-                    tab.splitPane = pane;
-                    loadFileToPane(tab, pane);
-                    renderTabs();
-                    showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${tab.name}`, 'success');
+                    // 先檢查檔案是否已經載入
+                    if (!tab.content || tab.loading) {
+                        // 如果還沒載入，先載入內容
+                        showToast('正在載入檔案內容...', 'info');
+                        
+                        // 設置載入狀態
+                        const content = document.getElementById(`split-${pane}-content`);
+                        content.innerHTML = `
+                            <div class="loading-state">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>載入中...</p>
+                            </div>
+                        `;
+                        
+                        // 載入檔案內容
+                        loadFileContentForPane(tab.path, tab.id, tab.isLocal, pane);
+                    } else {
+                        // 如果已經載入，直接顯示                    
+                        tab.splitPane = pane;
+                        loadFileToPane(tab, pane);
+                        renderTabs();
+                        showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${tab.name}`, 'success');
+                    }
                 }
             }            
             return;
@@ -2314,7 +2397,26 @@ function handleDropForPane(event, pane) {
 // 修復上傳後的處理
 async function handleFilesAsync(files) {
     if (!files || files.length === 0) return;
-    
+
+    // 如果在分割視窗模式但沒有指定面板，預設使用左側
+    if (splitView && !currentUploadPane) {
+        // 檢查哪個面板是空的
+        const leftEmpty = !splitViewState.left;
+        const rightEmpty = !splitViewState.right;
+        
+        if (leftEmpty && !rightEmpty) {
+            currentUploadPane = 'left';
+        } else if (!leftEmpty && rightEmpty) {
+            currentUploadPane = 'right';
+        } else if (leftEmpty && rightEmpty) {
+            // 兩邊都空，預設左側
+            currentUploadPane = 'left';
+        } else {
+            // 兩邊都有檔案，使用左側
+            currentUploadPane = 'left';
+        }
+    }
+
     // 確保不會開啟重複檔案
     const uniqueFiles = files.filter((file, index, self) => 
         index === self.findIndex(f => f.name === file.name && f.size === file.size)
@@ -2393,17 +2495,29 @@ function handleDroppedFile(virtualFile, pane) {
         renderTabs();
     } else {
         // 開啟新檔案
-        const newTab = openFile(virtualFile, false);
-        if (newTab) {
+        // 先創建標籤但不切換
+        openFile(virtualFile, false);
+        
+        // 等待標籤創建完成
             setTimeout(() => {
                 const tab = currentTabs.find(t => t.path === virtualFile.path);
                 if (tab) {
                     tab.splitPane = pane;
-                    loadFileToPane(tab, pane);
+                    // 確保檔案內容載入到正確的面板
+                    if (!tab.content || tab.loading) {
+                        // 直接載入到指定面板
+                        const content = document.getElementById(`split-${pane}-content`);
+                        if (content) {
+                            const emptyState = content.querySelector('.empty-state');
+                            if (emptyState) emptyState.style.display = 'none';
+                        }
+                        loadFileContentForPane(tab.path, tab.id, tab.isLocal, pane);
+                    } else {                    
+                        loadFileToPane(tab, pane);
+                    }
                     renderTabs();
                 }
             }, 100);
-        }
     }
     
     showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${virtualFile.name}`, 'success');
@@ -2417,7 +2531,12 @@ function loadFileToPane(tab, pane) {
     if (content && tab) {
         content.innerHTML = '';
         content.dataset.tabId = tab.id;
+        content.dataset.filePath = tab.path;
         
+        // 隱藏空狀態
+        const emptyState = document.getElementById(`split-${pane}-empty`);
+        if (emptyState) emptyState.style.display = 'none';
+
         if (tab.content && !tab.loading) {
             // 如果內容已載入，直接複製
             const iframe = tab.content.querySelector('iframe');
@@ -2615,6 +2734,9 @@ function handleFiles(files) {
 // 渲染已上傳檔案
 function renderUploadedFiles() {
     const filesList = document.getElementById('files-list');
+    const uploadedFilesContainer = document.getElementById('uploaded-files');
+    
+    if (!filesList || !uploadedFilesContainer) return;    
     filesList.innerHTML = '';
     
     uploadedFiles.forEach((file, index) => {
@@ -2630,7 +2752,7 @@ function renderUploadedFiles() {
         filesList.appendChild(fileDiv);
     });
     
-    document.getElementById('uploaded-files').style.display = uploadedFiles.length > 0 ? 'block' : 'none';
+    uploadedFilesContainer.style.display = uploadedFiles.length > 0 ? 'block' : 'none';
 }
 
 // 移除已上傳檔案

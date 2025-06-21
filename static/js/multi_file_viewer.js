@@ -1930,6 +1930,7 @@ function performPaneSearch() {
 // 切換分割視窗 - 修復邏輯
 function toggleSplitView() {
     splitView = !splitView;
+    window.splitView = splitView;
     const viewerContainer = document.getElementById('file-viewer');
     const splitBtn = document.querySelector('.btn-split');
     
@@ -2006,7 +2007,7 @@ function createSplitView() {
                         <button class="split-pane-btn" onclick="refreshPane('left')" title="重新整理">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <button class="split-pane-btn" onclick="toggleFullscreen()" title="全屏">
+                        <button class="split-pane-btn" onclick="togglePaneFullscreen('left')" title="全屏">
                             <i class="fas fa-maximize"></i>
                         </button>                         
                         <button class="split-pane-close" onclick="closeSplitPane('left')" title="關閉">
@@ -2043,7 +2044,7 @@ function createSplitView() {
                         <button class="split-pane-btn" onclick="refreshPane('right')" title="重新整理">
                             <i class="fas fa-sync-alt"></i>
                         </button>
-                        <button class="split-pane-btn" onclick="toggleFullscreen()" title="全屏">
+                        <button class="split-pane-btn" onclick="togglePaneFullscreen('right')" title="全屏">
                             <i class="fas fa-maximize"></i>
                         </button>                         
                         <button class="split-pane-close" onclick="closeSplitPane('right')" title="關閉">

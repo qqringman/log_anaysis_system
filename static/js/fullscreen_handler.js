@@ -631,9 +631,19 @@ class FullscreenHandler {
             document.msExitFullscreen();
         }
 
-        // 恢復原始 pane 的可見性
+        // 恢復原始 pane 的可見性（分割視窗模式）
         if (this.originalPane) {
             this.originalPane.style.visibility = '';
+        }
+
+        // 恢復原始內容（非分割視窗模式）
+        if (this.fullscreenElement && this.originalParent) {
+            // 重置元素樣式
+            this.fullscreenElement.style.width = '';
+            this.fullscreenElement.style.height = '';
+            
+            // 將元素移回原始位置
+            this.originalParent.appendChild(this.fullscreenElement);
         }
 
         // 移除全屏容器
@@ -653,8 +663,30 @@ class FullscreenHandler {
             this.currentPane = null;
         }
 
+        // 檢查是否需要顯示空狀態
+        if (!window.splitView) {
+            const viewerContainer = document.getElementById('file-viewer');
+            if (viewerContainer && viewerContainer.children.length === 0) {
+                // 如果沒有內容，顯示空狀態
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                emptyState.id = 'empty-state';
+                emptyState.innerHTML = `
+                    <i class="fas fa-file-alt"></i>
+                    <h5>選擇檔案開始瀏覽</h5>
+                    <p>從左側檔案樹選擇檔案，或拖曳檔案到此處</p>
+                    <button class="empty-state-btn" onclick="openUploadModal()">
+                        <i class="fas fa-upload"></i>
+                        上傳檔案
+                    </button>
+                `;
+                viewerContainer.appendChild(emptyState);
+            }
+        }
+
         this.isFullscreen = false;
         this.fullscreenElement = null;
+        this.originalParent = null;
         this.originalPane = null;
         this.originalContent = null;
         this.fullscreenContainer = null;

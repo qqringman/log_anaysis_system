@@ -27,17 +27,6 @@ let isProcessingDrop = false; // 防止重複處理拖放
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
 
-    document.addEventListener('click', function(e) {
-        const sidebar = document.getElementById('sidebar');
-        const searchInput = document.getElementById('search-input');
-        
-        // 如果側邊欄是縮合狀態，且點擊了搜尋框
-        if (sidebar.classList.contains('collapsed') && e.target === searchInput) {
-            e.preventDefault();
-            searchInput.focus();
-        }
-    });
-
     // 等待一下確保所有元素都載入
     setTimeout(() => {
         // 檢查是否有儲存的狀態
@@ -1594,6 +1583,12 @@ function toggleSidebar() {
             sidebar.classList.remove('collapsed');
             toggleIcon.className = 'fas fa-chevron-left';
         }
+        // 重新渲染當前視圖
+        if (currentView === 'recent') {
+            renderRecentFiles();
+        } else if (currentView === 'saved') {
+            renderSavedWorkspaces();
+        }        
     }
 }
 
@@ -1693,36 +1688,111 @@ function renderRecentFiles() {
     const container = document.getElementById('groups-container');
     container.innerHTML = '';
     
-    const recentDiv = document.createElement('div');
-    recentDiv.className = 'recent-files';
+    const sidebar = document.getElementById('sidebar');
+    const isCollapsed = sidebar.classList.contains('collapsed');
     
-    if (recentFiles.length === 0) {
-        recentDiv.innerHTML = `
-            <div class="empty-state" style="padding: 40px;">
-                <i class="fas fa-clock" style="font-size: 48px;"></i>
-                <h6 style="margin-top: 15px;">沒有最近開啟的檔案</h6>
-            </div>
-        `;
-    } else {
-        recentFiles.forEach(file => {
-            const fileDiv = document.createElement('div');
-            fileDiv.className = 'recent-file';
-            fileDiv.onclick = () => openFile(file);
-            
-            fileDiv.innerHTML = `
-                <i class="fas fa-file-alt recent-file-icon"></i>
-                <div class="recent-file-info">
-                    <div class="recent-file-name">${file.name}</div>
-                    <div class="recent-file-path">${file.path}</div>
+    if (isCollapsed) {
+        // 收合模式 - 顯示圖標列表
+        if (recentFiles.length === 0) {
+            container.innerHTML = `
+                <div class="empty-icon-state">
+                    <i class="fas fa-clock" style="font-size: 24px; color: #999;"></i>
                 </div>
-                <div class="recent-file-time">${formatTime(file.openedAt)}</div>
             `;
+        } else {
+            // 只顯示前 8 個最近檔案
+            const displayFiles = recentFiles.slice(0, 8);
+            displayFiles.forEach((file, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'group-item';
+                
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item standalone-file recent-file-icon-item';
+                fileItem.onclick = () => openFile(file);
+                fileItem.setAttribute('data-tooltip', file.name);
+                
+                const mainContainer = document.createElement('div');
+                mainContainer.style.display = 'flex';
+                mainContainer.style.alignItems = 'center';
+                mainContainer.style.justifyContent = 'center';
+                mainContainer.style.width = '100%';
+                
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-history item-icon';
+                icon.style.fontSize = '20px';
+                
+                // 根據時間設置不同的透明度
+                const hoursSinceOpen = (new Date() - new Date(file.openedAt)) / (1000 * 60 * 60);
+                if (hoursSinceOpen < 1) {
+                    icon.style.opacity = '1';
+                } else if (hoursSinceOpen < 24) {
+                    icon.style.opacity = '0.8';
+                } else {
+                    icon.style.opacity = '0.6';
+                }
+                
+                mainContainer.appendChild(icon);
+                fileItem.appendChild(mainContainer);
+                
+                // 添加時間標記
+                if (index < 3) {
+                    const badge = document.createElement('span');
+                    badge.className = 'recent-time-badge';
+                    badge.textContent = index + 1;
+                    fileItem.appendChild(badge);
+                }
+                
+                fileDiv.appendChild(fileItem);
+                container.appendChild(fileDiv);
+            });
             
-            recentDiv.appendChild(fileDiv);
-        });
+            // 如果有更多檔案，顯示一個"更多"按鈕
+            if (recentFiles.length > 8) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'group-item';
+                
+                const moreItem = document.createElement('div');
+                moreItem.className = 'more-items-button';
+                moreItem.setAttribute('data-tooltip', `還有 ${recentFiles.length - 8} 個檔案`);
+                moreItem.innerHTML = `<i class="fas fa-ellipsis-h"></i>`;
+                
+                moreDiv.appendChild(moreItem);
+                container.appendChild(moreDiv);
+            }
+        }
+    } else {
+        // 展開模式 - 保持原有的列表顯示
+        const recentDiv = document.createElement('div');
+        recentDiv.className = 'recent-files';
+        
+        if (recentFiles.length === 0) {
+            recentDiv.innerHTML = `
+                <div class="empty-state" style="padding: 40px;">
+                    <i class="fas fa-clock" style="font-size: 48px;"></i>
+                    <h6 style="margin-top: 15px;">沒有最近開啟的檔案</h6>
+                </div>
+            `;
+        } else {
+            recentFiles.forEach(file => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'recent-file';
+                fileDiv.onclick = () => openFile(file);
+                
+                fileDiv.innerHTML = `
+                    <i class="fas fa-file-alt recent-file-icon"></i>
+                    <div class="recent-file-info">
+                        <div class="recent-file-name">${file.name}</div>
+                        <div class="recent-file-path">${file.path}</div>
+                    </div>
+                    <div class="recent-file-time">${formatTime(file.openedAt)}</div>
+                `;
+                
+                recentDiv.appendChild(fileDiv);
+            });
+        }
+        
+        container.appendChild(recentDiv);
     }
-    
-    container.appendChild(recentDiv);
 }
 
 // 渲染已儲存的工作區
@@ -1730,40 +1800,111 @@ function renderSavedWorkspaces() {
     const container = document.getElementById('groups-container');
     container.innerHTML = '';
     
+    const sidebar = document.getElementById('sidebar');
+    const isCollapsed = sidebar.classList.contains('collapsed');
+    
     const savedDiv = document.createElement('div');
     savedDiv.className = 'saved-workspaces';
     
     fetch('/api/multi_viewer/list')
         .then(response => response.json())
         .then(data => {
-            if (data.length === 0) {
-                savedDiv.innerHTML = `
-                    <div class="empty-state" style="padding: 40px;">
-                        <i class="fas fa-save" style="font-size: 48px;"></i>
-                        <h6 style="margin-top: 15px;">沒有已儲存的工作區</h6>
-                    </div>
-                `;
-            } else {
-                data.forEach(workspace => {
-                    const workspaceDiv = document.createElement('div');
-                    workspaceDiv.dataset.workspaceId = workspace.id;
-                    workspaceDiv.className = 'workspace-item';
-                    workspaceDiv.onclick = () => loadWorkspace(workspace.id);
-                    
-                    workspaceDiv.innerHTML = `
-                        <div class="workspace-name">${workspace.name}</div>
-                        <div class="workspace-info">
-                            <i class="fas fa-user"></i> ${workspace.created_by} | 
-                            <i class="fas fa-clock"></i> ${formatTime(workspace.created_at)} | 
-                            <i class="fas fa-eye"></i> ${workspace.view_count}
+            if (isCollapsed) {
+                // 收合模式 - 顯示圖標列表
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-icon-state">
+                            <i class="fas fa-save" style="font-size: 24px; color: #999;"></i>
                         </div>
                     `;
+                } else {
+                    // 只顯示前 6 個工作區
+                    const displayWorkspaces = data.slice(0, 6);
+                    displayWorkspaces.forEach((workspace, index) => {
+                        const workspaceDiv = document.createElement('div');
+                        workspaceDiv.className = 'group-item';
+                        
+                        const workspaceItem = document.createElement('div');
+                        workspaceItem.className = 'workspace-item-icon standalone-file';
+                        workspaceItem.onclick = () => loadWorkspace(workspace.id);
+                        workspaceItem.setAttribute('data-tooltip', workspace.name);
+                        
+                        const mainContainer = document.createElement('div');
+                        mainContainer.style.display = 'flex';
+                        mainContainer.style.alignItems = 'center';
+                        mainContainer.style.justifyContent = 'center';
+                        mainContainer.style.width = '100%';
+                        
+                        const icon = document.createElement('i');
+                        // 根據是否為私密工作區顯示不同圖標
+                        if (workspace.is_public) {
+                            icon.className = 'fas fa-folder-open workspace-icon';
+                        } else {
+                            icon.className = 'fas fa-lock workspace-icon';
+                        }
+                        icon.style.fontSize = '20px';
+                        
+                        mainContainer.appendChild(icon);
+                        workspaceItem.appendChild(mainContainer);
+                        
+                        // 為前三個添加編號
+                        if (index < 3) {
+                            const badge = document.createElement('span');
+                            badge.className = 'workspace-number-badge';
+                            badge.textContent = index + 1;
+                            workspaceItem.appendChild(badge);
+                        }
+                        
+                        workspaceDiv.appendChild(workspaceItem);
+                        container.appendChild(workspaceDiv);
+                    });
                     
-                    savedDiv.appendChild(workspaceDiv);
-                });
+                    // 如果有更多工作區，顯示一個"更多"按鈕
+                    if (data.length > 6) {
+                        const moreDiv = document.createElement('div');
+                        moreDiv.className = 'group-item';
+                        
+                        const moreItem = document.createElement('div');
+                        moreItem.className = 'more-items-button';
+                        moreItem.setAttribute('data-tooltip', `還有 ${data.length - 6} 個工作區`);
+                        moreItem.innerHTML = `<i class="fas fa-ellipsis-h"></i>`;
+                        
+                        moreDiv.appendChild(moreItem);
+                        container.appendChild(moreDiv);
+                    }
+                }
+            } else {
+                // 展開模式 - 保持原有的列表顯示
+                if (data.length === 0) {
+                    savedDiv.innerHTML = `
+                        <div class="empty-state" style="padding: 40px;">
+                            <i class="fas fa-save" style="font-size: 48px;"></i>
+                            <h6 style="margin-top: 15px;">沒有已儲存的工作區</h6>
+                        </div>
+                    `;
+                } else {
+                    data.forEach(workspace => {
+                        const workspaceDiv = document.createElement('div');
+                        workspaceDiv.dataset.workspaceId = workspace.id;
+                        workspaceDiv.className = 'workspace-item';
+                        workspaceDiv.onclick = () => loadWorkspace(workspace.id);
+                        
+                        workspaceDiv.innerHTML = `
+                            <div class="workspace-name">${workspace.name}</div>
+                            <div class="workspace-info">
+                                <i class="fas fa-user"></i> ${workspace.created_by} | 
+                                <i class="fas fa-clock"></i> ${formatTime(workspace.created_at)} | 
+                                <i class="fas fa-eye"></i> ${workspace.view_count}
+                            </div>
+                        `;
+                        
+                        savedDiv.appendChild(workspaceDiv);
+                    });
+                }
+                
+                container.appendChild(savedDiv);
             }
             
-            container.appendChild(savedDiv);
             document.getElementById('saved-count').textContent = data.length;
         })
         .catch(error => {

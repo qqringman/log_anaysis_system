@@ -1775,240 +1775,540 @@ input:checked + .toggle-slider:before {
     border-radius: 2px;
 }
 
-/* 側邊欄縮合時的搜尋框樣式 */
-.sidebar.collapsed .sidebar-search {
-    padding: 10px 5px;
+
+
+
+/* 側邊欄收合美化樣式 - 簡潔現代風格 */
+
+/* ===== 側邊欄基礎樣式 ===== */
+.sidebar.collapsed {
+    background: #ffffff;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    border-right: 1px solid #e0e0e0;
+}
+
+/* ===== 導航區域 ===== */
+.sidebar.collapsed .sidebar-nav {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 0;
+}
+
+/* ===== 導航項目 ===== */
+.sidebar.collapsed .nav-item {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    margin: 4px auto;
+    padding: 0;
     display: flex;
+    align-items: center;
     justify-content: center;
+    border-radius: 10px;
+    background: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+/* hover 時的左側邊條 */
+.sidebar.collapsed .nav-item::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: #667eea;
+    border-radius: 0 3px 3px 0;
+    transition: height 0.2s ease;
+}
+
+.sidebar.collapsed .nav-item:hover::after {
+    height: 24px;
+}
+
+.sidebar.collapsed .nav-item:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.sidebar.collapsed .nav-item.active {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.sidebar.collapsed .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 24px;
+    background: #667eea;
+    border-radius: 0 3px 3px 0;
+}
+
+/* 導航圖標 */
+.sidebar.collapsed .nav-icon {
+    font-size: 20px;
+    margin: 0;
+    color: #6c757d;
+    transition: color 0.2s ease;
+}
+
+.sidebar.collapsed .nav-item:hover .nav-icon {
+    color: #495057;
+}
+
+.sidebar.collapsed .nav-item.active .nav-icon {
+    color: #667eea;
+}
+
+/* 徽章 */
+.sidebar.collapsed .nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 5px;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 9px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+}
+
+/* ===== 搜尋區域 ===== */
+.sidebar.collapsed .sidebar-search {
+    padding: 10px;
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .sidebar.collapsed .search-wrapper {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    margin: 0px 0px 0px 10px;
 }
 
-/* 隱藏輸入框，但保留功能 */
+/* hover 時的左側邊條 */
+.sidebar.collapsed .search-wrapper::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: #667eea;
+    border-radius: 0 3px 3px 0;
+    transition: height 0.2s ease;
+    margin: 0px 0px 0px -12px;
+}
+
+.sidebar.collapsed .search-wrapper:hover::after {
+    height: 24px;
+}
+
+.sidebar.collapsed .search-wrapper.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 24px;
+    background: #667eea;
+    border-radius: 0 3px 3px 0;
+}
+
 .sidebar.collapsed .search-input {
-    width: 40px;
-    height: 40px;
+    position: absolute;
+    width: 44px;
+    height: 44px;
     padding: 0;
-    border-radius: 50%;
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    cursor: pointer;
-    opacity: 0; /* 完全透明 */
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 2;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    cursor: default;
+    opacity: 0;
+    z-index: -1;
+    pointer-events: none;
 }
 
-.sidebar.collapsed .search-input:hover ~ .search-icon {
-    background: #e9ecef;
-    border-color: #667eea;
-    color: #667eea;
-}
-
-/* 放大鏡圖標作為按鈕背景 */
 .sidebar.collapsed .search-icon {
-    position: absolute;
-    top: 20px;
-    left: 0;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    color: #666;
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 50%;
+    font-size: 20px;
+    color: #6c757d;
+    background: transparent;
+    border-radius: 10px;
     pointer-events: none;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    position: relative; /* 改為相對定位 */
 }
 
-/* 點擊搜尋圖標時展開 */
-.sidebar.collapsed .search-input:focus {
-    width: 200px;
-    opacity: 1;
-    border-radius: 20px;
-    padding: 8px 35px 8px 12px;
-    background: white;
-    z-index: 10;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.sidebar.collapsed .search-input:focus ~ .search-icon {
-    width: auto;
-    height: auto;
-    left: auto;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: #667eea;
-}
-
-/* 添加工具提示 */
-.sidebar.collapsed .search-wrapper:hover::after {
-    content: "搜尋檔案";
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 10px;
-    padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    border-radius: 6px;
-    font-size: 12px;
-    white-space: nowrap;
-    z-index: 1000;
-    pointer-events: none;
-}
-
-.sidebar.collapsed .search-wrapper:hover::before {
-    content: '';
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 6px;
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 4px 4px 4px 0;
-    border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent;
-}
-
-/* 點擊時展開搜尋框 */
-.sidebar.collapsed .search-input:focus {
-    width: 90%;
-    border-radius: 20px;
-    padding: 8px 25px 8px 12px;
-    font-size: 14px;
+.sidebar.collapsed .search-wrapper:hover .search-icon {
+    background: rgba(102, 126, 234, 0.05);
     color: #495057;
-    text-align: left;
 }
 
-.sidebar.collapsed .search-input:focus + .search-icon {
-    left: auto;
-    right: 12px;
-    transform: translateY(-50%);
+/* ===== 群組容器 ===== */
+.sidebar.collapsed .groups-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
 }
 
-/* 側邊欄縮合時的群組樣式 */
+/* 滾動條 */
+.sidebar.collapsed .groups-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar.collapsed .groups-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.sidebar.collapsed .groups-container::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 2px;
+}
+
+/* ===== 群組項目 ===== */
 .sidebar.collapsed .group-item {
     margin-bottom: 8px;
     padding: 0;
+    background: transparent;
+    box-shadow: none;
+    position: relative;
 }
 
-.sidebar.collapsed .group-header {
-    padding: 12px;
+/* hover 時的左側邊條 */
+.sidebar.collapsed .group-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: #667eea;
+    border-radius: 0 3px 3px 0;
+    transition: height 0.2s ease;
+}
+
+.sidebar.collapsed .group-item:hover::before {
+    height: 30px;
+}
+
+.sidebar.collapsed .group-header,
+.sidebar.collapsed .folder-header,
+.sidebar.collapsed .standalone-file,
+.sidebar.collapsed .recent-file-icon-item,
+.sidebar.collapsed .workspace-item-icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    padding: 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    background: white;
-    border-radius: 8px;
+    border-radius: 10px;
+    background: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.sidebar.collapsed .group-header:hover,
+.sidebar.collapsed .folder-header:hover,
+.sidebar.collapsed .standalone-file:hover,
+.sidebar.collapsed .recent-file-icon-item:hover,
+.sidebar.collapsed .workspace-item-icon:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+/* 圖標樣式 */
+.sidebar.collapsed .group-icon,
+.sidebar.collapsed .group-icon-orange,
+.sidebar.collapsed .item-icon,
+.sidebar.collapsed .workspace-icon {
+    font-size: 20px;
     margin: 0;
+    transition: all 0.2s ease;
 }
 
 .sidebar.collapsed .group-icon {
-    margin: 0;
-    font-size: 20px;
+    color: #667eea;
 }
 
-.sidebar.collapsed .group-name {
-    display: none;
-}
-
-/* 隱藏縮合時的檔案樹 */
-.sidebar.collapsed .folder-tree {
-    display: none !important;
-}
-
-/* 資料夾圖標樣式 */
-.sidebar.collapsed .folder-header {
-    padding: 12px;
-    justify-content: center;
-}
-
-.sidebar.collapsed .folder-header .folder-tree-toggle {
-    display: none;
-}
-
-.sidebar.collapsed .folder-header .group-icon-orange {
-    margin: 0;
-    font-size: 20px;
+.sidebar.collapsed .group-icon-orange {
     color: #f39c12;
 }
 
-.sidebar.collapsed .folder-header .group-name {
-    display: none;
+.sidebar.collapsed .item-icon {
+    color: #667eea;
+}
+
+.sidebar.collapsed .recent-file-icon-item .item-icon {
+    color: #e74c3c;
+}
+
+.sidebar.collapsed .workspace-icon {
+    color: #28a745;
+}
+
+.sidebar.collapsed .workspace-icon.fa-lock {
+    color: #ffc107;
+}
+
+/* 計數徽章 */
+.sidebar.collapsed .group-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
+    padding: 0 5px;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 9px;
+    background: #667eea;
+    color: white;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.collapsed .folder-header .group-count {
+    background: #f39c12;
+}
+
+/* 時間/編號徽章 */
+.sidebar.collapsed .recent-time-badge,
+.sidebar.collapsed .workspace-number-badge {
     position: absolute;
-    top: 0;
-    right: 0;
-    background: #e74c3c;
-    color: white;
-    font-size: 10px;
-    padding: 2px 5px;
-    border-radius: 10px;
-    min-width: 16px;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    line-height: 18px;
     text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 9px;
+    color: white;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* 單獨檔案項目在縮合時的樣式 */
-.sidebar.collapsed .single-file-item .standalone-file {
-    padding: 12px;
+.sidebar.collapsed .recent-time-badge {
+    background: #e74c3c;
+}
+
+.sidebar.collapsed .workspace-number-badge {
+    background: #28a745;
+}
+
+/* ===== 更多按鈕 ===== */
+.sidebar.collapsed .more-items-button {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
     justify-content: center;
+    border-radius: 10px;
+    background: transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
 }
 
-.sidebar.collapsed .standalone-file .item-icon {
-    margin: 0;
+.sidebar.collapsed .more-items-button i {
+    font-size: 18px;
+    color: #6c757d;
+}
+
+.sidebar.collapsed .more-items-button:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.sidebar.collapsed .more-items-button:hover i {
+    color: #667eea;
+}
+
+/* ===== 空狀態 ===== */
+.sidebar.collapsed .empty-icon-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    opacity: 0.3;
+}
+
+.sidebar.collapsed .empty-icon-state i {
+    font-size: 32px;
+    color: #ccc;
+}
+
+/* ===== 設定按鈕 ===== */
+.sidebar.collapsed .sidebar-settings {
+    padding: 10px;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+}
+
+.sidebar.collapsed .settings-btn {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    padding: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.sidebar.collapsed .settings-btn:hover {
+    background: #f5f7fa;
+    border-color: #667eea;
+}
+
+.sidebar.collapsed .settings-btn i {
     font-size: 20px;
+    color: #6c757d;
+    transition: all 0.3s ease;
 }
 
-.sidebar.collapsed .standalone-file .item-name {
-    display: none;
+.sidebar.collapsed .settings-btn:hover i {
+    color: #667eea;
+    transform: rotate(30deg);
 }
 
-/* 為縮合的項目添加工具提示 */
-.sidebar.collapsed .group-header:hover::after,
-.sidebar.collapsed .folder-header:hover::after,
-.sidebar.collapsed .standalone-file:hover::after {
+/* ===== 工具提示 ===== */
+.sidebar.collapsed [data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
-    left: 100%;
-    top: 29%;
+    left: calc(100% + 12px);
+    top: 50%;
     transform: translateY(-50%);
-    margin-left: 10px;
     padding: 6px 12px;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.8);
     color: white;
     border-radius: 6px;
     font-size: 12px;
+    font-weight: 400;
     white-space: nowrap;
     z-index: 1000;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
-.sidebar.collapsed .group-header:hover::before,
-.sidebar.collapsed .folder-header:hover::before,
-.sidebar.collapsed .standalone-file:hover::before {
+.sidebar.collapsed [data-tooltip]:hover::after {
+    opacity: 1;
+}
+
+/* 箭頭 */
+.sidebar.collapsed [data-tooltip]::before {
     content: '';
     position: absolute;
-    left: 100%;
-    top: 29%;
+    left: calc(100% + 6px);
+    top: 50%;
     transform: translateY(-50%);
-    margin-left: 6px;
     width: 0;
     height: 0;
     border-style: solid;
-    border-width: 4px 4px 4px 0;
+    border-width: 4px 6px 4px 0;
+    border-color: transparent rgba(0, 0, 0, 0.8) transparent transparent;
+    opacity: 0;
+    transition: opacity 0.2s ease;
     z-index: 1000;
-    border-color: transparent rgba(0, 0, 0, 0.9) transparent transparent;
+}
+
+.sidebar.collapsed [data-tooltip]:hover::before {
+    opacity: 1;
+}
+
+/* ===== 側邊欄切換按鈕 ===== */
+.sidebar-toggle {
+    position: absolute;
+    top: 50%;
+    right: -15px;
+    transform: translateY(-50%);
+    background: white !important;
+    border: 1px solid #e0e0e0 !important;
+    width: 30px;
+    height: 48px;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s ease;
+}
+
+.sidebar-toggle:hover {
+    background: #f8f9fa !important;
+}
+
+.sidebar-toggle i {
+    font-size: 12px !important;
+    color: #6c757d !important;
+}
+
+/* ===== 深色模式支援 ===== */
+@media (prefers-color-scheme: dark) {
+    .sidebar.collapsed {
+        background: #2a2a2a;
+        border-right: 1px solid #3a3a3a;
+    }
+    
+    .sidebar.collapsed .nav-item:hover,
+    .sidebar.collapsed .search-wrapper:hover .search-icon,
+    .sidebar.collapsed .group-header:hover,
+    .sidebar.collapsed .folder-header:hover,
+    .sidebar.collapsed .standalone-file:hover,
+    .sidebar.collapsed .settings-btn:hover {
+        background: #3a3a3a;
+    }
+    
+    .sidebar.collapsed .group-header,
+    .sidebar.collapsed .folder-header,
+    .sidebar.collapsed .standalone-file,
+    .sidebar.collapsed .settings-btn {
+        background: #333;
+        border-color: #444;
+    }
+    
+    .sidebar.collapsed [data-tooltip]::after {
+        background: #f8f9fa;
+        color: #212529;
+    }
+    
+    .sidebar.collapsed [data-tooltip]::before {
+        border-color: transparent #f8f9fa transparent transparent;
+    }
+}
+
+/* 防止文字顯示 */
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .group-name,
+.sidebar.collapsed .item-name {
+    display: none !important;
 }

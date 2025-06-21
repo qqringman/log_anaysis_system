@@ -254,15 +254,13 @@ body {
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
 }
 
 .folder-header {
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border-bottom: 2px solid #e9ecef;
     padding: 15px 20px;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 12px;
 }
 
 .sidebar.collapsed .folder-header {
@@ -278,6 +276,14 @@ body {
     text-align: center;
 }
 
+.sidebar.collapsed .fa-chevron-down {
+    font-size: 7px;    
+}
+
+.sidebar.collapsed .fa-chevron-right {
+    font-size: 7px;      
+}
+
 /* 單獨檔案項目 */
 .single-file-item {
     margin-bottom: 8px;
@@ -285,7 +291,6 @@ body {
 
 .standalone-file {
     background: white;
-    border: 2px solid #e9ecef;
     padding: 12px 20px;
     margin-bottom: 0;
     transition: all 0.2s ease;
@@ -509,7 +514,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    z-index: 100;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
@@ -2059,11 +2064,11 @@ input:checked + .toggle-slider:before {
 }
 
 .sidebar.collapsed .recent-file-icon-item .item-icon {
-    color: #e74c3c;
+    color: #667eea;
 }
 
 .sidebar.collapsed .workspace-icon {
-    color: #28a745;
+    color: #667eea;
 }
 
 .sidebar.collapsed .workspace-icon.fa-lock {
@@ -2241,35 +2246,6 @@ input:checked + .toggle-slider:before {
 
 .sidebar.collapsed [data-tooltip]:hover::before {
     opacity: 1;
-}
-
-/* ===== 側邊欄切換按鈕 ===== */
-.sidebar-toggle {
-    position: absolute;
-    top: 50%;
-    right: -15px;
-    transform: translateY(-50%);
-    background: white !important;
-    border: 1px solid #e0e0e0 !important;
-    width: 30px;
-    height: 48px;
-    border-radius: 0 8px 8px 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05) !important;
-    transition: all 0.2s ease;
-}
-
-.sidebar-toggle:hover {
-    background: #f8f9fa !important;
-}
-
-.sidebar-toggle i {
-    font-size: 12px !important;
-    color: #6c757d !important;
 }
 
 /* ===== 深色模式支援 ===== */

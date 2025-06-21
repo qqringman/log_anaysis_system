@@ -1700,8 +1700,8 @@ function renderRecentFiles() {
                 </div>
             `;
         } else {
-            // 只顯示前 8 個最近檔案
-            const displayFiles = recentFiles.slice(0, 8);
+            // 只顯示前 5 個最近檔案
+            const displayFiles = recentFiles.slice(0, 5);
             displayFiles.forEach((file, index) => {
                 const fileDiv = document.createElement('div');
                 fileDiv.className = 'group-item';
@@ -1735,19 +1735,19 @@ function renderRecentFiles() {
                 fileItem.appendChild(mainContainer);
                 
                 // 添加時間標記
-                if (index < 3) {
+                /*if (index < 3) {
                     const badge = document.createElement('span');
                     badge.className = 'recent-time-badge';
                     badge.textContent = index + 1;
                     fileItem.appendChild(badge);
-                }
+                }*/
                 
                 fileDiv.appendChild(fileItem);
                 container.appendChild(fileDiv);
             });
             
             // 如果有更多檔案，顯示一個"更多"按鈕
-            if (recentFiles.length > 8) {
+            if (recentFiles.length > 5) {
                 const moreDiv = document.createElement('div');
                 moreDiv.className = 'group-item';
                 
@@ -1818,8 +1818,8 @@ function renderSavedWorkspaces() {
                         </div>
                     `;
                 } else {
-                    // 只顯示前 6 個工作區
-                    const displayWorkspaces = data.slice(0, 6);
+                    // 只顯示前 5 個工作區
+                    const displayWorkspaces = data.slice(0, 5);
                     displayWorkspaces.forEach((workspace, index) => {
                         const workspaceDiv = document.createElement('div');
                         workspaceDiv.className = 'group-item';
@@ -1847,20 +1847,20 @@ function renderSavedWorkspaces() {
                         mainContainer.appendChild(icon);
                         workspaceItem.appendChild(mainContainer);
                         
-                        // 為前三個添加編號
+                        /* 為前三個添加編號
                         if (index < 3) {
                             const badge = document.createElement('span');
                             badge.className = 'workspace-number-badge';
                             badge.textContent = index + 1;
                             workspaceItem.appendChild(badge);
-                        }
+                        }*/
                         
                         workspaceDiv.appendChild(workspaceItem);
                         container.appendChild(workspaceDiv);
                     });
                     
                     // 如果有更多工作區，顯示一個"更多"按鈕
-                    if (data.length > 6) {
+                    if (data.length > 5) {
                         const moreDiv = document.createElement('div');
                         moreDiv.className = 'group-item';
                         

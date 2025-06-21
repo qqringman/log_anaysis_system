@@ -2006,6 +2006,9 @@ function createSplitView() {
                         <button class="split-pane-btn" onclick="refreshPane('left')" title="重新整理">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <button class="split-pane-btn" onclick="toggleFullscreen()" title="全屏">
+                            <i class="fas fa-maximize"></i>
+                        </button>                         
                         <button class="split-pane-close" onclick="closeSplitPane('left')" title="關閉">
                             <i class="fas fa-times"></i>
                         </button>                        
@@ -2040,6 +2043,9 @@ function createSplitView() {
                         <button class="split-pane-btn" onclick="refreshPane('right')" title="重新整理">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <button class="split-pane-btn" onclick="toggleFullscreen()" title="全屏">
+                            <i class="fas fa-maximize"></i>
+                        </button>                         
                         <button class="split-pane-close" onclick="closeSplitPane('right')" title="關閉">
                             <i class="fas fa-times"></i>
                         </button>                        

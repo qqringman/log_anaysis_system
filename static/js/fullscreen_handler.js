@@ -20,6 +20,55 @@ class FullscreenHandler {
                 this.exitFullscreen();
             }
         });
+        // 添加樣式
+        this.addStyles();        
+    }
+
+    addStyles() {
+        if (document.getElementById('fullscreen-styles')) return;
+        
+        const style = document.createElement('style');
+        style.id = 'fullscreen-styles';
+        style.innerHTML = `
+            .fullscreen-toolbar-wrapper {
+                animation: slideDown 0.3s ease;
+            }
+            
+            @keyframes slideDown {
+                from { transform: translateY(-100%); }
+                to { transform: translateY(0); }
+            }
+            
+            .fullscreen-mobile-show-btn {
+                animation: fadeIn 0.3s ease;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            .fullscreen-mobile-show-btn:active {
+                transform: scale(0.95);
+            }
+            
+            /* 手機版優化 */
+            @media (max-width: 768px) {
+                .fullscreen-toolbar {
+                    padding: 8px 15px !important;
+                }
+                
+                .fullscreen-toolbar > div:first-child {
+                    font-size: 13px !important;
+                }
+                
+                .fullscreen-toolbar button {
+                    font-size: 13px !important;
+                    padding: 5px 12px !important;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     // 切換全屏
@@ -76,6 +125,32 @@ class FullscreenHandler {
             flex-direction: column;
         `;
 
+        // 創建頂部工具列容器（用於動畫）
+        const toolbarWrapper = document.createElement('div');
+        toolbarWrapper.className = 'fullscreen-toolbar-wrapper';
+        toolbarWrapper.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10001;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        `;
+
+        // 創建觸發區域（隱藏的，在頂部）
+        const triggerArea = document.createElement('div');
+        triggerArea.className = 'fullscreen-trigger-area';
+        triggerArea.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            z-index: 10002;
+            cursor: ns-resize;
+        `;
+
         // 創建頂部工具列
         const toolbar = document.createElement('div');
         toolbar.className = 'fullscreen-toolbar';
@@ -84,14 +159,15 @@ class FullscreenHandler {
             align-items: center;
             justify-content: space-between;
             padding: 10px 20px;
-            background: #f8f9fa;
+            background: rgba(248, 249, 250, 0.95);
             border-bottom: 1px solid #e0e0e0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
         `;
 
         // 標題
         const title = document.createElement('div');
-        title.style.cssText = 'font-weight: 600; color: #333;';
+        title.style.cssText = 'font-weight: 600; color: #333; font-size: 14px;';
         
         // 檢查是否為分割視窗模式
         if (window.splitView) {
@@ -100,29 +176,22 @@ class FullscreenHandler {
             const fileName = paneTitle ? paneTitle.textContent : pane + '視窗';
             title.textContent = `全屏模式 - ${fileName}`;
         } else {
-            // 嘗試獲取當前檔案名稱
-            const viewerContainer = document.getElementById('file-viewer');
-            if (viewerContainer) {
-                // 從標籤頁獲取當前檔案名稱
-                const activeTab = document.querySelector('.file-tab.active .tab-title');
-                const fileName = activeTab ? activeTab.textContent : '檔案';
-                title.textContent = `全屏模式 - ${fileName}`;
-            } else {
-                title.textContent = '全屏模式';
-            }
+            // 從標籤頁獲取當前檔案名稱
+            const activeTab = document.querySelector('.file-tab.active .tab-title');
+            const fileName = activeTab ? activeTab.textContent : '檔案';
+            title.textContent = `全屏模式 - ${fileName}`;
         }
         toolbar.appendChild(title);
 
         // 退出按鈕
         const exitBtn = document.createElement('button');
-        exitBtn.className = 'fullscreen-exit-btn';
         exitBtn.innerHTML = '<i class="fas fa-compress"></i> 退出全屏 (ESC)';
         exitBtn.onclick = () => this.exitFullscreen();
         exitBtn.style.cssText = `
-            padding: 8px 16px;
+            padding: 6px 16px;
             border-radius: 8px;
-            border: 1px solid #ddd;
-            background: #667eea;
+            border: 2px solid #dc3545;
+            background: #dc3545;
             color: white;
             cursor: pointer;
             font-size: 14px;
@@ -131,36 +200,60 @@ class FullscreenHandler {
             align-items: center;
             gap: 6px;
             transition: all 0.2s ease;
+            min-height: 32px;
         `;
 
         // 添加 hover 效果
         exitBtn.onmouseover = () => {
-            exitBtn.style.background = '#5968d9';
-            exitBtn.style.transform = 'translateY(-1px)';
-            exitBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+            exitBtn.style.background = '#c82333';
+            exitBtn.style.borderColor = '#c82333';
         };
 
         exitBtn.onmouseout = () => {
-            exitBtn.style.background = '#667eea';
-            exitBtn.style.transform = 'translateY(0)';
-            exitBtn.style.boxShadow = 'none';
+            exitBtn.style.background = '#dc3545';
+            exitBtn.style.borderColor = '#dc3545';
         };
 
         toolbar.appendChild(exitBtn);
-
-        fullscreenContainer.appendChild(toolbar);
+        toolbarWrapper.appendChild(toolbar);
 
         // 內容區域
         const contentWrapper = document.createElement('div');
         contentWrapper.style.cssText = 'flex: 1; overflow: hidden; position: relative;';
         
+        // 手機版的顯示工具列按鈕
+        const mobileShowBtn = document.createElement('button');
+        mobileShowBtn.className = 'fullscreen-mobile-show-btn';
+        mobileShowBtn.innerHTML = '<i class="fas fa-angle-down"></i>';
+        mobileShowBtn.style.cssText = `
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            border: none;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10001;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        `;
+
         // 保存原始父元素
         this.originalParent = element.parentNode;
         this.fullscreenElement = element;
         
         // 移動元素到全屏容器
         contentWrapper.appendChild(element);
+        fullscreenContainer.appendChild(toolbarWrapper);
+        fullscreenContainer.appendChild(triggerArea);
         fullscreenContainer.appendChild(contentWrapper);
+        fullscreenContainer.appendChild(mobileShowBtn);
         document.body.appendChild(fullscreenContainer);
 
         // 設置全屏樣式
@@ -169,6 +262,71 @@ class FullscreenHandler {
 
         this.isFullscreen = true;
         this.fullscreenContainer = fullscreenContainer;
+
+        // 自動隱藏工具列的函數
+        let hideTimeout;
+        let isToolbarVisible = true;
+
+        const hideToolbar = () => {
+            toolbarWrapper.style.transform = 'translateY(-100%)';
+            isToolbarVisible = false;
+            
+            // 手機版顯示下拉按鈕
+            if (window.innerWidth <= 768) {
+                mobileShowBtn.style.display = 'flex';
+            }
+        };
+
+        const showToolbar = () => {
+            toolbarWrapper.style.transform = 'translateY(0)';
+            isToolbarVisible = true;
+            mobileShowBtn.style.display = 'none';
+            
+            // 重置自動隱藏計時器
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(hideToolbar, 3000);
+        };
+
+        // 設置自動隱藏
+        hideTimeout = setTimeout(hideToolbar, 3000);
+
+        // 滑鼠事件（桌面版）
+        if (window.innerWidth > 768) {
+            // 滑鼠移到頂部觸發區域時顯示工具列
+            triggerArea.addEventListener('mouseenter', showToolbar);
+            
+            // 滑鼠在工具列上時保持顯示
+            toolbarWrapper.addEventListener('mouseenter', () => {
+                clearTimeout(hideTimeout);
+            });
+            
+            // 滑鼠離開工具列時重新計時
+            toolbarWrapper.addEventListener('mouseleave', () => {
+                hideTimeout = setTimeout(hideToolbar, 3000);
+            });
+        }
+
+        // 手機版事件
+        mobileShowBtn.addEventListener('click', showToolbar);
+
+        // 觸控事件（手機版）
+        if (window.innerWidth <= 768) {
+            let touchStartY = 0;
+            
+            contentWrapper.addEventListener('touchstart', (e) => {
+                touchStartY = e.touches[0].clientY;
+            });
+            
+            contentWrapper.addEventListener('touchmove', (e) => {
+                const touchY = e.touches[0].clientY;
+                const deltaY = touchY - touchStartY;
+                
+                // 從頂部向下滑動超過 50px 時顯示工具列
+                if (deltaY > 50 && touchStartY < 100 && !isToolbarVisible) {
+                    showToolbar();
+                }
+            });
+        }
 
         // 使用瀏覽器原生全屏 API（如果支援）
         if (fullscreenContainer.requestFullscreen) {

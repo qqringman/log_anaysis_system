@@ -1781,7 +1781,7 @@ input:checked + .toggle-slider:before {
 }
 
 
-
+/*----------------------------------------------*/
 
 /* 側邊欄收合美化樣式 - 簡潔現代風格 */
 
@@ -2288,3 +2288,100 @@ input:checked + .toggle-slider:before {
 .sidebar.collapsed .item-name {
     display: none !important;
 }
+
+
+/*----------------------------------------------*/
+
+/* 圓形刪除按鈕樣式 */
+.delete-btn-circle {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.delete-btn-circle:hover {
+    background: #dc3545;
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* 在項目 hover 時顯示刪除按鈕 */
+.recent-file:hover .delete-btn-circle,
+.workspace-item:hover .delete-btn-circle {
+    display: flex;
+}
+
+/* 調整項目樣式以容納刪除按鈕 */
+.recent-file,
+.workspace-item {
+    position: relative;
+    padding-right: 40px; /* 為刪除按鈕留出空間 */
+}
+
+/* 手機版樣式 */
+@media (max-width: 768px) {
+    .delete-btn-circle {
+        display: flex; /* 手機版始終顯示 */
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+    
+    /* 觸控優化 */
+    @media (hover: none) {
+        .delete-btn-circle {
+            display: flex;
+        }
+    }
+}
+
+/* 側邊欄收合時的調整 */
+.sidebar.collapsed .delete-btn-circle {
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+}
+
+/* 在原有的 .delete-btn-circle 樣式中添加過渡效果 */
+.delete-btn-circle {
+    /* ... 原有樣式 ... */
+    transition: all 0.2s ease, opacity 0.3s ease;
+}
+
+/* 添加隱藏時的樣式 */
+.delete-btn-circle.hiding {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+/* 滑動激活時隱藏圓形刪除按鈕 */
+.swipe-active .delete-btn-circle {
+    display: none !important;
+}
+
+/* 確保在滑動過程中圓形按鈕不會干擾 */
+@media (max-width: 768px) {
+    .recent-file.swiping .delete-btn-circle,
+    .workspace-item.swiping .delete-btn-circle {
+        pointer-events: none;
+        opacity: 0;
+    }
+}
+
+/*----------------------------------------------*/

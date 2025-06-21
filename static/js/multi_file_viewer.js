@@ -1773,7 +1773,7 @@ function renderRecentFiles() {
                 </div>
             `;
         } else {
-            recentFiles.forEach(file => {
+            recentFiles.forEach((file, index) => {
                 const fileDiv = document.createElement('div');
                 fileDiv.className = 'recent-file';
                 fileDiv.onclick = () => openFile(file);
@@ -1785,6 +1785,9 @@ function renderRecentFiles() {
                         <div class="recent-file-path">${file.path}</div>
                     </div>
                     <div class="recent-file-time">${formatTime(file.openedAt)}</div>
+                    <button class="delete-btn-circle" onclick="deleteRecentFile(event, ${index})" title="刪除">
+                        <i class="fas fa-times"></i>
+                    </button>
                 `;
                 
                 recentDiv.appendChild(fileDiv);
@@ -1896,6 +1899,9 @@ function renderSavedWorkspaces() {
                                 <i class="fas fa-clock"></i> ${formatTime(workspace.created_at)} | 
                                 <i class="fas fa-eye"></i> ${workspace.view_count}
                             </div>
+                            <button class="delete-btn-circle" onclick="deleteWorkspace(event, '${workspace.id}')" title="刪除">
+                                <i class="fas fa-times"></i>
+                            </button>
                         `;
                         
                         savedDiv.appendChild(workspaceDiv);
@@ -3615,6 +3621,61 @@ function updateRecentCount() {
     badge.textContent = count;
     badge.style.display = count > 0 ? 'inline-block' : 'none';
 }
+
+// 刪除最近檔案
+window.deleteRecentFile = function(event, index) {
+    event.stopPropagation(); // 防止觸發項目的點擊事件
+    
+    if (confirm('確定要從最近檔案中移除嗎？')) {
+        recentFiles.splice(index, 1);
+        
+        // 更新 localStorage
+        if (document.getElementById('remember-recent')?.checked !== false) {
+            try {
+                localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
+            } catch (e) {
+                console.error('儲存最近檔案失敗:', e);
+            }
+        }
+        
+        // 重新渲染
+        renderRecentFiles();
+        updateRecentCount();
+        
+        showToast('已從最近檔案中移除', 'success');
+    }
+};
+
+// 刪除工作區
+window.deleteWorkspace = async function(event, workspaceId) {
+    event.stopPropagation(); // 防止觸發項目的點擊事件
+    
+    if (confirm('確定要刪除此工作區嗎？此操作無法復原。')) {
+        try {
+            const response = await fetch(`/api/multi_viewer/delete/${workspaceId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showToast('工作區已刪除', 'success');
+                
+                // 重新載入工作區列表
+                if (currentView === 'saved') {
+                    renderSavedWorkspaces();
+                }
+                
+                updateSavedCount();
+            } else {
+                showToast(result.message || '刪除失敗', 'error');
+            }
+        } catch (error) {
+            console.error('刪除工作區失敗:', error);
+            showToast('刪除失敗', 'error');
+        }
+    }
+};
 
 // 在初始化時載入設定
 loadSettings();

@@ -1692,3 +1692,38 @@ input:checked + .toggle-slider:before {
 .toolbar-btn:last-child {
     margin-left: auto;
 }
+
+/* 分割視窗按鈕狀態 */
+.toolbar-btn.btn-split {
+    transition: all 0.3s ease;
+}
+
+.toolbar-btn.btn-split.active {
+    background: #28a745 !important;
+}
+
+/* 文字編輯器行號樣式 */
+.text-editor-container .line-numbers {
+    background: #f0f0f0;
+    color: #999;
+    padding: 20px 10px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: right;
+    user-select: none;
+    min-width: 50px;
+    overflow: hidden;
+    border-right: 1px solid #e0e0e0;
+}
+
+.text-editor-container .editor-textarea {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* 確保編輯器正確顯示 */
+.text-editor-container {
+    background: white;
+}

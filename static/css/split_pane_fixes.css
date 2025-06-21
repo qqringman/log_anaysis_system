@@ -6,12 +6,20 @@
     cursor: pointer;
     user-select: none;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 /* 雙擊視覺反饋 */
 .split-pane-content .empty-state:active {
     transform: scale(0.98);
     background: rgba(102, 126, 234, 0.05);
+}
+
+/* 修復分割視窗關閉按鈕的點擊問題 */
+.split-pane-actions {
+    position: relative;
+    z-index: 100;
+    pointer-events: all;
 }
 
 /* 修復拖放時的視覺效果 */

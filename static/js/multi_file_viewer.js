@@ -1359,14 +1359,18 @@ function closeTab(tabId, event) {
     if (index > -1) {
         const tab = currentTabs[index];
         
-        // 如果是分割視窗的標籤，清理分割視窗狀態
-        if (tab.splitPane) {
-            if (splitViewState.left === tab.path) {
-                splitViewState.left = null;
+        // 如果是可編輯檔案，檢查是否已儲存
+        if (tab.isEditable && window.textEditor) {
+            if (!window.textEditor.handleUnsavedFileClose(tab)) {
+                return; // 用戶取消關閉
             }
-            if (splitViewState.right === tab.path) {
-                splitViewState.right = null;
-            }
+        }
+        
+        // 如果是分割視窗的檔案，關閉對應的分割視窗
+        if (tab.splitPane && splitView) {
+            // 關閉分割視窗
+            window.closeSplitPane(tab.splitPane);
+            return; // closeSplitPane 會處理後續邏輯
         }
         
         currentTabs.splice(index, 1);
@@ -2231,9 +2235,27 @@ window.swapPanes = function() {
 
 // 切換差異模式
 window.toggleDiffMode = function() {
-
     if (!splitViewState.left || !splitViewState.right) {
         showToast('請先在兩側都載入檔案', 'error');
+        return;
+    }
+
+    // 檢查檔案類型
+    const leftTab = currentTabs.find(t => t.path === splitViewState.left);
+    const rightTab = currentTabs.find(t => t.path === splitViewState.right);
+    
+    if (!leftTab || !rightTab) {
+        showToast('無法找到檔案資訊', 'error');
+        return;
+    }
+    
+    // 檢查是否為文字檔案
+    const textExtensions = ['.txt', '.log', '.csv', '.json', '.xml', '.js', '.css', '.html', '.py', '.java', '.cpp', '.md'];
+    const leftIsText = textExtensions.some(ext => leftTab.path.toLowerCase().endsWith(ext)) || leftTab.isEditable;
+    const rightIsText = textExtensions.some(ext => rightTab.path.toLowerCase().endsWith(ext)) || rightTab.isEditable;
+    
+    if (!leftIsText || !rightIsText) {
+        showToast('只能比較文字類型的檔案', 'error');
         return;
     }
 
@@ -2838,12 +2860,16 @@ async function confirmSave() {
             name: tab.name,
             path: tab.path,
             color: tab.color,
-            splitPane: tab.splitPane
+            splitPane: tab.splitPane,
+            isEditable: tab.isEditable || false,
+            content: tab.isEditable ? tab.content : null // 儲存文字編輯器的內容
         })),
         activeTabPath: activeTabId ? currentTabs.find(t => t.id === activeTabId)?.path : null,
         splitView: splitView,
         splitViewState: splitViewState,
         diffMode: diffMode,
+        sidebarCollapsed: sidebarCollapsed, // 儲存側邊欄狀態
+        currentView: currentView, // 儲存當前檢視
         timestamp: new Date().toISOString()
     };
     
@@ -2855,8 +2881,9 @@ async function confirmSave() {
             },
             body: JSON.stringify({
                 state: state,
-                permission: isPrivate ? 'private' : 'public',
-                password: password
+                is_public: !isPrivate, // 注意這裡改為 is_public
+                password: password,
+                name: name // 加上名稱
             })
         });
         
@@ -2871,8 +2898,13 @@ async function confirmSave() {
             
             // 更新已儲存計數
             updateSavedCount();
+            
+            // 如果當前檢視是已儲存，重新載入
+            if (currentView === 'saved') {
+                renderSavedWorkspaces();
+            }
         } else {
-            showToast('儲存失敗：' + result.error, 'error');
+            showToast(result.message || '儲存失敗', 'error');
         }
     } catch (error) {
         console.error('儲存失敗:', error);
@@ -3050,6 +3082,7 @@ function addToRecentFiles(file) {
             console.error('儲存最近檔案失敗:', e);
         }
     }
+    updateRecentCount();
 }
 
 // 載入最近檔案
@@ -3062,6 +3095,7 @@ function loadRecentFiles() {
     } catch (e) {
         console.error('載入最近檔案失敗:', e);
     }
+    updateRecentCount();
 }
 
 // 載入已儲存的工作區
@@ -3236,11 +3270,18 @@ function loadSavedWorkspaces() {
 // 更新最近檔案計數
 function updateRecentCount() {
     const count = recentFiles.length;
-    const badge = document.querySelector('.nav-item:nth-child(2) .nav-badge');
-    if (badge) {
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
+    const navItem = document.querySelector('.nav-item:nth-child(2)'); // 最近檔案是第二個
+    let badge = navItem.querySelector('.nav-badge');
+    
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'nav-badge';
+        badge.style.background = '#f39c12'; // 橙色
+        navItem.appendChild(badge);
     }
+    
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
 }
 
 // 在初始化時載入設定

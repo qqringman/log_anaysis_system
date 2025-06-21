@@ -315,6 +315,30 @@ class TextEditor {
         URL.revokeObjectURL(url);
         window.showToast('檔案已下載', 'success');
     }
+
+    // 檢查檔案是否已修改
+    isFileModified(tab) {
+        return tab.name.endsWith('*');
+    }
+
+    // 處理未儲存檔案的關閉
+    handleUnsavedFileClose(tab) {
+        if (this.isFileModified(tab)) {
+            if (!confirm(`檔案 "${tab.name}" 尚未儲存，確定要關閉嗎？`)) {
+                return false;
+            }
+        }
+        
+        // 清理編輯器實例
+        const editorIds = [tab.id, `${tab.id}-left`, `${tab.id}-right`];
+        editorIds.forEach(id => {
+            if (this.editors.has(id)) {
+                this.editors.delete(id);
+            }
+        });
+        
+        return true;
+    }
 }
 
 // 初始化文字編輯器

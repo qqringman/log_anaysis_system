@@ -89,6 +89,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化空狀態的拖放
     setupEmptyStateDragDrop();
+
+    // 修復重複拖放事件
+    isDragging = false;    
 });
 
 // 載入工作區狀態
@@ -155,10 +158,13 @@ function setupEmptyStateDragDrop() {
     // 防止默認拖放行為
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         viewerContainer.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
     });
     
     function preventDefaults(e) {
+        if (e.target.closest('.split-pane-content')) {
+            // 如果是分割視窗內的拖放，不處理
+            return;
+        }        
         e.preventDefault();
         e.stopPropagation();
     }
@@ -192,9 +198,17 @@ function setupEmptyStateDragDrop() {
 
 // 處理檔案拖放
 function handleDropFiles(e) {
+    // 防止重複處理
+    if (isDragging) {
+        isDragging = false;
+        return;
+    }    
     const dt = e.dataTransfer;
     const files = dt.files;
-    
+
+    // 檢查是否為內部拖曳（從檔案樹拖曳）
+    const draggedFile = JSON.parse(dt.getData('application/json') || '{}');
+
     if (files && files.length > 0) {
         handleFilesDropped(Array.from(files));
     }
@@ -642,6 +656,7 @@ function createItemElement(item, level = 0) {
         
         const icon = document.createElement('i');
         icon.className = 'fas fa-folder item-icon';
+        icon.style.color = '#f39c12';
         mainContainer.appendChild(icon);
         
         const name = document.createElement('span');
@@ -662,10 +677,21 @@ function createItemElement(item, level = 0) {
             
             itemDiv.appendChild(childrenDiv);
         }
+        // 資料夾也可以拖曳（用於打開）
+        itemDiv.draggable = true;
+        itemDiv.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('application/json', JSON.stringify({
+                type: 'folder',
+                path: item.path,
+                name: item.name
+            }));
+            e.dataTransfer.effectAllowed = 'copy';
+        });        
     } else {
         itemDiv.className = 'file-item';
         itemDiv.onclick = () => openFile(item);
-        
+        itemDiv.draggable = true;
+
         const mainContainer = document.createElement('div');
         mainContainer.style.display = 'flex';
         mainContainer.style.alignItems = 'center';
@@ -673,6 +699,7 @@ function createItemElement(item, level = 0) {
         
         const icon = document.createElement('i');
         icon.className = 'fas fa-file-alt item-icon';
+        icon.style.color = '#667eea';
         mainContainer.appendChild(icon);
         
         const name = document.createElement('span');
@@ -681,6 +708,21 @@ function createItemElement(item, level = 0) {
         mainContainer.appendChild(name);
         
         itemDiv.appendChild(mainContainer);
+
+        // 檔案拖曳事件
+        itemDiv.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('application/json', JSON.stringify({
+                type: 'file',
+                path: item.path,
+                name: item.name
+            }));
+            e.dataTransfer.effectAllowed = 'copy';
+            itemDiv.style.opacity = '0.5';
+        });
+        
+        itemDiv.addEventListener('dragend', (e) => {
+            itemDiv.style.opacity = '1';
+        });        
     }
     
     return itemDiv;
@@ -923,17 +965,23 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
             emptyState.style.display = 'none';
         }
         
+        // 顯示載入中
         content.innerHTML = `
             <div class="loading-state">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p>載入中...</p>
-                <div class="loading-progress">
-                    <div class="loading-progress-bar"></div>
-                </div>
             </div>
         `;
-        
+
+        // 更新標題
+        if (title) {
+            const fileName = filePath.split('/').pop();
+            title.textContent = fileName;
+            title.title = filePath;
+        }
+
         const iframe = document.createElement('iframe');
+        iframe.id = `iframe-${pane}-${tabId}`
         iframe.style.width = '100%';
         iframe.style.height = '100%';
         iframe.style.border = 'none';
@@ -946,22 +994,28 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
         
         iframe.onload = () => {
             console.log(`檔案載入完成到 ${pane} 面板`);
-            
-            if (title) {
-                const fileName = filePath.split('/').pop();
-                title.textContent = fileName;
-                title.title = filePath;
-            }
-            
+                   
             content.dataset.tabId = tabId;
-            
+            content.dataset.filePath = filePath;
+
             // 儲存到分割視窗狀態
             splitViewState[pane] = filePath;
-            
+
+            // 修復：找到對應的標籤並更新其狀態
+            const tab = currentTabs.find(t => t.id === tabId);
+            if (tab) {
+                tab.loading = false;
+                tab.splitPane = pane;
+                renderTabs();
+            }
+
             // 設置同步滾動
             if (syncScroll) {
-                setupSyncScroll();
+                window.diffViewer && window.diffViewer.setupSyncScroll();
             }
+
+            // 啟用 iframe 內的訊息通信
+            setupIframeCommunication(iframe, pane);            
         };
         
         iframe.onerror = () => {
@@ -982,6 +1036,19 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
     } catch (error) {
         console.error('載入到面板失敗:', error);
     }
+}
+
+// 設置 iframe 通信
+function setupIframeCommunication(iframe, pane) {
+    // 等待 iframe 載入完成後發送初始化訊息
+    setTimeout(() => {
+        if (iframe.contentWindow) {
+            iframe.contentWindow.postMessage({
+                type: 'init',
+                pane: pane
+            }, '*');
+        }
+    }, 500);
 }
 
 // 生成標籤ID
@@ -1608,7 +1675,9 @@ function openPaneSearchModal(pane) {
     const modal = document.getElementById('pane-search-modal');
     const title = document.getElementById('pane-search-title');
     
-    title.textContent = pane === 'left' ? '左側視窗' : '右側視窗';
+    if (title) {
+        title.textContent = pane === 'left' ? '左側視窗' : '右側視窗';
+    }
     modal.classList.add('show');
     document.getElementById('pane-search-keyword').focus();
 }
@@ -1709,6 +1778,9 @@ function createSplitView() {
                         <button class="split-pane-btn" onclick="refreshPane('left')" title="重新整理">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <button class="split-pane-close" onclick="closeSplitPane('left')" title="關閉">
+                            <i class="fas fa-times"></i>
+                        </button>                        
                     </div>
                 </div>
                 <div class="split-pane-content" id="split-left-content">
@@ -1737,6 +1809,9 @@ function createSplitView() {
                         <button class="split-pane-btn" onclick="refreshPane('right')" title="重新整理">
                             <i class="fas fa-sync-alt"></i>
                         </button>
+                        <button class="split-pane-close" onclick="closeSplitPane('right')" title="關閉">
+                            <i class="fas fa-times"></i>
+                        </button>                        
                     </div>
                 </div>
                 <div class="split-pane-content" id="split-right-content">
@@ -1759,6 +1834,9 @@ function createSplitView() {
     
     // 設置分割視窗的拖放事件
     setupSplitPaneDragDrop();
+
+    // 加入拖曳指示器
+    addDragIndicators();    
 }
 
 // 設置分割面板拖放
@@ -1780,25 +1858,51 @@ function setupSplitPaneDragDrop() {
         // 高亮拖放區域
         ['dragenter', 'dragover'].forEach(eventName => {
             content.addEventListener(eventName, (e) => {
-                const emptyState = content.querySelector('.empty-state');
-                if (emptyState) {
-                    emptyState.classList.add('drag-over');
-                }
+                content.classList.add('drag-over');
+                showDragIndicator(pane);
             }, false);
         });
         
         ['dragleave', 'drop'].forEach(eventName => {
             content.addEventListener(eventName, (e) => {
-                const emptyState = content.querySelector('.empty-state');
-                if (emptyState) {
-                    emptyState.classList.remove('drag-over');
-                }
+                content.classList.remove('drag-over');
+                hideDragIndicator(pane);
             }, false);
         });
         
         // 處理拖放
         content.addEventListener('drop', (e) => handleDropForPane(e, pane), false);
     });
+}
+
+// 加入拖曳指示器
+function addDragIndicators() {
+    ['left', 'right'].forEach(pane => {
+        const content = document.getElementById(`split-${pane}-content`);
+        if (content) {
+            const indicator = document.createElement('div');
+            indicator.className = 'drag-indicator';
+            indicator.id = `drag-indicator-${pane}`;
+            indicator.innerHTML = `<i class="fas fa-file-import fa-3x"></i><p>拖放檔案到${pane === 'left' ? '左側' : '右側'}視窗</p>`;
+            content.appendChild(indicator);
+        }
+    });
+}
+
+// 顯示拖曳指示器
+function showDragIndicator(pane) {
+    const indicator = document.getElementById(`drag-indicator-${pane}`);
+    if (indicator) {
+        indicator.classList.add('show');
+    }
+}
+
+// 隱藏拖曳指示器
+function hideDragIndicator(pane) {
+    const indicator = document.getElementById(`drag-indicator-${pane}`);
+    if (indicator) {
+        indicator.classList.remove('show');
+    }
 }
 
 // 設置分割線拖動
@@ -1842,6 +1946,44 @@ function setupSplitResize() {
     });
 }
 
+// 關閉分割面板
+window.closeSplitPane = function(pane) {
+    const oppositepane = pane === 'left' ? 'right' : 'left';
+    const content = document.getElementById(`split-${pane}-content`);
+    const oppositeContent = document.getElementById(`split-${oppositepane}-content`);
+    const splitContainer = document.querySelector('.split-container');
+    const divider = document.getElementById('split-divider');
+    
+    if (!content || !oppositeContent) return;
+    
+    // 清理關閉的面板
+    const tabId = content.dataset.tabId;
+    if (tabId) {
+        const tab = currentTabs.find(t => t.id === tabId);
+        if (tab && tab.splitPane === pane) {
+            tab.splitPane = null;
+        }
+    }
+    
+    // 隱藏關閉的面板和分割線
+    content.parentElement.style.display = 'none';
+    divider.style.display = 'none';
+    
+    // 讓另一側填滿整個空間
+    oppositeContent.parentElement.style.flex = '1 1 100%';
+    
+    // 更新狀態
+    splitViewState[pane] = null;
+    
+    // 如果兩側都關閉了，退出分割視窗模式
+    if (!splitViewState.left && !splitViewState.right) {
+        toggleSplitView();
+    }
+    
+    renderTabs();
+    showToast(`已關閉${pane === 'left' ? '左側' : '右側'}視窗`, 'info');
+};
+
 // 搜尋分割面板
 window.searchInSplitPane = function(pane) {
     openPaneSearchModal(pane);
@@ -1849,6 +1991,13 @@ window.searchInSplitPane = function(pane) {
 
 // 交換左右面板
 window.swapPanes = function() {
+
+    // 保存當前狀態
+    const leftTabId = document.getElementById('split-left-content').dataset.tabId;
+    const rightTabId = document.getElementById('split-right-content').dataset.tabId;
+    const leftPath = document.getElementById('split-left-content').dataset.filePath;
+    const rightPath = document.getElementById('split-right-content').dataset.filePath;
+
     const leftContent = document.getElementById('split-left-content');
     const rightContent = document.getElementById('split-right-content');
     const leftTitle = document.getElementById('split-left-title');
@@ -1860,10 +2009,15 @@ window.swapPanes = function() {
     rightContent.innerHTML = tempContent;
     
     // 交換標題
-    const tempTitle = leftTitle.textContent;
-    leftTitle.textContent = rightTitle.textContent;
-    rightTitle.textContent = tempTitle;
-    
+    splitViewState.left = rightPath;
+    splitViewState.right = leftPath;
+
+    // 更新 dataset
+    leftContent.dataset.tabId = rightTabId || '';
+    leftContent.dataset.filePath = rightPath || '';
+    rightContent.dataset.tabId = leftTabId || '';
+    rightContent.dataset.filePath = leftPath || '';
+
     // 交換狀態
     const tempState = splitViewState.left;
     splitViewState.left = splitViewState.right;
@@ -1871,9 +2025,9 @@ window.swapPanes = function() {
     
     // 更新標籤的 splitPane 屬性
     currentTabs.forEach(tab => {
-        if (tab.path === splitViewState.left) {
+        if (tab.id === rightTabId) {
             tab.splitPane = 'left';
-        } else if (tab.path === splitViewState.right) {
+        } else if (tab.id === leftTabId) {
             tab.splitPane = 'right';
         }
     });
@@ -1884,6 +2038,12 @@ window.swapPanes = function() {
 
 // 切換差異模式
 window.toggleDiffMode = function() {
+
+    if (!splitViewState.left || !splitViewState.right) {
+        showToast('請先在兩側都載入檔案', 'error');
+        return;
+    }
+
     diffMode = !diffMode;
     const diffControls = document.getElementById('diff-controls');
     const diffBtn = document.querySelector('.btn-diff');
@@ -1895,7 +2055,6 @@ window.toggleDiffMode = function() {
         // 執行差異比較
         performDiff();
         
-        showToast('已啟用差異比較模式', 'success');
     } else {
         diffControls.style.display = 'none';
         diffBtn.classList.remove('active');
@@ -1913,14 +2072,16 @@ async function performDiff() {
     
     // 顯示載入中
     showToast('正在進行檔案比較...', 'info');
-    
-    // 這裡應該實現實際的差異比較邏輯
-    // 由於需要獲取 iframe 內容，這需要與後端配合
-    
-    // 模擬比較完成
-    setTimeout(() => {
-        showToast('差異比較完成', 'success');
-    }, 1000);
+
+    if (window.diffViewer) {
+        const result = await window.diffViewer.performDiff(splitViewState.left, splitViewState.right);
+        if (result) {
+            showToast('差異比較完成', 'success');
+        }
+    } else {
+        showToast('差異比較模組未載入', 'error');
+    }
+
 }
 
 // 匯出比較結果為 HTML
@@ -1933,50 +2094,33 @@ window.exportComparisonAsHTML = async function() {
     try {
         const leftTab = currentTabs.find(t => t.path === splitViewState.left);
         const rightTab = currentTabs.find(t => t.path === splitViewState.right);
-        
-        const response = await fetch('/api/export_comparison', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                leftFile: {
+        if (window.diffViewer) {
+            await window.diffViewer.exportComparison(
+                {
                     name: leftTab?.name || 'File 1',
                     path: splitViewState.left
                 },
-                rightFile: {
-                    name: rightTab?.name || 'File 2',
+                {
+                    name: rightTab?.name || 'File 2', 
                     path: splitViewState.right
-                },
-                diffContent: '' // 這裡應該包含實際的差異內容
-            })
-        });
-        
-        if (response.ok) {
-            // 觸發下載
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `comparison_${Date.now()}.html`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            
-            showToast('比較結果已匯出', 'success');
+                }
+            );
+
         } else {
             showToast('匯出失敗', 'error');
         }
     } catch (error) {
         console.error('匯出失敗:', error);
-        showToast('匯出失敗', 'error');
+        showToast('差異比較模組未載入', 'error');
     }
 };
 
 // 關閉差異查看器
 window.closeDiffViewer = function() {
-    document.getElementById('diff-viewer').style.display = 'none';
+    const diffViewer = document.getElementById('diff-viewer');
+    if (diffViewer) {
+        diffViewer.style.display = 'none';
+    }
 };
 
 // 同步滾動
@@ -1984,50 +2128,55 @@ window.syncScrolling = function() {
     syncScroll = !syncScroll;
     
     if (syncScroll) {
-        setupSyncScroll();
-        showToast('已啟用同步滾動', 'success');
+        if (window.diffViewer) {
+            window.diffViewer.setupSyncScroll();
+            showToast('已啟用同步滾動', 'success');
+        } else {
+            showToast('同步滾動功能未載入', 'error');
+            syncScroll = false;
+        }
     } else {
-        removeSyncScroll();
+        if (window.diffViewer) {
+            window.diffViewer.removeSyncScroll();
+        }
         showToast('已關閉同步滾動', 'info');
     }
 };
 
-// 設置同步滾動
-function setupSyncScroll() {
-    const leftContent = document.getElementById('split-left-content');
-    const rightContent = document.getElementById('split-right-content');
-    const leftIframe = leftContent?.querySelector('iframe');
-    const rightIframe = rightContent?.querySelector('iframe');
-    
-    if (leftIframe && rightIframe) {
-        // 需要實現 iframe 內容的滾動同步
-        // 這需要與 iframe 內容進行通信
-    }
-}
-
-// 移除同步滾動
-function removeSyncScroll() {
-    // 移除滾動事件監聽器
-}
-
 // 複製差異到左側
 window.copyDiffLeft = function() {
-    showToast('功能開發中', 'info');
+    if (window.diffViewer) {
+        window.diffViewer.copyDiffToLeft();
+    } else {
+        showToast('差異比較模組未載入', 'error');
+    }
 };
 
 // 複製差異到右側  
 window.copyDiffRight = function() {
-    showToast('功能開發中', 'info');
+    if (window.diffViewer) {
+        window.diffViewer.copyDiffToRight();
+    } else {
+        showToast('差異比較模組未載入', 'error');
+    }
 };
 
 // 下一個差異
 window.nextDiff = function() {
-    showToast('功能開發中', 'info');
+    if (window.diffViewer) {
+        window.diffViewer.nextDiff();
+    } else {
+        showToast('差異比較模組未載入', 'error');
+    }
 };
 
 // 上一個差異
 window.prevDiff = function() {
-    showToast('功能開發中', 'info');
+    if (window.diffViewer) {
+        window.diffViewer.prevDiff();
+    } else {
+        showToast('差異比較模組未載入', 'error');
+    }
 };
 
 // 為特定面板開啟上傳對話框
@@ -2067,9 +2216,56 @@ window.refreshPane = function(pane) {
 
 // 處理拖放到特定面板
 function handleDropForPane(event, pane) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // 先檢查是否是內部拖曳（從檔案樹拖曳）
+    const jsonData = event.dataTransfer.getData('application/json');
+    if (jsonData) {
+        try {
+            const draggedItem = JSON.parse(jsonData);
+            if (draggedItem.type === 'file') {
+                const virtualFile = {
+                    name: draggedItem.name,
+                    path: draggedItem.path,
+                    type: 'file',
+                    isLocal: false
+                };
+                handleDroppedFile(virtualFile, pane);
+            }
+            return;
+        } catch (e) {
+            console.error('解析拖曳資料失敗:', e);
+        }
+    }
+    
+    // 處理外部檔案拖曳
     const files = Array.from(event.dataTransfer.files);
     if (files.length > 0) {
-        const file = files[0];
+        files.forEach(file => {
+            const virtualFile = {
+                name: file.name,
+                path: URL.createObjectURL(file),
+                type: 'file',
+                isLocal: true
+            };
+            handleDroppedFile(virtualFile, pane);
+        });
+    }
+}
+
+// 修復上傳後的處理
+async function handleFilesAsync(files) {
+    const uploadProgress = document.createElement('div');
+    uploadProgress.className = 'upload-progress';
+    uploadProgress.innerHTML = '<div class="upload-progress-bar" style="width: 0%"></div>';
+    document.body.appendChild(uploadProgress);
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const progress = ((i + 1) / files.length) * 100;
+        uploadProgress.querySelector('.upload-progress-bar').style.width = `${progress}%`;
+        
         const virtualFile = {
             name: file.name,
             path: URL.createObjectURL(file),
@@ -2077,21 +2273,59 @@ function handleDropForPane(event, pane) {
             isLocal: true
         };
         
-        const existingTab = currentTabs.find(tab => tab.path === virtualFile.path);
-        if (existingTab) {
-            existingTab.splitPane = pane;
-            loadFileToPane(existingTab, pane);
-        } else {
-            const newTab = openFile(virtualFile, false);
-            if (newTab) {
-                newTab.splitPane = pane;
-                loadFileToPane(newTab, pane);
-                renderTabs();
+        if (splitView && currentUploadPane) {
+            // 分割視窗模式，上傳到指定面板
+            const tab = openFile(virtualFile, false);
+            if (tab) {
+                // 等待標籤創建完成
+                await new Promise(resolve => setTimeout(resolve, 100));
+                const createdTab = currentTabs.find(t => t.path === virtualFile.path);
+                if (createdTab) {
+                    createdTab.splitPane = currentUploadPane;
+                    loadFileToPane(createdTab, currentUploadPane);
+                }
             }
+        } else {
+            // 一般模式
+            openFile(virtualFile, i === 0);
         }
         
-        showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${file.name}`, 'success');
+        // 小延遲避免同時開啟太多檔案
+        await new Promise(resolve => setTimeout(resolve, 50));
     }
+    
+    // 移除進度條
+    setTimeout(() => {
+        uploadProgress.remove();
+    }, 500);
+}
+
+// 處理拖放的檔案
+function handleDroppedFile(virtualFile, pane) {
+    // 檢查是否已經開啟
+    const existingTab = currentTabs.find(tab => tab.path === virtualFile.path);
+    
+    if (existingTab) {
+        // 如果檔案已開啟，直接載入到面板
+        existingTab.splitPane = pane;
+        loadFileToPane(existingTab, pane);
+        renderTabs();
+    } else {
+        // 開啟新檔案
+        const newTab = openFile(virtualFile, false);
+        if (newTab) {
+            setTimeout(() => {
+                const tab = currentTabs.find(t => t.path === virtualFile.path);
+                if (tab) {
+                    tab.splitPane = pane;
+                    loadFileToPane(tab, pane);
+                    renderTabs();
+                }
+            }, 100);
+        }
+    }
+    
+    showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${virtualFile.name}`, 'success');
 }
 
 // 載入檔案到特定面板
@@ -2327,30 +2561,20 @@ function confirmUpload() {
         showToast('請選擇檔案', 'error');
         return;
     }
-    
-    uploadedFiles.forEach((file, index) => {
-        const virtualFile = {
-            name: file.name,
-            path: URL.createObjectURL(file),
-            type: 'file',
-            isLocal: true
-        };
-        
-        if (splitView && currentUploadPane) {
-            // 分割視窗模式，上傳到指定面板
-            const tab = openFile(virtualFile, false);
-            if (tab) {
-                tab.splitPane = currentUploadPane;
-                loadFileToPane(tab, currentUploadPane);
-            }
-        } else {
-            // 一般模式
-            openFile(virtualFile, index === 0);
-        }
-    });
-    
+
+    // 複製檔案陣列
+    const filesToUpload = [...uploadedFiles];
+   
     closeUploadModal();
-    showToast(`已開啟 ${uploadedFiles.length} 個檔案`, 'success');
+    showToast(`正在載入 ${filesToUpload.length} 個檔案...`, 'info');
+
+    // 背景非同步處理
+    handleFilesAsync(filesToUpload).then(() => {
+        showToast(`已成功載入 ${filesToUpload.length} 個檔案`, 'success');
+    }).catch(error => {
+        console.error('載入檔案失敗:', error);
+        showToast('部分檔案載入失敗', 'error');
+    });    
 }
 
 // 拖放事件處理
@@ -2385,15 +2609,22 @@ function setupDragAndDrop() {
         const emptyState = viewerContainer.querySelector('.empty-state');
         if (emptyState) {
             emptyState.classList.add('drag-over');
+            isDragging = true;
         }
     });
     
     viewerContainer.addEventListener('dragleave', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const emptyState = viewerContainer.querySelector('.empty-state');
-        if (emptyState) {
-            emptyState.classList.remove('drag-over');
+        // 檢查是否真的離開了容器
+        const rect = viewerContainer.getBoundingClientRect();
+        if (e.clientX <= rect.left || e.clientX >= rect.right ||
+            e.clientY <= rect.top || e.clientY >= rect.bottom) {
+            const emptyState = viewerContainer.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.classList.remove('drag-over');
+            }
+            isDragging = false;
         }
     });
     
@@ -2404,20 +2635,13 @@ function setupDragAndDrop() {
         if (emptyState) {
             emptyState.classList.remove('drag-over');
         }
-        
+
+        if (!isDragging) return;
+        isDragging = false;
+
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
-            files.forEach((file, index) => {
-                const virtualFile = {
-                    name: file.name,
-                    path: URL.createObjectURL(file),
-                    type: 'file',
-                    isLocal: true
-                };
-                openFile(virtualFile, index === 0);
-            });
-            
-            showToast(`已開啟 ${files.length} 個檔案`, 'success');
+            handleFilesDropped(files);
         }
     });
 }

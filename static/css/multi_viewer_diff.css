@@ -1,0 +1,201 @@
+/* static/css/multi_viewer_diff.css */
+
+/* 差異查看器樣式 */
+.diff-viewer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: none;
+}
+
+.diff-viewer-content {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    right: 50px;
+    bottom: 50px;
+    background: white;
+    border-radius: 10px;
+    overflow: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.diff-viewer-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1;
+}
+
+.diff-close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.diff-close-btn:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+/* 當前差異高亮 */
+.current-diff {
+    background-color: #ffd700 !important;
+    animation: pulse 1s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* 差異統計 */
+.diff-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    font-size: 14px;
+}
+
+.diff-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.diff-stat.additions {
+    color: #28a745;
+}
+
+.diff-stat.deletions {
+    color: #dc3545;
+}
+
+/* 差異導航 */
+.diff-navigation {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    gap: 10px;
+    z-index: 2001;
+}
+
+.diff-nav-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.diff-nav-btn:hover {
+    background: #5968d9;
+    transform: translateY(-1px);
+}
+
+.diff-nav-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* 行內差異樣式 */
+.diff-line-add {
+    background-color: #d4edda;
+}
+
+.diff-line-del {
+    background-color: #f8d7da;
+}
+
+.diff-line-context {
+    background-color: #f8f9fa;
+}
+
+/* 分割視窗關閉按鈕 */
+.split-pane-close {
+    background: none;
+    border: none;
+    color: #dc3545;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 5px;
+}
+
+.split-pane-close:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* 拖曳高亮效果 */
+.split-pane-content.drag-over {
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px dashed #667eea;
+}
+
+/* 上傳進度條 */
+.upload-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #e9ecef;
+}
+
+.upload-progress-bar {
+    height: 100%;
+    background: #667eea;
+    transition: width 0.3s ease;
+}
+
+/* 檔案拖曳指示器 */
+.drag-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(102, 126, 234, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.drag-indicator.show {
+    display: flex;
+}

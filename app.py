@@ -413,124 +413,6 @@ def short_url_redirect(short_code):
     else:
         abort(404)
 
-# 新增：匯出比較結果為 HTML
-@app.route('/api/export_comparison', methods=['POST'])
-def export_comparison():
-    """匯出檔案比較結果為 HTML"""
-    try:
-        data = request.get_json()
-        left_file = data.get('leftFile', {})
-        right_file = data.get('rightFile', {})
-        diff_content = data.get('diffContent', '')
-        
-        # 生成 HTML 模板
-        html_content = f"""
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>檔案比較結果 - {left_file.get('name', 'File 1')} vs {right_file.get('name', 'File 2')}</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.css" rel="stylesheet">
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-        }}
-        .header {{
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .header h1 {{
-            margin: 0 0 10px 0;
-            color: #333;
-        }}
-        .file-info {{
-            display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-        }}
-        .file-item {{
-            flex: 1;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            margin: 0 5px;
-        }}
-        .file-item h3 {{
-            margin: 0 0 5px 0;
-            color: #666;
-            font-size: 14px;
-        }}
-        .file-item p {{
-            margin: 0;
-            color: #333;
-            font-size: 16px;
-            font-weight: 500;
-        }}
-        .diff-container {{
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .timestamp {{
-            text-align: center;
-            color: #999;
-            font-size: 12px;
-            margin-top: 20px;
-        }}
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>檔案比較結果</h1>
-        <div class="file-info">
-            <div class="file-item">
-                <h3>左側檔案</h3>
-                <p>{left_file.get('name', 'Unknown')}</p>
-            </div>
-            <div class="file-item">
-                <h3>右側檔案</h3>
-                <p>{right_file.get('name', 'Unknown')}</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="diff-container">
-        {diff_content}
-    </div>
-    
-    <div class="timestamp">
-        生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    </div>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.js"></script>
-</body>
-</html>
-"""
-        
-        # 創建臨時檔案
-        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8')
-        temp_file.write(html_content)
-        temp_file.close()
-        
-        # 返回檔案下載
-        return send_from_directory(
-            os.path.dirname(temp_file.name),
-            os.path.basename(temp_file.name),
-            as_attachment=True,
-            download_name=f'comparison_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
-        )
-        
-    except Exception as e:
-        return jsonify({'success': False, 'message': f'匯出失敗: {str(e)}'})
-
 # 修改匯出檔案路由
 @app.route('/api/export')
 def export_file():
@@ -2372,6 +2254,244 @@ def extract_archive(file_path, extract_to):
     
     return extracted_files
 
+@app.route('/api/compare_files', methods=['POST'])
+def compare_files():
+    """比較兩個檔案的差異"""
+    try:
+        data = request.get_json()
+        left_path = data.get('leftPath')
+        right_path = data.get('rightPath')
+        
+        if not left_path or not right_path:
+            return jsonify({'success': False, 'message': '缺少檔案路徑'})
+        
+        # 讀取檔案內容
+        try:
+            with open(left_path, 'r', encoding='utf-8', errors='ignore') as f:
+                left_content = f.read()
+        except:
+            return jsonify({'success': False, 'message': '無法讀取左側檔案'})
+            
+        try:
+            with open(right_path, 'r', encoding='utf-8', errors='ignore') as f:
+                right_content = f.read()
+        except:
+            return jsonify({'success': False, 'message': '無法讀取右側檔案'})
+        
+        # 使用 difflib 生成差異
+        import difflib
+        differ = difflib.unified_diff(
+            left_content.splitlines(keepends=True),
+            right_content.splitlines(keepends=True),
+            fromfile=os.path.basename(left_path),
+            tofile=os.path.basename(right_path)
+        )
+        
+        diff_text = ''.join(differ)
+        
+        # 生成 HTML 格式的差異
+        html_diff = difflib.HtmlDiff()
+        diff_table = html_diff.make_table(
+            left_content.splitlines(),
+            right_content.splitlines(),
+            fromdesc=os.path.basename(left_path),
+            todesc=os.path.basename(right_path)
+        )
+        
+        return jsonify({
+            'success': True,
+            'diff': diff_text,
+            'htmlContent': diff_table,
+            'stats': {
+                'leftLines': len(left_content.splitlines()),
+                'rightLines': len(right_content.splitlines()),
+                'additions': diff_text.count('\n+'),
+                'deletions': diff_text.count('\n-')
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'比較失敗: {str(e)}'})
+
+# 修改匯出比較結果的路由
+@app.route('/api/export_comparison', methods=['POST'])
+def export_comparison():
+    """匯出檔案比較結果為 HTML"""
+    try:
+        data = request.get_json()
+        left_file = data.get('leftFile', {})
+        right_file = data.get('rightFile', {})
+        diff_content = data.get('diffContent', '')
+        
+        # 如果沒有提供差異內容，則重新生成
+        if not diff_content and left_file.get('path') and right_file.get('path'):
+            # 比較檔案
+            result = compare_files_internal(left_file['path'], right_file['path'])
+            if result:
+                diff_content = result.get('htmlContent', '')
+        
+        # 生成 HTML 模板
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>檔案比較結果 - {left_file.get('name', 'File 1')} vs {right_file.get('name', 'File 2')}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.css" rel="stylesheet">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }}
+        .header {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .header h1 {{
+            margin: 0 0 10px 0;
+            color: #333;
+        }}
+        .file-info {{
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }}
+        .file-item {{
+            flex: 1;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 0 5px;
+        }}
+        .file-item h3 {{
+            margin: 0 0 5px 0;
+            color: #666;
+            font-size: 14px;
+        }}
+        .file-item p {{
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }}
+        .diff-container {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }}
+        .timestamp {{
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }}
+        /* 差異樣式 */
+        .diff {{
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }}
+        .diff table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+        .diff td {{
+            padding: 2px 5px;
+            vertical-align: top;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }}
+        .diff .diff_header {{
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }}
+        .diff .diff_next {{
+            background-color: #f8f9fa;
+        }}
+        .diff .diff_add {{
+            background-color: #d4edda;
+        }}
+        .diff .diff_chg {{
+            background-color: #fff3cd;
+        }}
+        .diff .diff_sub {{
+            background-color: #f8d7da;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>檔案比較結果</h1>
+        <div class="file-info">
+            <div class="file-item">
+                <h3>左側檔案</h3>
+                <p>{left_file.get('name', 'Unknown')}</p>
+            </div>
+            <div class="file-item">
+                <h3>右側檔案</h3>
+                <p>{right_file.get('name', 'Unknown')}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="diff-container">
+        {diff_content or '<p style="text-align: center; color: #999;">沒有差異</p>'}
+    </div>
+    
+    <div class="timestamp">
+        生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.js"></script>
+</body>
+</html>
+"""
+        
+        # 創建臨時檔案
+        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8')
+        temp_file.write(html_content)
+        temp_file.close()
+        
+        # 返回檔案下載
+        return send_from_directory(
+            os.path.dirname(temp_file.name),
+            os.path.basename(temp_file.name),
+            as_attachment=True,
+            download_name=f'comparison_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+        )
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'匯出失敗: {str(e)}'})
+
+def compare_files_internal(left_path, right_path):
+    """內部比較檔案函數"""
+    try:
+        with open(left_path, 'r', encoding='utf-8', errors='ignore') as f:
+            left_content = f.read()
+        with open(right_path, 'r', encoding='utf-8', errors='ignore') as f:
+            right_content = f.read()
+            
+        import difflib
+        html_diff = difflib.HtmlDiff()
+        diff_table = html_diff.make_table(
+            left_content.splitlines(),
+            right_content.splitlines(),
+            fromdesc=os.path.basename(left_path),
+            todesc=os.path.basename(right_path)
+        )
+        
+        return {'htmlContent': diff_table}
+    except:
+        return None
+    
 if __name__ == '__main__':
     print("🚀 Enhanced Log 分析平台 v6 啟動中...")
     print("🆕 新增功能：")

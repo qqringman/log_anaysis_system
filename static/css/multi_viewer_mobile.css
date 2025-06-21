@@ -935,3 +935,36 @@
         font-size: 13px;
     }
 }
+
+/* 手機版顏色選擇器 */
+@media (max-width: 768px) {
+    .color-picker {
+        /* 在手機版中置中顯示 */
+        position: fixed !important;
+        left: 50% !important;
+        transform: translateX(-50%);
+        top: 50% !important;
+        margin-top: -60px;
+        z-index: 2001;
+        background: white;
+        padding: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .color-option {
+        width: 36px;
+        height: 36px;
+    }
+    
+    /* 加入背景遮罩 */
+    .color-picker.show::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: -1;
+    }
+}

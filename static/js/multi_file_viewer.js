@@ -1163,7 +1163,21 @@ function createTabElement(tab) {
             switchTab(tab.id);
         }
     };
-    
+
+    // 雙擊事件
+    tabDiv.ondblclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 檢查是否為觸控設備
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        if (isTouchDevice || window.innerWidth <= 768) {
+            // 手機版或觸控設備，雙擊顯示顏色選擇器
+            showTabContextMenu(e, tab);
+        }
+    };
+
     tabDiv.oncontextmenu = (e) => showTabContextMenu(e, tab);
     tabDiv.title = tab.path;
     
@@ -1229,18 +1243,45 @@ function showTabContextMenu(e, tab) {
     e.preventDefault();
     e.stopPropagation();
     
+    // 先關閉所有顏色選擇器
+    document.querySelectorAll('.color-picker').forEach(picker => {
+        picker.classList.remove('show');
+        picker.style.display = 'none';
+    });
+    
     const colorPicker = document.getElementById(`color-picker-${tab.id}`);
     if (colorPicker) {
-        document.querySelectorAll('.color-picker').forEach(picker => {
-            picker.classList.remove('show');
-        });
+        // 使用 fixed 定位，相對於視窗
+        const tabElement = e.currentTarget;
+        const rect = tabElement.getBoundingClientRect();
         
+        // 計算位置，確保不會超出視窗
+        let left = rect.left;
+        let top = rect.bottom + 5;
+        
+        // 檢查是否會超出右邊界
+        if (left + 160 > window.innerWidth) {
+            left = window.innerWidth - 170;
+        }
+        
+        // 檢查是否會超出下邊界
+        if (top + 80 > window.innerHeight) {
+            top = rect.top - 85;
+        }
+        
+        colorPicker.style.left = `${left}px`;
+        colorPicker.style.top = `${top}px`;
+        colorPicker.style.display = 'grid';
         colorPicker.classList.add('show');
         
+        // 點擊其他地方關閉
         setTimeout(() => {
-            document.addEventListener('click', function hideColorPicker() {
-                colorPicker.classList.remove('show');
-                document.removeEventListener('click', hideColorPicker);
+            document.addEventListener('click', function hideColorPicker(e) {
+                if (!e.target.closest('.color-picker')) {
+                    colorPicker.classList.remove('show');
+                    colorPicker.style.display = 'none';
+                    document.removeEventListener('click', hideColorPicker);
+                }
             }, { once: true });
         }, 100);
     }
@@ -1821,13 +1862,13 @@ function createSplitView() {
                     </div>
                 </div>
                 <div class="split-pane-content" id="split-left-content">
-                    <div class="empty-state" id="split-left-empty" ondblclick="handleSplitPaneDoubleClick('left')">
+                    <div class="empty-state" id="split-left-empty">
                         <i class="fas fa-file-alt"></i>
                         <p>選擇檔案顯示在左側</p>
                         <p style="font-size: 14px;">或拖曳檔案到此處</p>
                         <p style="font-size: 12px; color: #999; margin-top: 10px;">
                             <i class="fas fa-info-circle"></i> 雙擊開始輸入文字
-                        </p>                     
+                        </p>
                         <button class="empty-state-btn" onclick="openUploadModalForPane('left')">
                             <i class="fas fa-upload"></i>
                             上傳檔案
@@ -1855,13 +1896,13 @@ function createSplitView() {
                     </div>
                 </div>
                 <div class="split-pane-content" id="split-right-content">
-                    <div class="empty-state" id="split-right-empty" ondblclick="handleSplitPaneDoubleClick('right')">
+                    <div class="empty-state" id="split-right-empty">
                         <i class="fas fa-file-alt"></i>
                         <p>選擇檔案顯示在右側</p>
                         <p style="font-size: 14px;">或拖曳檔案到此處</p>
                         <p style="font-size: 12px; color: #999; margin-top: 10px;">
-                            <i class="fas fa-info-circle"></i> 雙擊創建新檔案
-                        </p>                        
+                            <i class="fas fa-info-circle"></i> 雙擊開始輸入文字
+                        </p>
                         <button class="empty-state-btn" onclick="openUploadModalForPane('right')">
                             <i class="fas fa-upload"></i>
                             上傳檔案
@@ -1959,11 +2000,31 @@ function setupSplitPaneDoubleClick() {
     ['left', 'right'].forEach(pane => {
         const content = document.getElementById(`split-${pane}-content`);
         if (content) {
-            content.addEventListener('dblclick', (e) => {
+            // 移除舊的事件監聽器
+            content.removeEventListener('dblclick', content._dblclickHandler);
+            
+            // 創建新的事件處理器
+            content._dblclickHandler = (e) => {
+                // 防止事件冒泡
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 只處理空狀態的雙擊
                 if (e.target.closest('.empty-state')) {
+                    // 防止重複點擊
+                    if (content.dataset.processing === 'true') return;
+                    
+                    content.dataset.processing = 'true';
                     handleSplitPaneDoubleClick(pane);
+                    
+                    // 延遲重置，防止快速雙擊
+                    setTimeout(() => {
+                        content.dataset.processing = 'false';
+                    }, 500);
                 }
-            });
+            };
+            
+            content.addEventListener('dblclick', content._dblclickHandler);
         }
     });
 }

@@ -654,16 +654,14 @@ body {
 
 /* 顏色選擇器 */
 .color-picker {
-    position: absolute;
-    top: 100%;
-    left: 0;
+    position: fixed !important; /* 改為 fixed 定位 */
     background: white;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     display: none;
-    z-index: 100;
+    z-index: 2000; /* 提高 z-index */
     grid-template-columns: repeat(4, 1fr);
     gap: 4px;
 }
@@ -1744,9 +1742,10 @@ input:checked + .toggle-slider:before {
     transition: transform 0.2s ease;
 }
 
-/* 防止拖曳時選取文字 */
-.file-tab * {
-    pointer-events: none;
+/* 標籤樣式調整 */
+.file-tab {
+    position: relative;
+    overflow: visible; /* 允許內容溢出 */
 }
 
 .file-tab .tab-close,
@@ -1754,9 +1753,10 @@ input:checked + .toggle-slider:before {
     pointer-events: all;
 }
 
-/* 拖曳時的插入指示器 */
+/* 確保標籤容器不會截斷內容 */
 .file-tabs {
-    position: relative;
+    overflow: visible !important; /* 改為 visible */
+    z-index: 100;
 }
 
 .file-tab.drag-over::before {

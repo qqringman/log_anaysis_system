@@ -9,6 +9,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Diff2Html CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.css" rel="stylesheet">
     
     <link href="{{ url_for('static', filename='css/multi_viewer_desktop.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/multi_viewer_mobile.css') }}" rel="stylesheet">
@@ -85,7 +87,7 @@
             
             <!-- 檔案內容 -->
             <div class="file-content">
-                <div class="content-toolbar">
+                <div class="content-toolbar" id="main-toolbar">
                     <div class="toolbar-group">
                         <button class="toolbar-btn" onclick="refreshContent()">
                             <i class="fas fa-sync-alt"></i>
@@ -113,6 +115,43 @@
                     </div>
                 </div>
                 
+                <!-- 分割視窗工具列 -->
+                <div class="content-toolbar split-toolbar" id="split-toolbar" style="display: none;">
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" onclick="swapPanes()">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>左右交換</span>
+                        </button>
+                        <button class="toolbar-btn btn-diff" onclick="toggleDiffMode()">
+                            <i class="fas fa-code-branch"></i>
+                            <span>比較差異</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="syncScrolling()">
+                            <i class="fas fa-sync"></i>
+                            <span>同步滾動</span>
+                        </button>
+                    </div>
+                    
+                    <div class="toolbar-group diff-controls" id="diff-controls" style="display: none;">
+                        <button class="toolbar-btn" onclick="copyDiffLeft()">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>複製到左側</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="copyDiffRight()">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>複製到右側</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="nextDiff()">
+                            <i class="fas fa-chevron-down"></i>
+                            <span>下一個差異</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="prevDiff()">
+                            <i class="fas fa-chevron-up"></i>
+                            <span>上一個差異</span>
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="file-viewer-container" id="file-viewer">
                     <div class="empty-state" id="empty-state" onclick="openUploadModal()">
                         <i class="fas fa-file-alt"></i>
@@ -130,6 +169,19 @@
     
     <!-- Toast 容器 -->
     <div class="toast-container" id="toast-container"></div>
+    
+    <!-- Diff 視窗 -->
+    <div id="diff-viewer" class="diff-viewer" style="display: none;">
+        <div class="diff-viewer-header">
+            <h5>檔案差異比較</h5>
+            <button class="diff-close-btn" onclick="closeDiffViewer()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="diff-viewer-content" id="diff-content">
+            <!-- Diff 結果將顯示在這裡 -->
+        </div>
+    </div>
     
     <!-- 儲存工作區對話框 -->
     <div id="save-modal" class="modal">
@@ -211,6 +263,15 @@
                     <label class="form-label">搜尋關鍵字</label>
                     <input type="text" class="form-control" id="search-keyword" placeholder="輸入要搜尋的內容" onkeyup="performSearch()">
                 </div>
+                <div class="search-scope mb-3">
+                    <label class="form-label">搜尋範圍</label>
+                    <select class="form-control" id="search-scope">
+                        <option value="all">所有視窗</option>
+                        <option value="active">當前視窗</option>
+                        <option value="left">左側視窗</option>
+                        <option value="right">右側視窗</option>
+                    </select>
+                </div>
                 <div class="search-options">
                     <div class="search-option">
                         <input type="checkbox" id="search-case-sensitive">
@@ -231,6 +292,53 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeSearchModal()">關閉</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 面板搜尋對話框 -->
+    <div id="pane-search-modal" class="modal search-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="fas fa-search me-2"></i>搜尋<span id="pane-search-title"></span>內容</h5>
+                <button onclick="closePaneSearchModal()" style="background: none; border: none; font-size: 24px; color: #999;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">搜尋關鍵字</label>
+                    <input type="text" class="form-control" id="pane-search-keyword" placeholder="輸入要搜尋的內容" onkeyup="performPaneSearch()">
+                </div>
+                <div class="search-options">
+                    <div class="search-option">
+                        <input type="checkbox" id="pane-search-case-sensitive">
+                        <label for="pane-search-case-sensitive">區分大小寫</label>
+                    </div>
+                    <div class="search-option">
+                        <input type="checkbox" id="pane-search-whole-word">
+                        <label for="pane-search-whole-word">全字匹配</label>
+                    </div>
+                    <div class="search-option">
+                        <input type="checkbox" id="pane-search-regex">
+                        <label for="pane-search-regex">使用正則表達式</label>
+                    </div>
+                </div>
+                <div class="search-navigation">
+                    <button class="btn btn-sm btn-secondary" onclick="prevPaneSearchResult()">
+                        <i class="fas fa-chevron-up"></i> 上一個
+                    </button>
+                    <span class="search-result-count mx-2">0 / 0</span>
+                    <button class="btn btn-sm btn-secondary" onclick="nextPaneSearchResult()">
+                        <i class="fas fa-chevron-down"></i> 下一個
+                    </button>
+                </div>
+                <div class="search-results" id="pane-search-results">
+                    <!-- 搜尋結果將動態載入 -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePaneSearchModal()">關閉</button>
             </div>
         </div>
     </div>
@@ -312,6 +420,9 @@
             </div>
         </div>
     </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
     <script>
         // 將伺服器端變數渲染到客戶端 JS 變數
         window.initialStateData = {{ state_data|tojson|safe }};

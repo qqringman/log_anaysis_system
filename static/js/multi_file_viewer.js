@@ -14,16 +14,21 @@ let currentView = 'files';
 let isDragging = false;
 let loadingTimeouts = {};
 let currentUploadPane = null;
+let diffMode = false;
+let syncScroll = false;
+let currentSearchPane = null;
+let searchResults = { left: [], right: [] };
+let currentSearchIndex = { left: 0, right: 0 };
+let splitViewState = { left: null, right: null };
+let tabDragData = null;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     // 檢查是否有儲存的狀態
-    // 從 HTML 中定義的全域變數讀取 stateData
     let stateData = window.initialStateData || null;
     
     if (stateData) {
         try {
-            // 如果 stateData 是字串，需要解析
             if (typeof stateData === 'string') {
                 stateData = JSON.parse(stateData);
             }
@@ -36,12 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
         const groupsData = urlParams.get('groups');
         
-        console.log('URL 參數 groups:', groupsData); // 調試用
-        
         if (groupsData) {
             try {
                 groups = JSON.parse(decodeURIComponent(groupsData));
-                console.log('解析後的群組資料:', groups); // 調試用
                 
                 // 確保檔案都有正確的名稱
                 groups.forEach(group => {
@@ -57,12 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 自動開啟第一個檔案
                 setTimeout(() => {
                     const firstFile = findFirstFile(groups);
-                    console.log('找到的第一個檔案:', firstFile); // 調試用
-                    
                     if (firstFile) {
                         openFile(firstFile);
                     } else {
-                        console.log('沒有找到任何檔案');
                         showToast('沒有找到可開啟的檔案', 'info');
                     }
                 }, 500);
@@ -72,7 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('無法載入檔案資料，請重新嘗試', 'error');
             }
         } else {
-            console.log('沒有 groups 參數，載入預設資料');
             // 載入預設資料
             loadDefaultGroups();
         }
@@ -80,6 +78,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 初始化拖放事件
     setupDragAndDrop();
+    setupTabDragAndDrop();
+    
+    // 初始化鍵盤快捷鍵
+    setupKeyboardShortcuts();
     
     // 載入最近檔案和已儲存的工作區
     loadRecentFiles();
@@ -93,16 +95,44 @@ function loadWorkspaceState(state) {
         renderGroups();
     }
     
+    // 載入分割視窗狀態
+    if (state.splitView !== undefined) {
+        splitView = state.splitView;
+        if (splitView) {
+            document.getElementById('main-toolbar').style.display = 'none';
+            document.getElementById('split-toolbar').style.display = 'flex';
+        }
+    }
+    
     if (state.tabs) {
         state.tabs.forEach((tab, index) => {
-            const shouldSwitch = index === 0; // 只有第一個檔案切換到它
-            openFile({name: tab.name, path: tab.path, color: tab.color}, shouldSwitch);
+            const shouldSwitch = index === 0;
+            openFile({
+                name: tab.name, 
+                path: tab.path, 
+                color: tab.color,
+                splitPane: tab.splitPane
+            }, shouldSwitch);
         });
+    }
+    
+    // 恢復分割視窗狀態
+    if (state.splitViewState && splitView) {
+        setTimeout(() => {
+            createSplitView();
+            if (state.splitViewState.left) {
+                const leftTab = currentTabs.find(t => t.path === state.splitViewState.left);
+                if (leftTab) loadFileToPane(leftTab, 'left');
+            }
+            if (state.splitViewState.right) {
+                const rightTab = currentTabs.find(t => t.path === state.splitViewState.right);
+                if (rightTab) loadFileToPane(rightTab, 'right');
+            }
+        }, 1000);
     }
     
     if (state.activeTabPath || state.activeTab) {
         setTimeout(() => {
-            // 優先使用 path 來匹配
             if (state.activeTabPath) {
                 const tab = currentTabs.find(t => t.path === state.activeTabPath);
                 if (tab) {
@@ -110,13 +140,90 @@ function loadWorkspaceState(state) {
                     return;
                 }
             }
-            // 舊的邏輯作為備用
             const tab = currentTabs.find(t => t.id === state.activeTab);
             if (tab) {
                 switchTab(tab.id);
             }
-        }, 500); // 增加延遲確保所有檔案都載入完成
+        }, 500);
     }
+}
+
+// 設置鍵盤快捷鍵
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + S: 儲存工作區
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            saveWorkspace();
+        }
+        
+        // Ctrl/Cmd + O: 開啟檔案
+        if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+            e.preventDefault();
+            openUploadModal();
+        }
+        
+        // Ctrl/Cmd + F: 搜尋
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            if (splitView) {
+                // 檢查焦點在哪個面板
+                const activeElement = document.activeElement;
+                const leftPane = document.getElementById('split-left');
+                const rightPane = document.getElementById('split-right');
+                
+                if (leftPane && leftPane.contains(activeElement)) {
+                    openPaneSearchModal('left');
+                } else if (rightPane && rightPane.contains(activeElement)) {
+                    openPaneSearchModal('right');
+                } else {
+                    openSearchModal();
+                }
+            } else {
+                openSearchModal();
+            }
+        }
+        
+        // F5: 重新整理
+        if (e.key === 'F5') {
+            e.preventDefault();
+            refreshContent();
+        }
+    });
+}
+
+// 設置標籤拖放
+function setupTabDragAndDrop() {
+    const tabsContainer = document.getElementById('file-tabs');
+    
+    tabsContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const draggingTab = document.querySelector('.file-tab.dragging');
+        if (!draggingTab) return;
+        
+        const afterElement = getDragAfterElement(tabsContainer, e.clientX);
+        if (afterElement == null) {
+            tabsContainer.appendChild(draggingTab);
+        } else {
+            tabsContainer.insertBefore(draggingTab, afterElement);
+        }
+    });
+}
+
+// 獲取拖放後的元素
+function getDragAfterElement(container, x) {
+    const draggableElements = [...container.querySelectorAll('.file-tab:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = x - box.left - box.width / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 // 處理檔案名稱
@@ -134,23 +241,14 @@ function processFileNames(item) {
 
 // 找到第一個檔案
 function findFirstFile(groups) {
-    console.log('查找第一個檔案，群組數量:', groups.length); // 調試用
-    
     for (let group of groups) {
-        console.log('檢查群組:', group.name, group); // 調試用
-        
         if (group.items) {
             for (let item of group.items) {
-                console.log('檢查項目:', item); // 調試用
-                
                 if (item.type === 'file') {
                     return item;
                 } else if (item.type === 'folder' && item.children) {
-                    console.log('檢查資料夾子項目，數量:', item.children.length); // 調試用
-                    
                     for (let child of item.children) {
                         if (child.type === 'file') {
-                            console.log('找到檔案:', child); // 調試用
                             return child;
                         }
                     }
@@ -158,8 +256,6 @@ function findFirstFile(groups) {
             }
         }
     }
-    
-    console.log('沒有找到任何檔案'); // 調試用
     return null;
 }
 
@@ -180,19 +276,13 @@ function renderGroups() {
     const container = document.getElementById('groups-container');
     container.innerHTML = '';
     
-    console.log('渲染群組，數量:', groups.length); // 調試用
-    
     let totalFiles = 0;
     let totalFolders = 0;
     
     groups.forEach((group, groupIndex) => {
-        console.log('渲染群組:', group.name, group); // 調試用
-        
-        // 處理群組中的項目
         if (group.items && group.items.length > 0) {
             group.items.forEach(item => {
                 if (item.type === 'folder') {
-                    // 每個資料夾作為獨立的樹
                     const folderGroup = {
                         name: item.name,
                         icon: 'fa-folder',
@@ -205,34 +295,27 @@ function renderGroups() {
                     container.appendChild(folderDiv);
                     totalFolders++;
                 } else if (item.type === 'group') {
-                    // 群組（如單獨檔案）
                     const groupDiv = createGroupElement(item, `${groupIndex}-${item.name}`);
                     container.appendChild(groupDiv);
                     if (item.items) {
                         totalFiles += item.items.length;
                     }
                 } else if (item.type === 'file') {
-                    // 單獨的檔案
                     const fileGroupDiv = createSingleFileElement(item);
                     container.appendChild(fileGroupDiv);
                     totalFiles++;
                 }
             });
         } else {
-            // 舊的群組格式
             const groupDiv = createGroupElement(group, groupIndex);
             container.appendChild(groupDiv);
             
-            // 計算檔案總數
             if (group.items) {
                 totalFiles += countFiles(group.items);
             }
         }
     });
     
-    console.log('總檔案數:', totalFiles, '總資料夾數:', totalFolders); // 調試用
-    
-    // 更新檔案計數
     const countText = totalFiles + totalFolders;
     document.getElementById('files-count').textContent = countText;
 }
@@ -259,18 +342,15 @@ function createGroupElement(group, groupIndex) {
     header.className = 'group-header';
     header.onclick = () => toggleGroup(groupIndex);
     
-    // 群組圖標
     const icon = document.createElement('i');
     icon.className = `fas ${group.icon || 'fa-folder'} group-icon`;
     header.appendChild(icon);
     
-    // 群組名稱
     const name = document.createElement('span');
     name.className = 'group-name';
     name.textContent = group.name;
     header.appendChild(name);
     
-    // 項目計數
     const count = document.createElement('span');
     count.className = 'group-count';
     const fileCount = group.items ? countFiles(group.items) : 0;
@@ -278,7 +358,6 @@ function createGroupElement(group, groupIndex) {
     
     groupDiv.appendChild(header);
     
-    // 項目容器
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'folder-tree';
     itemsContainer.id = `group-${typeof groupIndex === 'string' ? groupIndex : `group-${groupIndex}`}`;
@@ -301,29 +380,24 @@ function createFolderTreeElement(folder) {
     folderDiv.className = 'group-item folder-tree-root';
     folderDiv.dataset.path = folder.path;
     
-    // 資料夾標題
     const header = document.createElement('div');
     header.className = 'group-header folder-header';
     header.onclick = () => toggleFolderTree(folder.path);
     
-    // 展開/收合圖標
     const toggleIcon = document.createElement('i');
     toggleIcon.className = `fas fa-chevron-${folder.expanded ? 'down' : 'right'} folder-tree-toggle`;
     header.appendChild(toggleIcon);
     
-    // 資料夾圖標
     const icon = document.createElement('i');
     icon.className = 'fas fa-folder group-icon';
     header.appendChild(icon);
     
-    // 資料夾名稱
     const name = document.createElement('span');
     name.className = 'group-name';
     name.textContent = folder.name;
     name.title = folder.path;
     header.appendChild(name);
     
-    // 項目計數（先設為載入中）
     const count = document.createElement('span');
     count.className = 'group-count';
     count.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 10px;"></i>';
@@ -331,7 +405,6 @@ function createFolderTreeElement(folder) {
     
     folderDiv.appendChild(header);
     
-    // 樹狀容器
     const treeContainer = document.createElement('div');
     treeContainer.className = 'folder-tree';
     treeContainer.id = `folder-tree-${folder.path.replace(/[^a-zA-Z0-9]/g, '_')}`;
@@ -339,7 +412,6 @@ function createFolderTreeElement(folder) {
     
     folderDiv.appendChild(treeContainer);
     
-    // 如果展開，載入資料夾內容
     if (folder.expanded) {
         loadFolderContents(folder.path, treeContainer, count);
     }
@@ -362,13 +434,11 @@ function createSingleFileElement(file) {
     mainContainer.style.width = '100%';
     mainContainer.style.gap = '10px';
     
-    // 檔案圖標
     const icon = document.createElement('i');
     icon.className = 'fas fa-file-alt item-icon';
     icon.style.color = '#667eea';
     mainContainer.appendChild(icon);
     
-    // 檔案名稱（僅在非收合狀態顯示）
     if (!sidebarCollapsed) {
         const name = document.createElement('span');
         name.className = 'item-name';
@@ -396,7 +466,6 @@ function toggleFolderTree(folderPath) {
             treeContainer.style.display = 'block';
             toggleIcon.className = 'fas fa-chevron-down folder-tree-toggle';
             
-            // 如果還沒載入內容，現在載入
             if (treeContainer.innerHTML === '') {
                 loadFolderContents(folderPath, treeContainer, count);
             }
@@ -410,15 +479,12 @@ function toggleFolderTree(folderPath) {
 // 載入資料夾內容
 async function loadFolderContents(folderPath, container, countElement) {
     try {
-        // 顯示載入中
         container.innerHTML = `
             <div class="loading-folder">
                 <i class="fas fa-spinner fa-spin"></i> 載入中...
             </div>
         `;
         
-        // 這裡應該調用後端 API 來獲取資料夾內容
-        // 暫時使用模擬資料
         const response = await fetch(`/api/browse?path=${encodeURIComponent(folderPath)}`);
         const data = await response.json();
         
@@ -436,7 +502,6 @@ async function loadFolderContents(folderPath, container, countElement) {
         let fileCount = 0;
         
         if (data.items && data.items.length > 0) {
-            // 過濾掉返回上級的項目
             const items = data.items.filter(item => !item.is_parent);
             
             items.forEach(item => {
@@ -477,13 +542,11 @@ function createItemElement(item, level = 0) {
         itemDiv.className = 'folder-item';
         const hasChildren = item.children && item.children.length > 0;
         
-        // 創建主要容器
         const mainContainer = document.createElement('div');
         mainContainer.style.display = 'flex';
         mainContainer.style.alignItems = 'center';
         mainContainer.style.width = '100%';
         
-        // 切換按鈕
         if (hasChildren) {
             const toggleBtn = document.createElement('i');
             toggleBtn.className = 'fas fa-chevron-right folder-toggle';
@@ -498,12 +561,10 @@ function createItemElement(item, level = 0) {
             mainContainer.appendChild(spacer);
         }
         
-        // 資料夾圖標
         const icon = document.createElement('i');
         icon.className = 'fas fa-folder item-icon';
         mainContainer.appendChild(icon);
         
-        // 資料夾名稱
         const name = document.createElement('span');
         name.className = 'item-name';
         name.textContent = item.name;
@@ -511,7 +572,6 @@ function createItemElement(item, level = 0) {
         
         itemDiv.appendChild(mainContainer);
         
-        // 子項目容器
         if (hasChildren) {
             const childrenDiv = document.createElement('div');
             childrenDiv.className = 'folder-children';
@@ -527,18 +587,15 @@ function createItemElement(item, level = 0) {
         itemDiv.className = 'file-item';
         itemDiv.onclick = () => openFile(item);
         
-        // 創建主要容器
         const mainContainer = document.createElement('div');
         mainContainer.style.display = 'flex';
         mainContainer.style.alignItems = 'center';
         mainContainer.style.width = '100%';
         
-        // 檔案圖標
         const icon = document.createElement('i');
         icon.className = 'fas fa-file-alt item-icon';
         mainContainer.appendChild(icon);
         
-        // 檔案名稱
         const name = document.createElement('span');
         name.className = 'item-name';
         name.textContent = item.name;
@@ -573,14 +630,12 @@ function toggleFolder(element) {
 function openFile(file, switchToTab = true) {
     console.log('開啟檔案:', file);
     
-    // 檢查必要的屬性
     if (!file || !file.path) {
         console.error('檔案資料不完整:', file);
         showToast('檔案資料不完整', 'error');
         return;
     }
     
-    // 檢查是否已開啟
     const existingTab = currentTabs.find(tab => tab.path === file.path);
     
     if (existingTab) {
@@ -590,7 +645,6 @@ function openFile(file, switchToTab = true) {
         return;
     }
     
-    // 創建新標籤
     const tabId = generateTabId();
     const colorIndex = file.color ? tabColors.indexOf(file.color) : tabCounter % tabColors.length;
     const tab = {
@@ -601,7 +655,8 @@ function openFile(file, switchToTab = true) {
         loading: true,
         color: file.color || tabColors[colorIndex >= 0 ? colorIndex : tabCounter % tabColors.length],
         isLocal: file.isLocal || false,
-        loadStartTime: Date.now()
+        loadStartTime: Date.now(),
+        splitPane: file.splitPane || null
     };
     
     console.log('創建新標籤:', tab);
@@ -609,7 +664,6 @@ function openFile(file, switchToTab = true) {
     tabCounter++;
     currentTabs.push(tab);
 
-    // 確保設置 activeTabId
     if (switchToTab || !activeTabId) {
         activeTabId = tab.id;
     }
@@ -617,7 +671,6 @@ function openFile(file, switchToTab = true) {
     renderTabs();
     
     if (switchToTab) {
-        // 顯示載入中狀態
         const viewerContainer = document.getElementById('file-viewer');
         viewerContainer.innerHTML = `
             <div class="loading-state">
@@ -630,13 +683,10 @@ function openFile(file, switchToTab = true) {
         `;
     }
 
-    // 載入檔案內容（優化版本）
     loadFileContentOptimized(file.path, tabId, file.isLocal);
 
-    // 添加到最近檔案
     addToRecentFiles(file);
     
-    // 高亮顯示當前檔案
     document.querySelectorAll('.file-item').forEach(item => {
         item.classList.remove('active');
     });
@@ -656,17 +706,14 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
             return;
         }
         
-        // 標記為載入中
         tab.loading = true;
         tab.content = null;
         
-        // 創建 iframe 容器和載入指示器
         const container = document.createElement('div');
         container.style.position = 'relative';
         container.style.width = '100%';
         container.style.height = '100%';
         
-        // 載入指示器
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'iframe-loading';
         loadingDiv.innerHTML = `
@@ -680,7 +727,6 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
         `;
         container.appendChild(loadingDiv);
         
-        // 創建 iframe
         const iframe = document.createElement('iframe');
         iframe.id = `iframe-${tabId}`;
         iframe.style.width = '100%';
@@ -691,7 +737,6 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
         iframe.style.top = '0';
         iframe.style.left = '0';
         
-        // 設置 src 前的準備
         if (isLocal) {
             iframe.src = filePath;
         } else {
@@ -701,21 +746,17 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
         
         console.log('創建 iframe，src:', iframe.src);
         
-        // 監控載入進度
         let loadingCheckInterval = null;
         let loadTimeout = null;
         
-        // 設置載入完成處理
         iframe.onload = () => {
             console.log('iframe 載入完成');
             clearInterval(loadingCheckInterval);
             clearTimeout(loadTimeout);
             
-            // 計算載入時間
             const loadTime = Date.now() - tab.loadStartTime;
             console.log(`檔案載入完成，耗時: ${loadTime}ms`);
             
-            // 漸隱載入指示器
             if (loadingDiv) {
                 loadingDiv.classList.add('iframe-loaded');
                 setTimeout(() => {
@@ -729,13 +770,11 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
             tab.content = container;
             renderTabs();
             
-            // 顯示載入成功提示（對於大檔案）
             if (loadTime > 3000) {
                 showToast(`檔案載入完成 (${(loadTime/1000).toFixed(1)}秒)`, 'success');
             }
         };
         
-        // 設置錯誤處理
         iframe.onerror = (error) => {
             console.error('iframe 載入失敗:', error);
             clearInterval(loadingCheckInterval);
@@ -750,29 +789,23 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
             }
         };
         
-        // 添加 iframe 到容器
         container.appendChild(iframe);
         
-        // 如果是當前標籤，顯示容器
         if (tabId === activeTabId) {
             const viewerContainer = document.getElementById('file-viewer');
             viewerContainer.innerHTML = '';
             viewerContainer.appendChild(container);
         }
         
-        // 儲存容器到 tab
         tab.content = container;
         
-        // 設置較短的超時時間
         loadTimeout = setTimeout(() => {
             if (tab.loading) {
                 console.warn('載入時間過長，可能是大檔案');
-                // 不直接標記為失敗，繼續等待
                 showToast('檔案較大，載入中...', 'info');
             }
-        }, 10000); // 10秒提醒
+        }, 10000);
         
-        // 最終超時
         loadingTimeouts[tabId] = setTimeout(() => {
             if (tab.loading) {
                 console.error('載入超時');
@@ -785,7 +818,7 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
                     showErrorState(filePath, '載入超時');
                 }
             }
-        }, 60000); // 60秒最終超時
+        }, 60000);
         
     } catch (error) {
         console.error('載入檔案內容失敗:', error);
@@ -803,7 +836,6 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
         
         if (!content) return;
         
-        // 顯示載入中
         content.innerHTML = `
             <div class="loading-state">
                 <i class="fas fa-spinner fa-spin"></i>
@@ -814,7 +846,6 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
             </div>
         `;
         
-        // 創建 iframe
         const iframe = document.createElement('iframe');
         iframe.style.width = '100%';
         iframe.style.height = '100%';
@@ -829,15 +860,21 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
         iframe.onload = () => {
             console.log(`檔案載入完成到 ${pane} 面板`);
             
-            // 更新標題
             if (title) {
                 const fileName = filePath.split('/').pop();
                 title.textContent = fileName;
                 title.title = filePath;
             }
             
-            // 儲存 tabId
             content.dataset.tabId = tabId;
+            
+            // 儲存到分割視窗狀態
+            splitViewState[pane] = filePath;
+            
+            // 設置同步滾動
+            if (syncScroll) {
+                setupSyncScroll();
+            }
         };
         
         iframe.onerror = () => {
@@ -869,15 +906,12 @@ function generateTabId() {
 function renderTabs() {
     const tabsContainer = document.getElementById('file-tabs');
     
-    // 保留手機選單按鈕和新增按鈕
     const mobileBtn = tabsContainer.querySelector('.mobile-menu-btn');
     const addBtn = tabsContainer.querySelector('.add-tab-btn');
     
-    // 清空標籤（保留按鈕）
     const existingTabs = tabsContainer.querySelectorAll('.file-tab');
     existingTabs.forEach(tab => tab.remove());
     
-    // 插入標籤
     currentTabs.forEach(tab => {
         const tabElement = createTabElement(tab);
         if (addBtn) {
@@ -893,19 +927,68 @@ function createTabElement(tab) {
     const tabDiv = document.createElement('div');
     tabDiv.className = `file-tab ${tab.id === activeTabId ? 'active' : ''}`;
     tabDiv.style.setProperty('--tab-color', tab.color);
+    tabDiv.dataset.tabId = tab.id;
+    tabDiv.draggable = true;
+    
+    // 拖放事件
+    tabDiv.addEventListener('dragstart', (e) => {
+        tabDiv.classList.add('dragging');
+        tabDragData = tab;
+        e.dataTransfer.effectAllowed = 'move';
+    });
+    
+    tabDiv.addEventListener('dragend', (e) => {
+        tabDiv.classList.remove('dragging');
+        
+        // 重新排序 currentTabs
+        const allTabs = document.querySelectorAll('.file-tab');
+        const newOrder = [];
+        allTabs.forEach(tabEl => {
+            const tabId = tabEl.dataset.tabId;
+            const tab = currentTabs.find(t => t.id === tabId);
+            if (tab) newOrder.push(tab);
+        });
+        currentTabs = newOrder;
+    });
+    
     tabDiv.onclick = (e) => {
-        // 防止點擊子元素時觸發
         if (e.target.closest('.tab-close') || e.target.closest('.color-picker')) {
             return;
         }
-        switchTab(tab.id);
+        
+        // 檢查是否需要在分割視窗中開啟
+        if (tab.splitPane) {
+            if (!splitView) {
+                toggleSplitView();
+            }
+            setTimeout(() => {
+                const leftTab = currentTabs.find(t => t.path === splitViewState.left);
+                const rightTab = currentTabs.find(t => t.path === splitViewState.right);
+                if (leftTab) loadFileToPane(leftTab, 'left');
+                if (rightTab) loadFileToPane(rightTab, 'right');
+            }, 300);
+        } else {
+            switchTab(tab.id);
+        }
     };
+    
     tabDiv.oncontextmenu = (e) => showTabContextMenu(e, tab);
     tabDiv.title = tab.path;
     
     // 圖標
     const icon = document.createElement('i');
     icon.className = 'fas fa-file-alt tab-icon';
+    
+    // 如果是分割視窗的檔案，顯示特殊圖標
+    if (tab.splitPane) {
+        const splitIcon = document.createElement('i');
+        splitIcon.className = 'fas fa-columns tab-split-icon';
+        splitIcon.style.marginLeft = '4px';
+        splitIcon.style.fontSize = '10px';
+        splitIcon.style.opacity = '0.7';
+        tabDiv.appendChild(splitIcon);
+    }
+    
     tabDiv.appendChild(icon);
     
     // 標題
@@ -959,14 +1042,12 @@ function showTabContextMenu(e, tab) {
     
     const colorPicker = document.getElementById(`color-picker-${tab.id}`);
     if (colorPicker) {
-        // 隱藏其他顏色選擇器
         document.querySelectorAll('.color-picker').forEach(picker => {
             picker.classList.remove('show');
         });
         
         colorPicker.classList.add('show');
         
-        // 點擊其他地方時關閉
         setTimeout(() => {
             document.addEventListener('click', function hideColorPicker() {
                 colorPicker.classList.remove('show');
@@ -996,14 +1077,12 @@ function switchTab(tabId) {
     if (tab) {
         const viewerContainer = document.getElementById('file-viewer');
         
-        // 隱藏空狀態
         const emptyState = document.getElementById('empty-state');
         if (emptyState) {
             emptyState.style.display = 'none';
         }
         
         if (splitView) {
-            // 分割視窗模式
             if (!viewerContainer.querySelector('.split-container')) {
                 createSplitView();
             }
@@ -1014,7 +1093,6 @@ function switchTab(tabId) {
                 leftPane.appendChild(tab.content.cloneNode(true));
             }
         } else {
-            // 單一視窗模式
             viewerContainer.innerHTML = '';
             
             if (tab.content && !tab.loading) {
@@ -1023,10 +1101,8 @@ function switchTab(tabId) {
             } else if (tab.loading) {
                 console.log('標籤還在載入中');
                 if (tab.content) {
-                    // 如果有載入中的內容，顯示它
                     viewerContainer.appendChild(tab.content);
                 } else {
-                    // 否則顯示載入狀態
                     viewerContainer.innerHTML = `
                         <div class="loading-state">
                             <i class="fas fa-spinner fa-spin"></i>
@@ -1051,7 +1127,6 @@ function switchTab(tabId) {
 function closeTab(tabId, event) {
     event.stopPropagation();
     
-    // 清理載入超時
     if (loadingTimeouts[tabId]) {
         clearTimeout(loadingTimeouts[tabId]);
         delete loadingTimeouts[tabId];
@@ -1069,7 +1144,6 @@ function closeTab(tabId, event) {
             const viewerContainer = document.getElementById('file-viewer');
             viewerContainer.innerHTML = '';
             
-            // 顯示空狀態
             const emptyState = createEmptyState();
             viewerContainer.appendChild(emptyState);
         }
@@ -1130,12 +1204,10 @@ function toggleSidebar() {
     const backdrop = document.getElementById('sidebar-backdrop');
     const settings = document.querySelector('.sidebar-settings');
     
-    // 手機版處理
     if (window.innerWidth <= 768) {
         sidebar.classList.toggle('show');
         backdrop.classList.toggle('show');
         
-        // 確保設定區域跟隨側邊欄
         if (settings) {
             if (sidebar.classList.contains('show')) {
                 settings.style.left = '0';
@@ -1144,7 +1216,6 @@ function toggleSidebar() {
             }
         }
     } else {
-        // 桌面版處理
         sidebarCollapsed = !sidebarCollapsed;
         
         if (sidebarCollapsed) {
@@ -1162,7 +1233,6 @@ function searchFiles(query) {
     const allItems = document.querySelectorAll('.file-item, .folder-item');
     
     if (!query) {
-        // 如果沒有搜尋詞，顯示所有項目
         allItems.forEach(item => {
             item.style.display = 'flex';
         });
@@ -1176,7 +1246,6 @@ function searchFiles(query) {
         if (name.includes(lowerQuery)) {
             item.style.display = 'flex';
             
-            // 展開父資料夾
             let parent = item.parentElement;
             while (parent && parent.classList.contains('folder-children')) {
                 parent.classList.add('expanded');
@@ -1264,7 +1333,6 @@ function renderSavedWorkspaces() {
     const savedDiv = document.createElement('div');
     savedDiv.className = 'saved-workspaces';
     
-    // 從伺服器載入已儲存的工作區
     fetch('/api/multi_viewer/list')
         .then(response => response.json())
         .then(data => {
@@ -1310,16 +1378,19 @@ function loadWorkspace(workspaceId) {
 
 // 工具列功能
 function refreshContent() {
-    if (activeTabId) {
+    if (splitView) {
+        // 分割視窗模式下刷新兩個面板
+        refreshPane('left');
+        refreshPane('right');
+    } else if (activeTabId) {
+        // 單一視窗模式
         const tab = currentTabs.find(t => t.id === activeTabId);
         if (tab && !tab.loading) {
-            // 清除舊內容
             tab.content = null;
             tab.loading = true;
             tab.loadStartTime = Date.now();
             renderTabs();
             
-            // 顯示載入中狀態
             const viewerContainer = document.getElementById('file-viewer');
             viewerContainer.innerHTML = `
                 <div class="loading-state">
@@ -1331,7 +1402,6 @@ function refreshContent() {
                 </div>
             `;
             
-            // 重新載入
             loadFileContentOptimized(tab.path, tab.id, tab.isLocal);
             showToast('已重新整理', 'success');
         }
@@ -1340,13 +1410,20 @@ function refreshContent() {
 
 // 開啟搜尋對話框
 function openSearchModal() {
-    if (!activeTabId) {
-        showToast('請先開啟檔案', 'info');
-        return;
-    }
-    
     document.getElementById('search-modal').classList.add('show');
     document.getElementById('search-keyword').focus();
+    
+    // 根據當前模式設置搜尋範圍
+    const searchScope = document.getElementById('search-scope');
+    if (splitView) {
+        searchScope.value = 'all';
+        searchScope.style.display = 'block';
+        searchScope.previousElementSibling.style.display = 'block';
+    } else {
+        searchScope.value = 'active';
+        searchScope.style.display = 'none';
+        searchScope.previousElementSibling.style.display = 'none';
+    }
 }
 
 function closeSearchModal() {
@@ -1356,19 +1433,110 @@ function closeSearchModal() {
 // 執行搜尋
 function performSearch() {
     const keyword = document.getElementById('search-keyword').value;
+    const scope = document.getElementById('search-scope').value;
+    const caseSensitive = document.getElementById('search-case-sensitive').checked;
+    const wholeWord = document.getElementById('search-whole-word').checked;
+    const regex = document.getElementById('search-regex').checked;
+    
     if (!keyword) {
         document.getElementById('search-results').innerHTML = '';
         return;
     }
     
-    // 模擬搜尋功能 - 實際應該調用後端API
     const resultsDiv = document.getElementById('search-results');
     resultsDiv.innerHTML = '<p style="text-align: center; color: #999;">搜尋中...</p>';
     
-    // 這裡應該實作真正的搜尋功能
+    // 實際搜尋實現需要與 iframe 內容通信
     setTimeout(() => {
-        resultsDiv.innerHTML = '<p style="text-align: center; color: #999;">搜尋功能開發中</p>';
+        // 這裡應該實現真正的搜尋功能
+        const searchOptions = {
+            keyword,
+            scope,
+            caseSensitive,
+            wholeWord,
+            regex
+        };
+        
+        // 根據搜尋範圍執行搜尋
+        if (scope === 'all' && splitView) {
+            searchInPane('left', searchOptions);
+            searchInPane('right', searchOptions);
+        } else if (scope === 'left') {
+            searchInPane('left', searchOptions);
+        } else if (scope === 'right') {
+            searchInPane('right', searchOptions);
+        } else {
+            // 搜尋當前活動標籤
+            searchInActiveTab(searchOptions);
+        }
+        
+        resultsDiv.innerHTML = '<p style="text-align: center; color: #999;">搜尋完成</p>';
     }, 500);
+}
+
+// 在特定面板中搜尋
+function searchInPane(pane, options) {
+    const content = document.getElementById(`split-${pane}-content`);
+    const iframe = content?.querySelector('iframe');
+    
+    if (iframe && iframe.contentWindow) {
+        // 發送搜尋請求到 iframe
+        iframe.contentWindow.postMessage({
+            type: 'search',
+            options: options
+        }, '*');
+    }
+}
+
+// 在活動標籤中搜尋
+function searchInActiveTab(options) {
+    if (activeTabId) {
+        const tab = currentTabs.find(t => t.id === activeTabId);
+        if (tab && tab.content) {
+            const iframe = tab.content.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'search',
+                    options: options
+                }, '*');
+            }
+        }
+    }
+}
+
+// 開啟面板搜尋對話框
+function openPaneSearchModal(pane) {
+    currentSearchPane = pane;
+    const modal = document.getElementById('pane-search-modal');
+    const title = document.getElementById('pane-search-title');
+    
+    title.textContent = pane === 'left' ? '左側視窗' : '右側視窗';
+    modal.classList.add('show');
+    document.getElementById('pane-search-keyword').focus();
+}
+
+function closePaneSearchModal() {
+    document.getElementById('pane-search-modal').classList.remove('show');
+    currentSearchPane = null;
+}
+
+// 執行面板搜尋
+function performPaneSearch() {
+    const keyword = document.getElementById('pane-search-keyword').value;
+    const caseSensitive = document.getElementById('pane-search-case-sensitive').checked;
+    const wholeWord = document.getElementById('pane-search-whole-word').checked;
+    const regex = document.getElementById('pane-search-regex').checked;
+    
+    if (!keyword || !currentSearchPane) return;
+    
+    const searchOptions = {
+        keyword,
+        caseSensitive,
+        wholeWord,
+        regex
+    };
+    
+    searchInPane(currentSearchPane, searchOptions);
 }
 
 // 切換分割視窗
@@ -1378,9 +1546,16 @@ function toggleSplitView() {
     
     if (splitView) {
         createSplitView();
+        document.getElementById('main-toolbar').style.display = 'none';
+        document.getElementById('split-toolbar').style.display = 'flex';
         showToast('已啟用分割視窗', 'success');
     } else {
         // 恢復單一視窗
+        document.getElementById('main-toolbar').style.display = 'flex';
+        document.getElementById('split-toolbar').style.display = 'none';
+        document.getElementById('diff-controls').style.display = 'none';
+        diffMode = false;
+        
         viewerContainer.innerHTML = '';
         if (activeTabId) {
             const tab = currentTabs.find(t => t.id === activeTabId);
@@ -1404,6 +1579,9 @@ function createSplitView() {
                 <div class="split-pane-toolbar">
                     <span class="split-pane-title" id="split-left-title">左側視窗</span>
                     <div class="split-pane-actions">
+                        <button class="split-pane-btn" onclick="searchInSplitPane('left')" title="搜尋">
+                            <i class="fas fa-search"></i>
+                        </button>
                         <button class="split-pane-btn" onclick="openUploadModalForPane('left')" title="上傳檔案">
                             <i class="fas fa-upload"></i>
                         </button>
@@ -1424,11 +1602,14 @@ function createSplitView() {
                     </div>
                 </div>
             </div>
-            <div class="split-divider" onmousedown="initResize(event)"></div>
+            <div class="split-divider" id="split-divider"></div>
             <div class="split-pane" id="split-right">
                 <div class="split-pane-toolbar">
                     <span class="split-pane-title" id="split-right-title">右側視窗</span>
                     <div class="split-pane-actions">
+                        <button class="split-pane-btn" onclick="searchInSplitPane('right')" title="搜尋">
+                            <i class="fas fa-search"></i>
+                        </button>
                         <button class="split-pane-btn" onclick="openUploadModalForPane('right')" title="上傳檔案">
                             <i class="fas fa-upload"></i>
                         </button>
@@ -1451,6 +1632,9 @@ function createSplitView() {
             </div>
         </div>
     `;
+    
+    // 設置分割線拖動
+    setupSplitResize();
     
     // 設置分割視窗的拖放事件
     const leftContent = document.getElementById('split-left-content');
@@ -1486,16 +1670,223 @@ function createSplitView() {
             }
             handleDropForPane(e, pane);
         });
+        
+        // 設置焦點事件
+        content.addEventListener('click', () => {
+            content.focus();
+        });
     });
     
-    // 如果有活動標籤，載入到左側
-    if (activeTabId) {
-        const tab = currentTabs.find(t => t.id === activeTabId);
-        if (tab && tab.content) {
-            loadFileToPane(tab, 'left');
-        }
+    // 恢復之前的狀態
+    if (splitViewState.left) {
+        const leftTab = currentTabs.find(t => t.path === splitViewState.left);
+        if (leftTab) loadFileToPane(leftTab, 'left');
+    }
+    
+    if (splitViewState.right) {
+        const rightTab = currentTabs.find(t => t.path === splitViewState.right);
+        if (rightTab) loadFileToPane(rightTab, 'right');
     }
 }
+
+// 設置分割線拖動
+function setupSplitResize() {
+    const divider = document.getElementById('split-divider');
+    const container = document.querySelector('.split-container');
+    const leftPane = document.getElementById('split-left');
+    const rightPane = document.getElementById('split-right');
+    
+    let isResizing = false;
+    let startX = 0;
+    let startLeftWidth = 0;
+    
+    divider.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startLeftWidth = leftPane.offsetWidth;
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        
+        const deltaX = e.clientX - startX;
+        const containerWidth = container.offsetWidth;
+        const newLeftWidth = startLeftWidth + deltaX;
+        const percentage = (newLeftWidth / containerWidth) * 100;
+        
+        if (percentage >= 20 && percentage <= 80) {
+            leftPane.style.flex = `0 0 ${percentage}%`;
+            rightPane.style.flex = '1';
+        }
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+        }
+    });
+}
+
+// 搜尋分割面板
+window.searchInSplitPane = function(pane) {
+    openPaneSearchModal(pane);
+};
+
+// 交換左右面板
+window.swapPanes = function() {
+    const leftContent = document.getElementById('split-left-content');
+    const rightContent = document.getElementById('split-right-content');
+    const leftTitle = document.getElementById('split-left-title');
+    const rightTitle = document.getElementById('split-right-title');
+    
+    // 交換內容
+    const tempContent = leftContent.innerHTML;
+    leftContent.innerHTML = rightContent.innerHTML;
+    rightContent.innerHTML = tempContent;
+    
+    // 交換標題
+    const tempTitle = leftTitle.textContent;
+    leftTitle.textContent = rightTitle.textContent;
+    rightTitle.textContent = tempTitle;
+    
+    // 交換狀態
+    const tempState = splitViewState.left;
+    splitViewState.left = splitViewState.right;
+    splitViewState.right = tempState;
+    
+    showToast('已交換左右視窗', 'success');
+};
+
+// 切換差異模式
+window.toggleDiffMode = function() {
+    diffMode = !diffMode;
+    const diffControls = document.getElementById('diff-controls');
+    const diffBtn = document.querySelector('.btn-diff');
+    
+    if (diffMode) {
+        diffControls.style.display = 'flex';
+        diffBtn.classList.add('active');
+        
+        // 執行差異比較
+        performDiff();
+        
+        showToast('已啟用差異比較模式', 'success');
+    } else {
+        diffControls.style.display = 'none';
+        diffBtn.classList.remove('active');
+        closeDiffViewer();
+        showToast('已關閉差異比較模式', 'info');
+    }
+};
+
+// 執行差異比較
+async function performDiff() {
+    const leftContent = await getIframeContent('left');
+    const rightContent = await getIframeContent('right');
+    
+    if (!leftContent || !rightContent) {
+        showToast('無法獲取檔案內容', 'error');
+        return;
+    }
+    
+    // 使用 jsdiff 庫進行差異比較
+    const diff = Diff.createTwoFilesPatch(
+        splitViewState.left || 'Left File',
+        splitViewState.right || 'Right File',
+        leftContent,
+        rightContent
+    );
+    
+    // 顯示差異
+    const diffViewer = document.getElementById('diff-viewer');
+    const diffContent = document.getElementById('diff-content');
+    
+    // 使用 diff2html 顯示差異
+    const diffHtml = Diff2Html.html(diff, {
+        drawFileList: false,
+        matching: 'lines',
+        outputFormat: 'side-by-side'
+    });
+    
+    diffContent.innerHTML = diffHtml;
+    diffViewer.style.display = 'block';
+}
+
+// 獲取 iframe 內容
+async function getIframeContent(pane) {
+    const content = document.getElementById(`split-${pane}-content`);
+    const iframe = content?.querySelector('iframe');
+    
+    if (!iframe) return null;
+    
+    try {
+        // 這裡需要實現與 iframe 的通信來獲取內容
+        // 暫時返回模擬內容
+        return `Sample content from ${pane} pane`;
+    } catch (error) {
+        console.error('獲取 iframe 內容失敗:', error);
+        return null;
+    }
+}
+
+// 關閉差異查看器
+window.closeDiffViewer = function() {
+    document.getElementById('diff-viewer').style.display = 'none';
+};
+
+// 同步滾動
+window.syncScrolling = function() {
+    syncScroll = !syncScroll;
+    
+    if (syncScroll) {
+        setupSyncScroll();
+        showToast('已啟用同步滾動', 'success');
+    } else {
+        removeSyncScroll();
+        showToast('已關閉同步滾動', 'info');
+    }
+};
+
+// 設置同步滾動
+function setupSyncScroll() {
+    const leftContent = document.getElementById('split-left-content');
+    const rightContent = document.getElementById('split-right-content');
+    const leftIframe = leftContent?.querySelector('iframe');
+    const rightIframe = rightContent?.querySelector('iframe');
+    
+    if (leftIframe && rightIframe) {
+        // 需要實現 iframe 內容的滾動同步
+        // 這需要與 iframe 內容進行通信
+    }
+}
+
+// 移除同步滾動
+function removeSyncScroll() {
+    // 移除滾動事件監聽器
+}
+
+// 複製差異到左側
+window.copyDiffLeft = function() {
+    showToast('功能開發中', 'info');
+};
+
+// 複製差異到右側  
+window.copyDiffRight = function() {
+    showToast('功能開發中', 'info');
+};
+
+// 下一個差異
+window.nextDiff = function() {
+    showToast('功能開發中', 'info');
+};
+
+// 上一個差異
+window.prevDiff = function() {
+    showToast('功能開發中', 'info');
+};
 
 // 為特定面板開啟上傳對話框
 window.openUploadModalForPane = function(pane) {
@@ -1511,13 +1902,11 @@ window.refreshPane = function(pane) {
     if (tabId) {
         const tab = currentTabs.find(t => t.id === tabId);
         if (tab && !tab.loading) {
-            // 重新載入檔案
             tab.content = null;
             tab.loading = true;
             tab.loadStartTime = Date.now();
             renderTabs();
             
-            // 顯示載入狀態
             content.innerHTML = `
                 <div class="loading-state">
                     <i class="fas fa-spinner fa-spin"></i>
@@ -1528,7 +1917,6 @@ window.refreshPane = function(pane) {
                 </div>
             `;
             
-            // 重新載入
             loadFileContentForPane(tab.path, tab.id, tab.isLocal, pane);
             showToast(`已重新整理${pane === 'left' ? '左側' : '右側'}視窗`, 'success');
         }
@@ -1539,7 +1927,6 @@ window.refreshPane = function(pane) {
 function handleDropForPane(event, pane) {
     const files = Array.from(event.dataTransfer.files);
     if (files.length > 0) {
-        // 開啟第一個檔案到指定面板
         const file = files[0];
         const virtualFile = {
             name: file.name,
@@ -1548,18 +1935,18 @@ function handleDropForPane(event, pane) {
             isLocal: true
         };
         
-        // 創建或更新標籤
         const existingTab = currentTabs.find(tab => tab.path === virtualFile.path);
         if (existingTab) {
             loadFileToPane(existingTab, pane);
         } else {
-            // 創建新標籤但不切換
             openFile(virtualFile, false);
-            // 載入到指定面板
             setTimeout(() => {
                 const newTab = currentTabs.find(tab => tab.path === virtualFile.path);
                 if (newTab) {
+                    // 標記此標籤在分割視窗中使用
+                    newTab.splitPane = pane;
                     loadFileToPane(newTab, pane);
+                    renderTabs();
                 }
             }, 100);
         }
@@ -1580,7 +1967,6 @@ function loadFileToPane(tab, pane) {
         if (tab.content && !tab.loading) {
             content.appendChild(tab.content.cloneNode(true));
         } else {
-            // 需要載入
             content.innerHTML = `
                 <div class="loading-state">
                     <i class="fas fa-spinner fa-spin"></i>
@@ -1594,53 +1980,15 @@ function loadFileToPane(tab, pane) {
             loadFileContentForPane(tab.path, tab.id, tab.isLocal, pane);
         }
         
-        // 更新標題
         if (title) {
             title.textContent = tab.name;
             title.title = tab.path;
         }
+        
+        // 更新狀態
+        splitViewState[pane] = tab.path;
     }
 }
-
-// 初始化調整大小
-window.initResize = function(e) {
-    e.preventDefault();
-    isDragging = true;
-    
-    const container = document.querySelector('.split-container');
-    const leftPane = document.getElementById('split-left');
-    const rightPane = document.getElementById('split-right');
-    const divider = e.target;
-    
-    const startX = e.pageX;
-    const startLeftWidth = leftPane.offsetWidth;
-    const containerWidth = container.offsetWidth;
-    
-    function doDrag(e) {
-        if (!isDragging) return;
-        
-        const deltaX = e.pageX - startX;
-        const newLeftWidth = startLeftWidth + deltaX;
-        const percentage = (newLeftWidth / containerWidth) * 100;
-        
-        // 限制最小和最大寬度
-        if (percentage >= 20 && percentage <= 80) {
-            leftPane.style.flex = `0 0 ${percentage}%`;
-            rightPane.style.flex = '1';
-        }
-    }
-    
-    function stopDrag() {
-        isDragging = false;
-        document.removeEventListener('mousemove', doDrag);
-        document.removeEventListener('mouseup', stopDrag);
-        divider.style.cursor = 'col-resize';
-    }
-    
-    document.addEventListener('mousemove', doDrag);
-    document.addEventListener('mouseup', stopDrag);
-    divider.style.cursor = 'col-resize';
-};
 
 // 儲存工作區
 function saveWorkspace() {
@@ -1684,10 +2032,13 @@ async function confirmSave() {
         tabs: currentTabs.map(tab => ({
             name: tab.name,
             path: tab.path,
-            color: tab.color
+            color: tab.color,
+            splitPane: tab.splitPane
         })),
         activeTabPath: activeTabId ? currentTabs.find(t => t.id === activeTabId)?.path : null,
         splitView: splitView,
+        splitViewState: splitViewState,
+        diffMode: diffMode,
         timestamp: new Date().toISOString()
     };
     
@@ -1710,7 +2061,6 @@ async function confirmSave() {
             showToast('工作區儲存成功', 'success');
             closeSaveModal();
             
-            // 更新 URL
             window.history.pushState({}, '', `/multi_viewer?state=${result.id}`);
             currentWorkspaceId = result.id;
         } else {
@@ -1731,7 +2081,6 @@ function exportFile() {
     
     const tab = currentTabs.find(t => t.id === activeTabId);
     if (tab) {
-        // 實作匯出功能
         showToast('匯出功能開發中', 'info');
     }
 }
@@ -1744,7 +2093,6 @@ function openUploadModal() {
     document.getElementById('uploaded-files').style.display = 'none';
     document.getElementById('files-list').innerHTML = '';
     
-    // 設置拖放事件
     const uploadArea = document.getElementById('upload-area');
     uploadArea.addEventListener('dragover', handleDragOver);
     uploadArea.addEventListener('dragleave', handleDragLeave);
@@ -1804,7 +2152,6 @@ function confirmUpload() {
         return;
     }
     
-    // 處理每個檔案
     uploadedFiles.forEach((file, index) => {
         const virtualFile = {
             name: file.name,
@@ -1813,25 +2160,22 @@ function confirmUpload() {
             isLocal: true
         };
         
-        // 根據是否在分割視窗模式處理
         if (splitView && currentUploadPane) {
-            // 在分割視窗模式下，載入到指定面板
             if (index === 0) {
-                // 第一個檔案創建標籤並載入到面板
                 openFile(virtualFile, false);
                 setTimeout(() => {
                     const newTab = currentTabs.find(tab => tab.path === virtualFile.path);
                     if (newTab) {
+                        newTab.splitPane = currentUploadPane;
                         loadFileToPane(newTab, currentUploadPane);
+                        renderTabs();
                     }
                 }, 100);
             } else {
-                // 其他檔案只創建標籤
                 openFile(virtualFile, false);
             }
         } else {
-            // 普通模式下，開啟檔案
-            openFile(virtualFile, index === 0); // 只切換到第一個檔案
+            openFile(virtualFile, index === 0);
         }
     });
     
@@ -1893,7 +2237,6 @@ function setupDragAndDrop() {
         
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0) {
-            // 直接開啟檔案
             files.forEach((file, index) => {
                 const virtualFile = {
                     name: file.name,
@@ -1911,21 +2254,17 @@ function setupDragAndDrop() {
 
 // 添加到最近檔案
 function addToRecentFiles(file) {
-    // 移除重複的
     recentFiles = recentFiles.filter(f => f.path !== file.path);
     
-    // 添加到開頭
     recentFiles.unshift({
         ...file,
         openedAt: new Date().toISOString()
     });
     
-    // 限制數量
     if (recentFiles.length > 20) {
         recentFiles = recentFiles.slice(0, 20);
     }
     
-    // 儲存到 localStorage（如果設定允許）
     if (document.getElementById('remember-recent')?.checked !== false) {
         try {
             localStorage.setItem('recentFiles', JSON.stringify(recentFiles));
@@ -1987,7 +2326,6 @@ function showToast(message, type = 'info') {
     
     container.appendChild(toast);
     
-    // 自動移除
     setTimeout(() => removeToast(toast), 5000);
 }
 
@@ -2007,13 +2345,13 @@ function formatTime(timeString) {
     const now = new Date();
     const diff = now - date;
     
-    if (diff < 60000) { // 小於1分鐘
+    if (diff < 60000) {
         return '剛剛';
-    } else if (diff < 3600000) { // 小於1小時
+    } else if (diff < 3600000) {
         return Math.floor(diff / 60000) + ' 分鐘前';
-    } else if (diff < 86400000) { // 小於1天
+    } else if (diff < 86400000) {
         return Math.floor(diff / 3600000) + ' 小時前';
-    } else if (diff < 604800000) { // 小於7天
+    } else if (diff < 604800000) {
         return Math.floor(diff / 86400000) + ' 天前';
     } else {
         return date.toLocaleDateString();
@@ -2030,13 +2368,11 @@ function closeSettingsModal() {
 }
 
 function showSettingsTab(tab) {
-    // 切換標籤
     document.querySelectorAll('.settings-tab').forEach(t => {
         t.classList.remove('active');
     });
     event.currentTarget.classList.add('active');
     
-    // 切換內容
     document.querySelectorAll('.settings-panel').forEach(panel => {
         panel.style.display = 'none';
     });
@@ -2044,7 +2380,6 @@ function showSettingsTab(tab) {
 }
 
 function saveSettings() {
-    // 儲存設定到 localStorage
     const settings = {
         autoSave: document.getElementById('auto-save').checked,
         rememberRecent: document.getElementById('remember-recent').checked,
@@ -2058,7 +2393,6 @@ function saveSettings() {
         showToast('設定已儲存', 'success');
         closeSettingsModal();
         
-        // 應用設定
         applySettings(settings);
     } catch (e) {
         console.error('儲存設定失敗:', e);
@@ -2068,14 +2402,12 @@ function saveSettings() {
 
 // 應用設定
 function applySettings(settings) {
-    // 應用深色模式
     if (settings.darkMode) {
         document.body.classList.add('dark-mode');
     } else {
         document.body.classList.remove('dark-mode');
     }
     
-    // 應用緊湊模式
     if (settings.compactMode) {
         document.body.classList.add('compact-mode');
     } else {
@@ -2090,14 +2422,12 @@ function loadSettings() {
         if (saved) {
             const settings = JSON.parse(saved);
             
-            // 應用設定到UI
             document.getElementById('auto-save').checked = settings.autoSave || false;
             document.getElementById('remember-recent').checked = settings.rememberRecent !== false;
             document.getElementById('dark-mode').checked = settings.darkMode || false;
             document.getElementById('compact-mode').checked = settings.compactMode || false;
             document.getElementById('dev-mode').checked = settings.devMode || false;
             
-            // 應用設定
             applySettings(settings);
         }
     } catch (e) {
@@ -2107,30 +2437,3 @@ function loadSettings() {
 
 // 在初始化時載入設定
 loadSettings();
-
-// 添加快捷鍵支援
-document.addEventListener('keydown', (e) => {
-    // Ctrl/Cmd + S: 儲存工作區
-    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        saveWorkspace();
-    }
-    
-    // Ctrl/Cmd + O: 開啟檔案
-    if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-        e.preventDefault();
-        openUploadModal();
-    }
-    
-    // Ctrl/Cmd + F: 搜尋
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        openSearchModal();
-    }
-    
-    // F5: 重新整理
-    if (e.key === 'F5') {
-        e.preventDefault();
-        refreshContent();
-    }
-});

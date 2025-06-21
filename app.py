@@ -413,6 +413,124 @@ def short_url_redirect(short_code):
     else:
         abort(404)
 
+# 新增：匯出比較結果為 HTML
+@app.route('/api/export_comparison', methods=['POST'])
+def export_comparison():
+    """匯出檔案比較結果為 HTML"""
+    try:
+        data = request.get_json()
+        left_file = data.get('leftFile', {})
+        right_file = data.get('rightFile', {})
+        diff_content = data.get('diffContent', '')
+        
+        # 生成 HTML 模板
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>檔案比較結果 - {left_file.get('name', 'File 1')} vs {right_file.get('name', 'File 2')}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.css" rel="stylesheet">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }}
+        .header {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .header h1 {{
+            margin: 0 0 10px 0;
+            color: #333;
+        }}
+        .file-info {{
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }}
+        .file-item {{
+            flex: 1;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 0 5px;
+        }}
+        .file-item h3 {{
+            margin: 0 0 5px 0;
+            color: #666;
+            font-size: 14px;
+        }}
+        .file-item p {{
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }}
+        .diff-container {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }}
+        .timestamp {{
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>檔案比較結果</h1>
+        <div class="file-info">
+            <div class="file-item">
+                <h3>左側檔案</h3>
+                <p>{left_file.get('name', 'Unknown')}</p>
+            </div>
+            <div class="file-item">
+                <h3>右側檔案</h3>
+                <p>{right_file.get('name', 'Unknown')}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="diff-container">
+        {diff_content}
+    </div>
+    
+    <div class="timestamp">
+        生成時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.js"></script>
+</body>
+</html>
+"""
+        
+        # 創建臨時檔案
+        temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8')
+        temp_file.write(html_content)
+        temp_file.close()
+        
+        # 返回檔案下載
+        return send_from_directory(
+            os.path.dirname(temp_file.name),
+            os.path.basename(temp_file.name),
+            as_attachment=True,
+            download_name=f'comparison_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
+        )
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'匯出失敗: {str(e)}'})
+
 # 修改匯出檔案路由
 @app.route('/api/export')
 def export_file():

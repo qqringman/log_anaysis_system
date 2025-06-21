@@ -97,10 +97,6 @@
                             <i class="fas fa-search"></i>
                             <span>搜尋</span>
                         </button>
-                        <button class="toolbar-btn" onclick="toggleSplitView()">
-                            <i class="fas fa-columns"></i>
-                            <span>分割視窗</span>
-                        </button>
                     </div>
                     
                     <div class="toolbar-group">
@@ -111,6 +107,10 @@
                         <button class="toolbar-btn" onclick="exportFile()">
                             <i class="fas fa-download"></i>
                             <span>匯出</span>
+                        </button>
+                        <button class="toolbar-btn btn-split" onclick="toggleSplitView()">
+                            <i class="fas fa-columns"></i>
+                            <span>分割視窗</span>
                         </button>
                     </div>
                 </div>
@@ -129,6 +129,10 @@
                         <button class="toolbar-btn" onclick="syncScrolling()">
                             <i class="fas fa-sync"></i>
                             <span>同步滾動</span>
+                        </button>
+                        <button class="toolbar-btn" onclick="exportComparisonAsHTML()">
+                            <i class="fas fa-file-export"></i>
+                            <span>匯出比較</span>
                         </button>
                     </div>
                     
@@ -150,14 +154,21 @@
                             <span>上一個差異</span>
                         </button>
                     </div>
+                    
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn btn-split" onclick="toggleSplitView()">
+                            <i class="fas fa-times"></i>
+                            <span>關閉分割</span>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="file-viewer-container" id="file-viewer">
-                    <div class="empty-state" id="empty-state" onclick="openUploadModal()">
+                    <div class="empty-state" id="empty-state">
                         <i class="fas fa-file-alt"></i>
                         <h5>選擇檔案開始瀏覽</h5>
                         <p>從左側檔案樹選擇檔案，或拖曳檔案到此處</p>
-                        <button class="empty-state-btn">
+                        <button class="empty-state-btn" onclick="openUploadModal()">
                             <i class="fas fa-upload"></i>
                             上傳檔案
                         </button>
@@ -188,7 +199,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5><i class="fas fa-save me-2"></i>儲存工作區</h5>
-                <button onclick="closeSaveModal()" style="background: none; border: none; font-size: 24px; color: #999;">
+                <button onclick="closeSaveModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -225,13 +236,13 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5><i class="fas fa-upload me-2"></i>上傳檔案</h5>
-                <button onclick="closeUploadModal()" style="background: none; border: none; font-size: 24px; color: #999;">
+                <button onclick="closeUploadModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="upload-area" id="upload-area">
-                    <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)">
+                    <input type="file" id="file-input" multiple style="display: none;" onchange="handleFileSelect(event)" accept="*/*">
                     <i class="fas fa-cloud-upload-alt"></i>
                     <h6>拖曳檔案到此處或點擊選擇</h6>
                     <p>支援多個檔案同時上傳</p>
@@ -254,7 +265,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5><i class="fas fa-search me-2"></i>搜尋檔案內容</h5>
-                <button onclick="closeSearchModal()" style="background: none; border: none; font-size: 24px; color: #999;">
+                <button onclick="closeSearchModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -301,7 +312,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5><i class="fas fa-search me-2"></i>搜尋<span id="pane-search-title"></span>內容</h5>
-                <button onclick="closePaneSearchModal()" style="background: none; border: none; font-size: 24px; color: #999;">
+                <button onclick="closePaneSearchModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -351,7 +362,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5><i class="fas fa-cog me-2"></i>設定</h5>
-                <button onclick="closeSettingsModal()" style="background: none; border: none; font-size: 24px; color: #999;">
+                <button onclick="closeSettingsModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>

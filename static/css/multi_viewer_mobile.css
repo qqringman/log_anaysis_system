@@ -146,6 +146,57 @@
     .empty-state p {
         font-size: 14px;
     }
+    
+    /* 最近檔案手機版優化 */
+    .recent-file {
+        flex-direction: row;
+        align-items: center;
+        padding: 10px;
+    }
+    
+    .recent-file-icon {
+        font-size: 20px;
+        margin-right: 10px;
+    }
+    
+    .recent-file-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .recent-file-time {
+        display: none; /* 在手機上隱藏時間 */
+    }
+    
+    /* 側邊欄折疊時的特殊處理 */
+    .sidebar.collapsed .recent-file {
+        padding: 8px;
+    }
+    
+    .sidebar.collapsed .recent-file-icon {
+        font-size: 16px;
+        margin-right: 8px;
+    }
+    
+    .sidebar.collapsed .recent-file-path {
+        display: none;
+    }
+    
+    /* 已儲存工作區手機版 */
+    .workspace-item {
+        padding: 12px;
+    }
+    
+    .workspace-info {
+        font-size: 11px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .sidebar.collapsed .workspace-info {
+        font-size: 10px;
+    }
 }
 
 /* 平板優化 */
@@ -279,8 +330,6 @@
 
 /* 手機版樣式 */
 @media (max-width: 768px) {
-    /* ... 現有的樣式 ... */
-    
     /* 側邊欄設定區域修復 */
     .sidebar {
         display: flex;
@@ -422,8 +471,6 @@
     :root {
         --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     }
-    
-    /* ... 現有的樣式 ... */
     
     /* 側邊欄設定區域修復 - 考慮 iPhone 安全區域 */
     .sidebar-settings {

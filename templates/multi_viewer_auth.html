@@ -3,113 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>需要密碼 - 多檔案瀏覽器</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
+    <title>工作區需要密碼</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
         
         .auth-container {
             background: white;
-            border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             max-width: 400px;
             width: 90%;
         }
         
         .auth-icon {
-            width: 80px;
-            height: 80px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 30px;
-        }
-        
-        .auth-icon i {
-            font-size: 40px;
+            text-align: center;
+            font-size: 48px;
             color: #667eea;
+            margin-bottom: 20px;
         }
         
         h2 {
             text-align: center;
             color: #333;
             margin-bottom: 10px;
-            font-size: 28px;
         }
         
-        .subtitle {
+        p {
             text-align: center;
             color: #666;
             margin-bottom: 30px;
         }
         
-        .form-control {
-            border-radius: 10px;
-            padding: 12px 20px;
-            font-size: 16px;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s ease;
+        .form-group {
+            margin-bottom: 20px;
         }
         
-        .form-control:focus {
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        input[type="password"]:focus {
+            outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
             border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
+            border-radius: 8px;
             font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        .btn:hover {
+            background: #5968d9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
         
         .error-message {
-            color: #dc3545;
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             text-align: center;
-            margin-top: 15px;
             display: none;
-        }
-        
-        .error-message.show {
-            display: block;
-        }
-        
-        .back-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-        
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .back-link a:hover {
-            text-decoration: underline;
         }
     </style>
 </head>
@@ -118,48 +105,34 @@
         <div class="auth-icon">
             <i class="fas fa-lock"></i>
         </div>
-        
-        <h2>需要密碼</h2>
-        <p class="subtitle">此工作區需要密碼才能存取</p>
-        
-        <form onsubmit="handleSubmit(event)">
-            <div class="mb-4">
-                <input type="password" class="form-control" id="password" placeholder="請輸入密碼" required autofocus>
-            </div>
-            
-            <button type="submit" class="btn btn-primary w-100">
-                <i class="fas fa-unlock me-2"></i>解鎖
-            </button>
-        </form>
+        <h2>此工作區需要密碼</h2>
+        <p>請輸入密碼以查看工作區內容</p>
         
         <div class="error-message" id="error-message">
-            <i class="fas fa-exclamation-circle me-1"></i>密碼錯誤，請重試
+            密碼錯誤，請重試
         </div>
         
-        <div class="back-link">
-            <a href="/">
-                <i class="fas fa-arrow-left me-1"></i>返回首頁
-            </a>
-        </div>
+        <form method="get" action="/multi_viewer">
+            <input type="hidden" name="state" value="{{ state_id }}">
+            <div class="form-group">
+                <label for="pwd">密碼</label>
+                <input type="password" name="pwd" id="pwd" placeholder="輸入密碼" required autofocus>
+            </div>
+            <button type="submit" class="btn">
+                <i class="fas fa-unlock"></i> 解鎖工作區
+            </button>
+        </form>
     </div>
     
     <script>
-        function handleSubmit(event) {
-            event.preventDefault();
-            
-            const password = document.getElementById('password').value;
-            const stateId = '{{ state_id }}';
-            
-            // 重新導向並附加密碼參數
-            window.location.href = `/multi_viewer?state=${stateId}&pwd=${encodeURIComponent(password)}`;
-        }
-        
-        // 檢查是否有錯誤參數
+        // 檢查 URL 參數是否有錯誤
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('error')) {
-            document.getElementById('error-message').classList.add('show');
-            document.getElementById('password').focus();
+            document.getElementById('error-message').style.display = 'block';
         }
+        
+        // 自動聚焦密碼輸入框
+        document.getElementById('pwd').focus();
     </script>
 </body>
 </html>

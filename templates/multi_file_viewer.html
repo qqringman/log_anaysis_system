@@ -101,6 +101,11 @@
                             <i class="fas fa-search"></i>
                             <span>搜尋</span>
                         </button>
+                        <!-- 在這裡添加全屏按鈕 -->
+                        <button class="toolbar-btn" onclick="toggleFullscreen()">
+                            <i class="fas fa-expand"></i>
+                            <span>全屏</span>
+                        </button>                        
                     </div>
                     
                     <div class="toolbar-group">
@@ -116,6 +121,10 @@
                             <i class="fas fa-columns"></i>
                             <span>分割視窗</span>
                         </button>
+                        <button class="toolbar-btn" onclick="toggleFullscreen()">
+                            <i class="fas fa-expand"></i>
+                            <span>全屏</span>
+                        </button>                        
                     </div>
                 </div>
                 
@@ -447,5 +456,6 @@
     <script src="{{ url_for('static', filename='js/iframe_search.js') }}"></script>
     <script src="{{ url_for('static', filename='js/multi_viewer_diff.js') }}"></script>
     <script src="{{ url_for('static', filename='js/text_editor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/fullscreen_handler.js') }}"></script>
 </body>
 </html>

@@ -22,7 +22,7 @@ class TextEditor {
         
         // 如果在分割視窗模式
         if (window.splitView && pane) {
-            window.currentUploadPane = pane;
+            // 不要切換標籤，保持分割視窗
             const tab = window.openFile(virtualFile, false);
             
             if (tab) {
@@ -160,14 +160,21 @@ class TextEditor {
             display: flex;
             overflow: hidden;
             background: #fafafa;
+            position: relative;
         `;
         
         // 行號區域
+        const lineNumbersWrapper = document.createElement('div');
+        lineNumbersWrapper.style.cssText = `
+            background: #f0f0f0;
+            overflow: hidden;
+            border-right: 1px solid #e0e0e0;
+            position: relative;
+        `;
+        
         const lineNumbers = document.createElement('div');
         lineNumbers.className = 'line-numbers';
         lineNumbers.style.cssText = `
-            background: #f0f0f0;
-            color: #999;
             padding: 20px 10px;
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 14px;
@@ -175,8 +182,7 @@ class TextEditor {
             text-align: right;
             user-select: none;
             min-width: 50px;
-            overflow: hidden;
-            border-right: 1px solid #e0e0e0;
+            color: #999;
         `;
         
         // 編輯器
@@ -201,6 +207,7 @@ class TextEditor {
             resize: none;
             overflow-y: auto;
             background: white;
+            white-space: pre;
         `;
         textarea.placeholder = '開始輸入文字...';
         textarea.value = tab.content || '';
@@ -222,6 +229,9 @@ class TextEditor {
                 tab.name += '*';
                 window.renderTabs();
             }
+            
+            // 儲存內容到 tab
+            tab.content = e.target.value;
         });
         
         // 同步滾動
@@ -235,15 +245,19 @@ class TextEditor {
                 e.preventDefault();
                 const start = textarea.selectionStart;
                 const end = textarea.selectionEnd;
-                textarea.value = textarea.value.substring(0, start) + '\t' + textarea.value.substring(end);
+                const value = textarea.value;
+                textarea.value = value.substring(0, start) + '\t' + value.substring(end);
                 textarea.selectionStart = textarea.selectionEnd = start + 1;
                 // 更新行號
                 this.updateLineNumbers(lineNumbers, textarea.value);
+                // 觸發 input 事件
+                textarea.dispatchEvent(new Event('input'));
             }
         });
         
+        lineNumbersWrapper.appendChild(lineNumbers);
         textareaWrapper.appendChild(textarea);
-        editorWrapper.appendChild(lineNumbers);
+        editorWrapper.appendChild(lineNumbersWrapper);
         editorWrapper.appendChild(textareaWrapper);
         container.appendChild(editorWrapper);
         
@@ -253,15 +267,15 @@ class TextEditor {
         
         return container;
     }
-
+    
     // 更新行號
     updateLineNumbers(lineNumbersElement, text) {
         const lines = text.split('\n').length;
         let lineNumbersHTML = '';
         for (let i = 1; i <= lines; i++) {
-            lineNumbersHTML += i + '\n';
+            lineNumbersHTML += `<div style="height: 1.6em; line-height: 1.6;">${i}</div>`;
         }
-        lineNumbersElement.textContent = lineNumbersHTML;
+        lineNumbersElement.innerHTML = lineNumbersHTML;
     }
     
     // 儲存檔案
@@ -306,7 +320,7 @@ class TextEditor {
 // 初始化文字編輯器
 window.textEditor = new TextEditor();
 
-// 修改雙擊事件處理
+// 修改雙擊事件處理 - 直接創建文字編輯器
 window.handleSplitPaneDoubleClick = function(pane) {
     // 檢查是否有檔案
     const content = document.getElementById(`split-${pane}-content`);

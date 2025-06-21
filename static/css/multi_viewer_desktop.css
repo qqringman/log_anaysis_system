@@ -1727,3 +1727,45 @@ input:checked + .toggle-slider:before {
 .text-editor-container {
     background: white;
 }
+
+/* 標籤拖曳效果 */
+.file-tab {
+    cursor: move;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.file-tab.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.file-tab:not(.dragging) {
+    transition: transform 0.2s ease;
+}
+
+/* 防止拖曳時選取文字 */
+.file-tab * {
+    pointer-events: none;
+}
+
+.file-tab .tab-close,
+.file-tab .color-picker {
+    pointer-events: all;
+}
+
+/* 拖曳時的插入指示器 */
+.file-tabs {
+    position: relative;
+}
+
+.file-tab.drag-over::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #667eea;
+    border-radius: 2px;
+}

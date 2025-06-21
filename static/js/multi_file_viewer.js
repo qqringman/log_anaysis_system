@@ -219,30 +219,16 @@ function setupKeyboardShortcuts() {
 // 設置標籤拖放
 function setupTabDragAndDrop() {
     const tabsContainer = document.getElementById('file-tabs');
+    let draggedTab = null;
     
-    tabsContainer.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        const draggingTab = document.querySelector('.file-tab.dragging');
-        if (!draggingTab) return;
-        
-        const afterElement = getDragAfterElement(tabsContainer, e.clientX);
-        if (afterElement == null) {
-            tabsContainer.appendChild(draggingTab);
-        } else {
-            tabsContainer.insertBefore(draggingTab, afterElement);
-        }
-    });
-    
-    // 設置標籤拖曳結束事件
-    tabsContainer.addEventListener('dragend', (e) => {
-        if (e.target.classList.contains('file-tab')) {
-            e.target.classList.remove('dragging');
-        }
-    });
-
-    // 允許標籤拖曳到分割視窗
+    // 委託事件處理，因為標籤是動態創建的
     tabsContainer.addEventListener('dragstart', (e) => {
         if (e.target.classList.contains('file-tab')) {
+            draggedTab = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            
+            // 儲存拖曳的標籤資料
             const tabId = e.target.dataset.tabId;
             const tab = currentTabs.find(t => t.id === tabId);
             if (tab) {
@@ -252,10 +238,57 @@ function setupTabDragAndDrop() {
                     path: tab.path,
                     name: tab.name
                 }));
-                e.dataTransfer.effectAllowed = 'copy';
             }
         }
-    });    
+    });
+    
+    tabsContainer.addEventListener('dragend', (e) => {
+        if (e.target.classList.contains('file-tab')) {
+            e.target.classList.remove('dragging');
+            draggedTab = null;
+            
+            // 更新 currentTabs 陣列順序
+            updateTabsOrder();
+        }
+    });
+    
+    tabsContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!draggedTab) return;
+        
+        const afterElement = getDragAfterElement(tabsContainer, e.clientX);
+        if (afterElement == null) {
+            // 如果沒有後續元素，檢查是否要插入到最後一個標籤之前
+            const allTabs = [...tabsContainer.querySelectorAll('.file-tab:not(.dragging)')];
+            const addBtn = tabsContainer.querySelector('.add-tab-btn');
+            if (allTabs.length > 0 && addBtn) {
+                tabsContainer.insertBefore(draggedTab, addBtn);
+            }
+        } else {
+            tabsContainer.insertBefore(draggedTab, afterElement);
+        }
+    });
+    
+    // 防止拖曳到其他元素上
+    tabsContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+    });
+}
+
+// 更新標籤順序
+function updateTabsOrder() {
+    const tabElements = document.querySelectorAll('.file-tab');
+    const newOrder = [];
+    
+    tabElements.forEach(tabEl => {
+        const tabId = tabEl.dataset.tabId;
+        const tab = currentTabs.find(t => t.id === tabId);
+        if (tab) {
+            newOrder.push(tab);
+        }
+    });
+    
+    currentTabs = newOrder;
 }
 
 // 處理分割視窗的雙擊事件
@@ -1096,7 +1129,13 @@ function createTabElement(tab) {
         });
         currentTabs = newOrder;
     });
+
+    // 防止拖曳時選取文字
+    tabDiv.addEventListener('selectstart', (e) => {
+        e.preventDefault();
+    });
     
+    // 點擊事件
     tabDiv.onclick = (e) => {
         if (e.target.closest('.tab-close') || e.target.closest('.color-picker')) {
             return;
@@ -1977,27 +2016,98 @@ function setupSplitResize() {
 
 // 關閉分割面板
 window.closeSplitPane = function(pane) {
-    const oppositepane = pane === 'left' ? 'right' : 'left';
-    const content = document.getElementById(`split-${pane}-content`);
-    const oppositeContent = document.getElementById(`split-${oppositepane}-content`);
+    const oppositePane = pane === 'left' ? 'right' : 'left';
+    const closingContent = document.getElementById(`split-${pane}-content`);
+    const remainingContent = document.getElementById(`split-${oppositePane}-content`);
     
-    if (!content || !oppositeContent) return;
+    if (!closingContent || !remainingContent) return;
     
-    // 清理關閉的面板
-    const tabId = content.dataset.tabId;
-    if (tabId) {
-        const tab = currentTabs.find(t => t.id === tabId);
-        if (tab && tab.splitPane === pane) {
-            tab.splitPane = null;
+    // 獲取要保留的標籤資訊
+    const remainingTabId = remainingContent.dataset.tabId;
+    const remainingFilePath = remainingContent.dataset.filePath;
+    let remainingTab = null;
+    
+    if (remainingTabId) {
+        remainingTab = currentTabs.find(t => t.id === remainingTabId);
+    }
+    
+    // 清理關閉的面板標記
+    const closingTabId = closingContent.dataset.tabId;
+    if (closingTabId) {
+        const closingTab = currentTabs.find(t => t.id === closingTabId);
+        if (closingTab && closingTab.splitPane === pane) {
+            closingTab.splitPane = null;
         }
+    }
+    
+    // 清理保留的面板標記
+    if (remainingTab) {
+        remainingTab.splitPane = null;
     }
     
     // 更新狀態
     splitViewState[pane] = null;
+    splitViewState[oppositePane] = null;
     
-    // 直接退出分割視窗模式
-    showToast(`已關閉${pane === 'left' ? '左側' : '右側'}視窗，退出分割模式`, 'info');
-    toggleSplitView();
+    // 退出分割視窗模式，但保留剩餘的內容
+    splitView = false;
+    const splitBtn = document.querySelector('.btn-split');
+    splitBtn.style.background = '';
+    splitBtn.innerHTML = '<i class="fas fa-columns"></i> <span>分割視窗</span>';
+    
+    document.getElementById('main-toolbar').style.display = 'flex';
+    document.getElementById('split-toolbar').style.display = 'none';
+    document.getElementById('diff-controls').style.display = 'none';
+    diffMode = false;
+    
+    // 顯示剩餘的檔案內容
+    const viewerContainer = document.getElementById('file-viewer');
+    viewerContainer.innerHTML = '';
+    
+    if (remainingTab) {
+        // 設置為當前活動標籤
+        activeTabId = remainingTab.id;
+        
+        // 如果內容已經載入，直接顯示
+        if (remainingTab.content && !remainingTab.loading) {
+            viewerContainer.appendChild(remainingTab.content);
+        } else {
+            // 如果還沒載入或正在載入，重新載入
+            viewerContainer.innerHTML = `
+                <div class="loading-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>載入中...</p>
+                    <div class="loading-progress">
+                        <div class="loading-progress-bar"></div>
+                    </div>
+                </div>
+            `;
+            
+            // 檢查是否為可編輯檔案
+            if (remainingTab.isEditable) {
+                window.textEditor.loadEditorToTab(remainingTab);
+            } else {
+                loadFileContentOptimized(remainingTab.path, remainingTab.id, remainingTab.isLocal);
+            }
+        }
+    } else if (remainingFilePath) {
+        // 如果沒有找到標籤但有檔案路徑，嘗試重新開啟
+        const file = {
+            name: remainingFilePath.split('/').pop(),
+            path: remainingFilePath,
+            type: 'file',
+            isLocal: false
+        };
+        openFile(file, true);
+    } else {
+        // 如果沒有任何內容，顯示空狀態
+        const emptyState = createEmptyState();
+        viewerContainer.appendChild(emptyState);
+        activeTabId = null;
+    }
+    
+    renderTabs();
+    showToast(`已關閉${pane === 'left' ? '左側' : '右側'}視窗，保留${oppositePane === 'left' ? '左側' : '右側'}內容`, 'info');
 };
 
 // 搜尋分割面板

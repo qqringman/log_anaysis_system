@@ -9,6 +9,8 @@ class DiffViewer {
         this.currentDiffIndex = 0;
         this.diffPositions = [];
         this.syncScrollEnabled = false;
+        this.syncScrollTimer = null;
+        this.ignoreScroll = false;        
     }
 
     // 執行差異比較
@@ -33,7 +35,8 @@ class DiffViewer {
             const result = await response.json();
             this.diffResult = result;
             this.displayDiff(result);
-            
+            this.showDiffViewer();
+
             return result;
         } catch (error) {
             console.error('差異比較失敗:', error);
@@ -44,38 +47,78 @@ class DiffViewer {
 
     // 顯示差異
     displayDiff(diffData) {
-        const diffViewer = document.getElementById('diff-viewer');
-        const diffContent = document.getElementById('diff-content');
-        
         if (!diffData || !diffData.diff) {
-            diffContent.innerHTML = '<p style="text-align: center; color: #999;">沒有差異</p>';
             return;
         }
+    }
 
-        // 使用 diff2html 顯示差異
-        const diffHtml = Diff2Html.html(diffData.diff, {
-            drawFileList: false,
-            matching: 'lines',
-            outputFormat: 'side-by-side'
-        });
-
-        diffContent.innerHTML = diffHtml;
-        diffViewer.style.display = 'block';
-
-        // 收集所有差異位置
+    // 顯示差異查看器
+    showDiffViewer() {
+        const diffViewer = document.createElement('div');
+        diffViewer.id = 'diff-viewer-overlay';
+        diffViewer.className = 'diff-viewer-overlay';
+        diffViewer.innerHTML = `
+            <div class="diff-viewer-container">
+                <div class="diff-viewer-header">
+                    <h3>檔案差異比較</h3>
+                    <div class="diff-stats">
+                        <span class="diff-stat additions">
+                            <i class="fas fa-plus"></i> ${this.diffResult.stats?.additions || 0} 新增
+                        </span>
+                        <span class="diff-stat deletions">
+                            <i class="fas fa-minus"></i> ${this.diffResult.stats?.deletions || 0} 刪除
+                        </span>
+                    </div>
+                    <button class="diff-close-btn" onclick="window.diffViewer.closeDiffViewer()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="diff-viewer-body">
+                    ${this.diffResult.htmlContent || '<p>沒有差異</p>'}
+                </div>
+                <div class="diff-navigation">
+                    <button class="diff-nav-btn" onclick="window.diffViewer.prevDiff()">
+                        <i class="fas fa-chevron-up"></i> 上一個
+                    </button>
+                    <span class="diff-position">${this.currentDiffIndex + 1} / ${this.diffPositions.length}</span>
+                    <button class="diff-nav-btn" onclick="window.diffViewer.nextDiff()">
+                        <i class="fas fa-chevron-down"></i> 下一個
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(diffViewer);
         this.collectDiffPositions();
+    }
+
+    // 關閉差異查看器
+    closeDiffViewer() {
+        const diffViewer = document.getElementById('diff-viewer-overlay');
+        if (diffViewer) {
+            diffViewer.remove();
+        }
     }
 
     // 收集差異位置
     collectDiffPositions() {
         this.diffPositions = [];
-        const diffs = document.querySelectorAll('.d2h-diff-line-add, .d2h-diff-line-del');
+        const diffViewer = document.getElementById('diff-viewer-overlay');
+        if (!diffViewer) return;
+        
+        const diffs = diffViewer.querySelectorAll('.diff-add, .diff-del, .diff-change');
         diffs.forEach(diff => {
             this.diffPositions.push({
                 element: diff,
                 top: diff.offsetTop
             });
         });
+        
+        // 更新差異計數
+        const positionElement = diffViewer.querySelector('.diff-position');
+        if (positionElement) {
+            positionElement.textContent = `${this.currentDiffIndex + 1} / ${this.diffPositions.length}`;
+        }
     }
 
     // 下一個差異
@@ -104,6 +147,17 @@ class DiffViewer {
         // 高亮當前差異
         this.diffPositions.forEach(d => d.element.classList.remove('current-diff'));
         diff.element.classList.add('current-diff');
+
+        // 更新位置顯示
+        this.updateDiffPosition();
+    }
+
+    // 然後加入新函數：
+    updateDiffPosition() {
+        const positionElement = document.querySelector('.diff-position');
+        if (positionElement) {
+            positionElement.textContent = `${this.currentDiffIndex + 1} / ${this.diffPositions.length}`;
+        }
     }
 
     // 設置同步滾動
@@ -118,13 +172,53 @@ class DiffViewer {
         
         if (!leftIframe || !rightIframe) return;
 
-        // 發送訊息到 iframe 設置同步滾動
-        leftIframe.contentWindow.postMessage({ type: 'enableSyncScroll', target: 'right' }, '*');
-        rightIframe.contentWindow.postMessage({ type: 'enableSyncScroll', target: 'left' }, '*');
-
-        // 監聽滾動事件
-        window.addEventListener('message', this.handleSyncScrollMessage.bind(this));
+        // 為 iframe 設置滾動監聽
+        this.setupIframeScrollSync(leftIframe, rightIframe, 'left');
+        this.setupIframeScrollSync(rightIframe, leftIframe, 'right');
+        
         this.syncScrollEnabled = true;
+        window.showToast('已啟用同步滾動', 'success');
+    }
+
+    setupIframeScrollSync(sourceIframe, targetIframe, sourceSide) {
+        try {
+            const sourceDoc = sourceIframe.contentDocument || sourceIframe.contentWindow.document;
+            const targetDoc = targetIframe.contentDocument || targetIframe.contentWindow.document;
+            
+            if (!sourceDoc || !targetDoc) return;
+            
+            const sourceScrollElement = sourceDoc.documentElement || sourceDoc.body;
+            const targetScrollElement = targetDoc.documentElement || targetDoc.body;
+            
+            // 滾動事件處理
+            const scrollHandler = () => {
+                if (!this.syncScrollEnabled || this.ignoreScroll) return;
+                
+                clearTimeout(this.syncScrollTimer);
+                this.syncScrollTimer = setTimeout(() => {
+                    this.ignoreScroll = true;
+                    
+                    const scrollPercentX = sourceScrollElement.scrollLeft / 
+                        (sourceScrollElement.scrollWidth - sourceScrollElement.clientWidth);
+                    const scrollPercentY = sourceScrollElement.scrollTop / 
+                        (sourceScrollElement.scrollHeight - sourceScrollElement.clientHeight);
+                    
+                    targetScrollElement.scrollLeft = scrollPercentX * 
+                        (targetScrollElement.scrollWidth - targetScrollElement.clientWidth);
+                    targetScrollElement.scrollTop = scrollPercentY * 
+                        (targetScrollElement.scrollHeight - targetScrollElement.clientHeight);
+                    
+                    setTimeout(() => { this.ignoreScroll = false; }, 50);
+                }, 10);
+            };
+            
+            sourceDoc.addEventListener('scroll', scrollHandler, true);
+            
+            // 儲存處理器以便移除
+            sourceIframe.syncScrollHandler = scrollHandler;
+        } catch (error) {
+            console.error('設置同步滾動失敗:', error);
+        }
     }
 
     // 移除同步滾動
@@ -139,47 +233,57 @@ class DiffViewer {
         
         if (!leftIframe || !rightIframe) return;
 
-        // 發送訊息到 iframe 停用同步滾動
-        leftIframe.contentWindow.postMessage({ type: 'disableSyncScroll' }, '*');
-        rightIframe.contentWindow.postMessage({ type: 'disableSyncScroll' }, '*');
+        try {
+            // 移除滾動事件監聽
+            const leftDoc = leftIframe.contentDocument || leftIframe.contentWindow.document;
+            const rightDoc = rightIframe.contentDocument || rightIframe.contentWindow.document;
+            
+            if (leftDoc && leftIframe.syncScrollHandler) {
+                leftDoc.removeEventListener('scroll', leftIframe.syncScrollHandler, true);
+            }
+            
+            if (rightDoc && rightIframe.syncScrollHandler) {
+                rightDoc.removeEventListener('scroll', rightIframe.syncScrollHandler, true);
+            }
+        } catch (error) {
+            console.error('移除同步滾動失敗:', error);
+        }
         
         this.syncScrollEnabled = false;
-    }
-
-    // 處理同步滾動訊息
-    handleSyncScrollMessage(event) {
-        if (!this.syncScrollEnabled) return;
-        
-        if (event.data.type === 'scroll') {
-            const targetPane = event.data.source === 'left' ? 'right' : 'left';
-            const targetIframe = document.querySelector(`#split-${targetPane}-content iframe`);
-            
-            if (targetIframe && targetIframe.contentWindow) {
-                targetIframe.contentWindow.postMessage({
-                    type: 'scrollTo',
-                    scrollTop: event.data.scrollTop,
-                    scrollLeft: event.data.scrollLeft
-                }, '*');
-            }
-        }
+        window.showToast('已關閉同步滾動', 'info');
     }
 
     // 複製差異到左側
     async copyDiffToLeft() {
-        // TODO: 實作複製差異到左側的功能
-        // 需要後端支援來修改檔案內容
-        window.showToast('功能開發中 - 複製差異到左側', 'info');
+        if (!this.diffResult || !this.diffResult.diff) {
+            window.showToast('沒有可複製的差異', 'error');
+            return;
+        }
+        
+        // 實際實作需要後端支援
+        if (confirm('確定要將右側的內容複製到左側嗎？這將覆蓋左側的檔案內容。')) {
+            window.showToast('複製功能需要後端支援', 'info');
+            // TODO: 實作檔案內容複製
+        }
     }
 
     // 複製差異到右側
     async copyDiffToRight() {
-        // TODO: 實作複製差異到右側的功能
-        // 需要後端支援來修改檔案內容
-        window.showToast('功能開發中 - 複製差異到右側', 'info');
+        if (!this.diffResult || !this.diffResult.diff) {
+            window.showToast('沒有可複製的差異', 'error');
+            return;
+        }
+        
+        // 實際實作需要後端支援
+        if (confirm('確定要將左側的內容複製到右側嗎？這將覆蓋右側的檔案內容。')) {
+            window.showToast('複製功能需要後端支援', 'info');
+            // TODO: 實作檔案內容複製
+        }
     }
 
     // 匯出差異比較結果
     async exportComparison(leftFile, rightFile) {
+        window.showToast('正在匯出比較結果...', 'info');
         try {
             const response = await fetch('/api/export_comparison', {
                 method: 'POST',

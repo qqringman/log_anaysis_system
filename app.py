@@ -329,6 +329,30 @@ def save_multi_viewer_state():
     except Exception as e:
         return jsonify({'success': False, 'message': f'儲存失敗: {str(e)}'})
 
+@app.route('/api/multi_viewer/delete/<state_id>', methods=['DELETE'])
+def delete_multi_viewer_state(state_id):
+    """刪除多檔案瀏覽器狀態"""
+    try:
+        conn = sqlite3.connect('chat_data.db')
+        cursor = conn.cursor()
+        
+        # 檢查權限
+        cursor.execute('SELECT created_by FROM multi_viewer_states WHERE id = ?', (state_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'success': False, 'message': '工作區不存在'}), 404
+        
+        # 刪除工作區
+        cursor.execute('DELETE FROM multi_viewer_states WHERE id = ?', (state_id,))
+        conn.commit()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': '工作區已刪除'})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'刪除失敗: {str(e)}'})
+
 @app.route('/api/multi_viewer/list')
 def list_multi_viewer_states():
     """列出已儲存的多檔案瀏覽器狀態"""

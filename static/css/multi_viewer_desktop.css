@@ -870,10 +870,17 @@ body {
     background: #e0e0e0;
     cursor: col-resize;
     position: relative;
+    transition: background 0.2s ease;
+    /* 增加可點擊區域 */
+    padding: 0 4px;
+    margin: 0 -4px;
+    box-sizing: content-box;
 }
 
-.split-divider:hover {
+.split-divider:hover,
+.split-divider:active {
     background: #667eea;
+    width: 6px;
 }
 
 .split-divider::after {

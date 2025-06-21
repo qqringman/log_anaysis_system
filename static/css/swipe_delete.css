@@ -1,0 +1,99 @@
+/* 滑動刪除樣式 */
+.recent-file,
+.workspace-item,
+.file-item,
+.folder-item {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+/* 刪除按鈕 */
+.swipe-delete-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0 20px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.swipe-delete-btn:hover {
+    background: #c82333;
+}
+
+.swipe-delete-btn i {
+    font-size: 16px;
+}
+
+/* 右鍵選單 */
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 2000;
+    min-width: 150px;
+    padding: 5px 0;
+}
+
+.context-menu-item {
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.context-menu-item:hover {
+    background: #f8f9fa;
+}
+
+.context-menu-item[data-action="delete"] {
+    color: #dc3545;
+}
+
+.context-menu-item[data-action="delete"]:hover {
+    background: #fee;
+}
+
+/* 手機版優化 */
+@media (max-width: 768px) {
+    .swipe-delete-btn {
+        padding: 0 15px;
+        font-size: 13px;
+    }
+    
+    /* 防止項目在滑動時溢出 */
+    .groups-container {
+        overflow-x: hidden;
+    }
+}
+
+/* 深色模式支援 */
+@media (prefers-color-scheme: dark) {
+    .context-menu {
+        background: #2a2a2a;
+        border-color: #3a3a3a;
+        color: #e0e0e0;
+    }
+    
+    .context-menu-item:hover {
+        background: #3a3a3a;
+    }
+}

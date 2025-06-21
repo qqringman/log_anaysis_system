@@ -199,3 +199,182 @@
 .drag-indicator.show {
     display: flex;
 }
+
+/* 差異查看器覆蓋層 */
+.diff-viewer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+}
+
+.diff-viewer-container {
+    background: white;
+    width: 90%;
+    max-width: 1200px;
+    height: 90vh;
+    border-radius: 15px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.diff-viewer-header {
+    background: #f8f9fa;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.diff-viewer-header h3 {
+    margin: 0;
+    flex: 1;
+    color: #333;
+}
+
+.diff-stats {
+    display: flex;
+    gap: 20px;
+}
+
+.diff-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.diff-stat.additions {
+    color: #28a745;
+}
+
+.diff-stat.deletions {
+    color: #dc3545;
+}
+
+.diff-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.diff-close-btn:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.diff-viewer-body {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+    background: #fafafa;
+}
+
+/* 差異樣式 */
+.diff-line {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.diff-add {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.diff-del {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.diff-change {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.current-diff {
+    background-color: #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* 差異導航 */
+.diff-navigation {
+    background: white;
+    padding: 15px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.diff-nav-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.diff-nav-btn:hover {
+    background: #5968d9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.diff-nav-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.diff-position {
+    font-weight: 500;
+    color: #666;
+    min-width: 80px;
+    text-align: center;
+}
+
+/* 手機版優化 */
+@media (max-width: 768px) {
+    .diff-viewer-container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .diff-viewer-header {
+        padding: 15px;
+    }
+    
+    .diff-viewer-header h3 {
+        font-size: 18px;
+    }
+    
+    .diff-stats {
+        display: none;
+    }
+}

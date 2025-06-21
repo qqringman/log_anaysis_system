@@ -1,0 +1,32 @@
+/* 搜尋高亮樣式 */
+.search-highlight {
+    background-color: #ffeb3b;
+    color: #000;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+.search-highlight.current-highlight {
+    background-color: #ff9800;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* 搜尋導航 */
+.search-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.search-result-count {
+    font-weight: 500;
+    color: #666;
+    min-width: 60px;
+    text-align: center;
+}

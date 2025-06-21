@@ -21,6 +21,8 @@ let searchResults = { left: [], right: [] };
 let currentSearchIndex = { left: 0, right: 0 };
 let splitViewState = { left: null, right: null };
 let tabDragData = null;
+let dragCounter = 0; // 防止重複拖放
+let isProcessingDrop = false; // 防止重複處理拖放
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
@@ -198,11 +200,19 @@ function setupEmptyStateDragDrop() {
 
 // 處理檔案拖放
 function handleDropFiles(e) {
-    // 防止重複處理
-    if (isDragging) {
-        isDragging = false;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // 防止重複處理拖放
+    if (isProcessingDrop) {
         return;
     }    
+    
+    isProcessingDrop = true;
+    setTimeout(() => {
+        isProcessingDrop = false;
+    }, 100);
+    
     const dt = e.dataTransfer;
     const files = dt.files;
 
@@ -210,7 +220,15 @@ function handleDropFiles(e) {
     const draggedFile = JSON.parse(dt.getData('application/json') || '{}');
 
     if (files && files.length > 0) {
-        handleFilesDropped(Array.from(files));
+        // 確保不會開啟重複檔案
+        const uniqueFiles = Array.from(files).filter((file, index, self) => 
+            index === self.findIndex(f => f.name === file.name && f.size === file.size)
+        );
+        handleFilesDropped(uniqueFiles);
+    } else if (draggedFile && draggedFile.type === 'file') {
+        // 處理內部拖曳
+        const virtualFile = { ...draggedFile, isLocal: false };
+        openFile(virtualFile, true);
     }
 }
 
@@ -302,6 +320,23 @@ function setupTabDragAndDrop() {
         }
     });
 }
+
+// 允許標籤拖曳到分割視窗
+tabsContainer.addEventListener('dragstart', (e) => {
+    if (e.target.classList.contains('file-tab')) {
+        const tabId = e.target.dataset.tabId;
+        const tab = currentTabs.find(t => t.id === tabId);
+        if (tab) {
+            e.dataTransfer.setData('application/json', JSON.stringify({
+                type: 'tab',
+                tabId: tabId,
+                path: tab.path,
+                name: tab.name
+            }));
+            e.dataTransfer.effectAllowed = 'copy';
+        }
+    }
+});
 
 // 獲取拖放後的元素
 function getDragAfterElement(container, x) {
@@ -1111,22 +1146,23 @@ function createTabElement(tab) {
         }
         
         // 檢查是否需要恢復分割視窗
-        if (tab.splitPane) {
-            if (!splitView) {
-                // 恢復分割視窗狀態
-                toggleSplitView();
-                setTimeout(() => {
-                    // 找到配對的檔案
-                    const pairedTabs = currentTabs.filter(t => t.splitPane);
-                    pairedTabs.forEach(t => {
-                        if (t.splitPane === 'left') {
-                            loadFileToPane(t, 'left');
-                        } else if (t.splitPane === 'right') {
-                            loadFileToPane(t, 'right');
-                        }
-                    });
-                }, 300);
-            }
+        if (splitView && tab.splitPane) {
+            // 如果已經在分割視窗模式，直接載入到對應面板
+            loadFileToPane(tab, tab.splitPane);
+        } else if (tab.splitPane && !splitView) {
+            // 如果標籤有分割視窗記錄但目前不在分割視窗模式
+            toggleSplitView();
+            setTimeout(() => {
+                // 找到配對的檔案
+                const pairedTabs = currentTabs.filter(t => t.splitPane);
+                pairedTabs.forEach(t => {
+                    if (t.splitPane === 'left') {
+                        loadFileToPane(t, 'left');
+                    } else if (t.splitPane === 'right') {
+                        loadFileToPane(t, 'right');
+                    }
+                });
+            }, 300);
         } else {
             switchTab(tab.id);
         }
@@ -1511,6 +1547,7 @@ function renderSavedWorkspaces() {
             } else {
                 data.forEach(workspace => {
                     const workspaceDiv = document.createElement('div');
+                    workspaceDiv.dataset.workspaceId = workspace.id;
                     workspaceDiv.className = 'workspace-item';
                     workspaceDiv.onclick = () => loadWorkspace(workspace.id);
                     
@@ -1916,15 +1953,18 @@ function setupSplitResize() {
     let startX = 0;
     let startLeftWidth = 0;
     
-    divider.addEventListener('mousedown', (e) => {
+    // 使用 pointer events 支援觸控
+    divider.addEventListener('pointerdown', (e) => {
         isResizing = true;
         startX = e.clientX;
         startLeftWidth = leftPane.offsetWidth;
         document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none'; // 防止選取文字
+        divider.setPointerCapture(e.pointerId);
         e.preventDefault();
     });
     
-    document.addEventListener('mousemove', (e) => {
+    divider.addEventListener('pointermove', (e) => {
         if (!isResizing) return;
         
         const deltaX = e.clientX - startX;
@@ -1938,10 +1978,12 @@ function setupSplitResize() {
         }
     });
     
-    document.addEventListener('mouseup', () => {
+    divider.addEventListener('pointerup', (e) => {
         if (isResizing) {
             isResizing = false;
             document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            divider.releasePointerCapture(e.pointerId);
         }
     });
 }
@@ -1991,7 +2033,8 @@ window.searchInSplitPane = function(pane) {
 
 // 交換左右面板
 window.swapPanes = function() {
-
+    if (!splitView) return;
+    
     // 保存當前狀態
     const leftTabId = document.getElementById('split-left-content').dataset.tabId;
     const rightTabId = document.getElementById('split-right-content').dataset.tabId;
@@ -2008,15 +2051,16 @@ window.swapPanes = function() {
     leftContent.innerHTML = rightContent.innerHTML;
     rightContent.innerHTML = tempContent;
     
-    // 交換標題
-    splitViewState.left = rightPath;
-    splitViewState.right = leftPath;
-
     // 更新 dataset
     leftContent.dataset.tabId = rightTabId || '';
     leftContent.dataset.filePath = rightPath || '';
     rightContent.dataset.tabId = leftTabId || '';
     rightContent.dataset.filePath = leftPath || '';
+    
+    // 交換標題
+    const tempTitle = leftTitle.textContent;
+    leftTitle.textContent = rightTitle.textContent;
+    rightTitle.textContent = tempTitle;
 
     // 交換狀態
     const tempState = splitViewState.left;
@@ -2025,9 +2069,13 @@ window.swapPanes = function() {
     
     // 更新標籤的 splitPane 屬性
     currentTabs.forEach(tab => {
-        if (tab.id === rightTabId) {
+        if (rightTabId && tab.id === rightTabId) {
             tab.splitPane = 'left';
-        } else if (tab.id === leftTabId) {
+        } else if (leftTabId && tab.id === leftTabId) {
+            tab.splitPane = 'right';
+        } else if (tab.path === rightPath) {
+            tab.splitPane = 'left';
+        } else if (tab.path === leftPath) {
             tab.splitPane = 'right';
         }
     });
@@ -2232,7 +2280,16 @@ function handleDropForPane(event, pane) {
                     isLocal: false
                 };
                 handleDroppedFile(virtualFile, pane);
-            }
+            } else if (draggedItem.type === 'tab') {
+                // 處理從標籤拖曳
+                const tab = currentTabs.find(t => t.id === draggedItem.tabId);
+                if (tab) {
+                    tab.splitPane = pane;
+                    loadFileToPane(tab, pane);
+                    renderTabs();
+                    showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${tab.name}`, 'success');
+                }
+            }            
             return;
         } catch (e) {
             console.error('解析拖曳資料失敗:', e);
@@ -2256,15 +2313,33 @@ function handleDropForPane(event, pane) {
 
 // 修復上傳後的處理
 async function handleFilesAsync(files) {
-    const uploadProgress = document.createElement('div');
-    uploadProgress.className = 'upload-progress';
-    uploadProgress.innerHTML = '<div class="upload-progress-bar" style="width: 0%"></div>';
-    document.body.appendChild(uploadProgress);
+    if (!files || files.length === 0) return;
     
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const progress = ((i + 1) / files.length) * 100;
-        uploadProgress.querySelector('.upload-progress-bar').style.width = `${progress}%`;
+    // 確保不會開啟重複檔案
+    const uniqueFiles = files.filter((file, index, self) => 
+        index === self.findIndex(f => f.name === file.name && f.size === file.size)
+    );
+    
+    if (uniqueFiles.length === 0) return;
+    
+    // 如果檔案很多，顯示進度條
+    const showProgress = uniqueFiles.length > 3;
+    let uploadProgress = null;
+    
+    if (showProgress) {
+        uploadProgress = document.createElement('div');
+        uploadProgress.className = 'upload-progress';
+        uploadProgress.innerHTML = '<div class="upload-progress-bar" style="width: 0%"></div>';
+        document.body.appendChild(uploadProgress);
+    }
+    
+    for (let i = 0; i < uniqueFiles.length; i++) {
+        const file = uniqueFiles[i];
+        const progress = ((i + 1) / uniqueFiles.length) * 100;
+        
+        if (uploadProgress) {
+            uploadProgress.querySelector('.upload-progress-bar').style.width = `${progress}%`;
+        }
         
         const virtualFile = {
             name: file.name,
@@ -2290,14 +2365,20 @@ async function handleFilesAsync(files) {
             openFile(virtualFile, i === 0);
         }
         
-        // 小延遲避免同時開啟太多檔案
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // 只在有多個檔案時加延遲
+        if (uniqueFiles.length > 1) {
+            await new Promise(resolve => setTimeout(resolve, 30));
+        }
     }
     
     // 移除進度條
-    setTimeout(() => {
-        uploadProgress.remove();
-    }, 500);
+    if (uploadProgress) {
+        setTimeout(() => {
+            uploadProgress.remove();
+        }, 300);
+    }
+    
+    showToast(`已成功載入 ${uniqueFiles.length} 個檔案`, 'success');
 }
 
 // 處理拖放的檔案
@@ -2441,8 +2522,11 @@ async function confirmSave() {
             showToast('工作區儲存成功', 'success');
             closeSaveModal();
             
-            window.history.pushState({}, '', `/multi_viewer?state=${result.id}`);
-            currentWorkspaceId = result.id;
+            window.history.pushState({}, '', `/multi_viewer?state=${result.state_id}`);
+            currentWorkspaceId = result.state_id;
+            
+            // 更新已儲存計數
+            updateSavedCount();
         } else {
             showToast('儲存失敗：' + result.error, 'error');
         }
@@ -2562,19 +2646,19 @@ function confirmUpload() {
         return;
     }
 
-    // 複製檔案陣列
+    // 複製檔案陣列並清空
     const filesToUpload = [...uploadedFiles];
+    uploadedFiles = [];
    
     closeUploadModal();
-    showToast(`正在載入 ${filesToUpload.length} 個檔案...`, 'info');
 
-    // 背景非同步處理
-    handleFilesAsync(filesToUpload).then(() => {
-        showToast(`已成功載入 ${filesToUpload.length} 個檔案`, 'success');
-    }).catch(error => {
-        console.error('載入檔案失敗:', error);
-        showToast('部分檔案載入失敗', 'error');
-    });    
+    // 背景非同步處理，不阻塞 UI
+    setTimeout(() => {
+        handleFilesAsync(filesToUpload).catch(error => {
+            console.error('載入檔案失敗:', error);
+            showToast('部分檔案載入失敗', 'error');
+        });
+    }, 0);
 }
 
 // 拖放事件處理
@@ -2829,8 +2913,47 @@ function loadSettings() {
     }
 }
 
+// 更新已儲存計數
+function updateSavedCount() {
+    fetch('/api/multi_viewer/list')
+        .then(response => response.json())
+        .then(data => {
+            // 只計算當前用戶的工作區
+            const username = window.currentUsername || 'anonymous';
+            const userWorkspaces = data.filter(w => w.created_by === username);
+            document.getElementById('saved-count').textContent = userWorkspaces.length;
+        })
+        .catch(error => {
+            console.error('更新計數失敗:', error);
+        });
+}
+
+// 載入已儲存的工作區
+function loadSavedWorkspaces() {
+    updateSavedCount();
+}
+
+// 更新最近檔案計數
+function updateRecentCount() {
+    const count = recentFiles.length;
+    const badge = document.querySelector('.nav-item:nth-child(2) .nav-badge');
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+}
+
 // 在初始化時載入設定
 loadSettings();
+
+// 定期更新計數
+setInterval(() => {
+    updateSavedCount();
+}, 30000); // 每30秒更新一次
+
+// 全局函數綁定（確保這些函數都被綁定）
+window.updateSavedCount = updateSavedCount;
+window.updateRecentCount = updateRecentCount;
 
 // 全局函數綁定
 window.toggleSidebar = toggleSidebar;

@@ -14,6 +14,8 @@
     
     <link href="{{ url_for('static', filename='css/multi_viewer_desktop.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/multi_viewer_mobile.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/swipe_delete.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/iframe_search.css') }}" rel="stylesheet">    
     <link href="{{ url_for('static', filename='css/multi_viewer_diff.css') }}" rel="stylesheet">
 
 </head>
@@ -440,6 +442,8 @@
         window.initialStateData = {{ state_data|tojson|safe }};
     </script>    
     <script src="{{ url_for('static', filename='js/multi_file_viewer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sidebar_swipe_delete.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/iframe_search.js') }}"></script>
     <script src="{{ url_for('static', filename='js/multi_viewer_diff.js') }}"></script>
 </body>
 </html>

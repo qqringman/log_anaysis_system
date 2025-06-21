@@ -1815,8 +1815,8 @@ input:checked + .toggle-slider:before {
     position: absolute;
     top: 20px;
     left: 0;
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1888,7 +1888,7 @@ input:checked + .toggle-slider:before {
 .sidebar.collapsed .search-input:focus {
     width: 90%;
     border-radius: 20px;
-    padding: 8px 35px 8px 12px;
+    padding: 8px 25px 8px 12px;
     font-size: 14px;
     color: #495057;
     text-align: left;

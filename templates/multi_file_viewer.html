@@ -29,20 +29,20 @@
         <aside class="sidebar" id="sidebar">
             <!-- 導航選單 -->
             <div class="sidebar-nav">
-                <div class="nav-item active" onclick="showView('files')">
+                <div class="nav-item active" onclick="showView('files', this)">
                     <i class="fas fa-folder nav-icon"></i>
                     <span class="nav-text">檔案</span>
                     <span class="nav-badge" id="files-count">0</span>
                 </div>
-                
-                <div class="nav-item" onclick="showView('recent')">
+
+                <div class="nav-item" onclick="showView('recent', this)">
                     <i class="fas fa-clock nav-icon"></i>
                     <span class="nav-text">最近</span>
                 </div>
-                
-                <div class="nav-item" onclick="showView('saved')">
+
+                <div class="nav-item" onclick="showView('saved', this)">
                     <i class="fas fa-save nav-icon"></i>
-                    <span class="nav-text">已儲存</span>
+                    <span class="nav-text">工作區</span>
                     <span class="nav-badge" id="saved-count" style="background: #28a745;">0</span>
                 </div>
             </div>

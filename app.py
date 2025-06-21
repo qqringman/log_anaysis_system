@@ -271,7 +271,7 @@ def multi_viewer():
                 # 需要密碼驗證
                 password = request.args.get('pwd')
                 if not password or hashlib.sha256(password.encode()).hexdigest() != password_hash:
-                    return render_template('multi_viewer_auth.html', state_id=state_id)
+                    return render_template('multi_viewer_auth.html', state_id=state_id, error="error")
             
             state_data = state[2]
     

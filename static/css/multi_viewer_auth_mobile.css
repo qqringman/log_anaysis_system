@@ -1,0 +1,357 @@
+/* 
+ * 手機版樣式表 - 日誌分析系統密碼驗證頁面
+ * 支援 iPhone 及各種手機裝置
+ */
+
+/* ===== iOS Safe Area 支援 ===== */
+@supports (padding: max(0px)) {
+    body {
+        /* iPhone X 以上的安全區域適配 */
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+        padding-top: max(20px, env(safe-area-inset-top));
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
+
+/* ===== 手機基礎樣式 (max-width: 768px) ===== */
+@media (max-width: 768px) {
+    /* 容器調整 */
+    .auth-container {
+        padding: 30px 20px;
+        margin: 0;
+        border-radius: 16px;
+        max-width: 100%;
+        width: calc(100% - 40px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+    
+    /* Logo 區域優化 */
+    .auth-logo {
+        margin-bottom: 30px;
+    }
+    
+    .auth-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+    }
+    
+    /* 標題文字調整 */
+    h2 {
+        font-size: 22px;
+        margin-bottom: 8px;
+    }
+    
+    .subtitle {
+        font-size: 14px;
+        margin-bottom: 25px;
+        line-height: 1.4;
+    }
+    
+    /* 表單元素優化 */
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        font-size: 13px;
+        margin-bottom: 10px;
+        letter-spacing: 0.3px;
+    }
+    
+    label i {
+        font-size: 14px;
+    }
+    
+    /* 輸入框調整 */
+    .input-wrapper {
+        border-radius: 10px;
+        min-height: 48px; /* 符合 iOS 建議的觸控目標大小 */
+    }
+    
+    .input-icon {
+        left: 16px;
+        font-size: 16px;
+    }
+    
+    input[type="password"],
+    input[type="text"] {
+        padding: 14px 45px;
+        font-size: 16px; /* 防止 iOS 自動縮放 */
+        -webkit-appearance: none; /* 移除 iOS 預設樣式 */
+        appearance: none;
+    }
+    
+    /* 顯示/隱藏密碼按鈕 */
+    .toggle-password {
+        right: 12px;
+        font-size: 16px;
+        padding: 10px;
+        min-width: 44px; /* iOS 觸控目標建議大小 */
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* 提交按鈕優化 */
+    .btn {
+        padding: 14px 20px;
+        font-size: 15px;
+        border-radius: 10px;
+        min-height: 48px;
+        letter-spacing: 0.5px;
+        -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+        touch-action: manipulation; /* 優化觸控響應 */
+    }
+    
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* 底部連結 */
+    .auth-footer {
+        margin-top: 25px;
+        padding-top: 25px;
+    }
+    
+    .auth-footer a {
+        font-size: 13px;
+        padding: 10px;
+        display: inline-flex;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* 錯誤彈窗調整 */
+    .error-modal {
+        padding: 25px 20px;
+        border-radius: 16px;
+        width: calc(100% - 40px);
+        max-width: 340px;
+    }
+    
+    .error-icon-wrapper {
+        width: 55px;
+        height: 55px;
+        margin-bottom: 16px;
+    }
+    
+    .error-icon-wrapper i {
+        font-size: 28px;
+    }
+    
+    .error-modal h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+    
+    .error-modal p {
+        font-size: 14px;
+        margin-bottom: 20px;
+        line-height: 1.4;
+    }
+    
+    .error-modal button {
+        padding: 12px 25px;
+        font-size: 15px;
+        border-radius: 8px;
+        min-height: 44px;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* 動畫調整 */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* 浮動圓圈裝飾調整 */
+    .circle:nth-child(1) {
+        width: 200px;
+        height: 200px;
+        top: -100px;
+        left: -80px;
+    }
+    
+    .circle:nth-child(2) {
+        width: 150px;
+        height: 150px;
+        bottom: -75px;
+        right: -40px;
+    }
+    
+    .circle:nth-child(3) {
+        width: 100px;
+        height: 100px;
+        display: none; /* 手機版隱藏第三個圓圈 */
+    }
+}
+
+/* ===== 小手機優化 (max-width: 375px) ===== */
+@media (max-width: 375px) {
+    .auth-container {
+        padding: 25px 16px;
+    }
+    
+    h2 {
+        font-size: 20px;
+    }
+    
+    .subtitle {
+        font-size: 13px;
+    }
+    
+    .auth-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 24px;
+    }
+    
+    input[type="password"],
+    input[type="text"] {
+        padding: 12px 42px;
+        font-size: 15px;
+    }
+}
+
+/* ===== 橫向模式優化 ===== */
+@media (max-height: 600px) and (orientation: landscape) {
+    body {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    
+    .auth-container {
+        padding: 20px 25px;
+    }
+    
+    .auth-logo {
+        margin-bottom: 20px;
+    }
+    
+    .auth-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+    
+    h2 {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+    
+    .subtitle {
+        margin-bottom: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .btn {
+        padding: 12px 20px;
+        min-height: 44px;
+    }
+    
+    .auth-footer {
+        margin-top: 20px;
+        padding-top: 20px;
+    }
+}
+
+/* ===== iOS 特定優化 ===== */
+@supports (-webkit-touch-callout: none) {
+    /* iOS Safari 特定樣式 */
+    input[type="password"],
+    input[type="text"] {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+    
+    /* 修復 iOS 輸入框圓角問題 */
+    .input-wrapper {
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+        mask-image: radial-gradient(white, black);
+    }
+    
+    /* 優化滾動性能 */
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ===== 手機深色模式 ===== */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+    .auth-container {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+    
+    .input-wrapper {
+        background: #2a2a2a;
+        border-color: #3a3a3a;
+    }
+    
+    .input-wrapper:focus-within {
+        background: #333;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+    
+    .error-modal {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* ===== 觸控優化 ===== */
+@media (hover: none) and (pointer: coarse) {
+    /* 移除 hover 效果，改用 active */
+    .btn:hover {
+        transform: none;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+    
+    .toggle-password:hover {
+        color: #adb5bd;
+        background: none;
+    }
+    
+    .toggle-password:active {
+        color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.1);
+    }
+    
+    .auth-footer a:hover {
+        text-decoration: none;
+    }
+    
+    .auth-footer a:active {
+        text-decoration: underline;
+    }
+}
+
+/* ===== 無障礙優化 ===== */
+@media (prefers-reduced-motion: reduce) {
+    /* 減少動畫 */
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .auth-container {
+        animation: none;
+    }
+    
+    .floating-circles {
+        display: none;
+    }
+}

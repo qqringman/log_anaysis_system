@@ -26,131 +26,228 @@ let isProcessingDrop = false; // 防止重複處理拖放
 
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
-    // 檢查是否有儲存的狀態
-    let stateData = window.initialStateData || null;
-    
-    if (stateData) {
-        try {
-            if (typeof stateData === 'string') {
-                stateData = JSON.parse(stateData);
-            }
-            loadWorkspaceState(stateData);
-        } catch (e) {
-            console.error('載入工作區狀態失敗', e);
-        }
-    } else {
-        // 從 URL 參數載入資料
-        const urlParams = new URLSearchParams(window.location.search);
-        const groupsData = urlParams.get('groups');
+    // 等待一下確保所有元素都載入
+    setTimeout(() => {
+        // 檢查是否有儲存的狀態
+        let stateData = window.initialStateData || null;
         
-        if (groupsData) {
+        if (stateData) {
             try {
-                groups = JSON.parse(decodeURIComponent(groupsData));
+                if (typeof stateData === 'string') {
+                    stateData = JSON.parse(stateData);
+                }
                 
-                // 確保檔案都有正確的名稱
-                groups.forEach(group => {
-                    if (group.items) {
-                        group.items.forEach(item => {
-                            processFileNames(item);
-                        });
-                    }
-                });
-                
-                renderGroups();
-                
-                // 自動開啟第一個檔案
-                setTimeout(() => {
-                    const firstFile = findFirstFile(groups);
-                    if (firstFile) {
-                        openFile(firstFile);
-                    } else {
-                        showToast('沒有找到可開啟的檔案', 'info');
-                    }
-                }, 500);
-                
+                // 驗證狀態資料
+                if (stateData && typeof stateData === 'object') {
+                    console.log('載入工作區狀態');
+                    loadWorkspaceState(stateData);
+                } else {
+                    console.error('工作區狀態格式不正確');
+                    loadDefaultGroups();
+                }
             } catch (e) {
-                console.error('解析群組資料失敗', e);
-                showToast('無法載入檔案資料，請重新嘗試', 'error');
+                console.error('載入工作區狀態失敗', e);
+                showToast('載入工作區失敗，載入預設狀態', 'error');
+                loadDefaultGroups();
             }
         } else {
-            // 載入預設資料
-            loadDefaultGroups();
+            // 從 URL 參數載入資料
+            const urlParams = new URLSearchParams(window.location.search);
+            const groupsData = urlParams.get('groups');
+            
+            if (groupsData) {
+                try {
+                    groups = JSON.parse(decodeURIComponent(groupsData));
+                    
+                    // 確保檔案都有正確的名稱
+                    groups.forEach(group => {
+                        if (group.items) {
+                            group.items.forEach(item => {
+                                processFileNames(item);
+                            });
+                        }
+                    });
+                    
+                    renderGroups();
+                    
+                    // 自動開啟第一個檔案
+                    setTimeout(() => {
+                        const firstFile = findFirstFile(groups);
+                        if (firstFile) {
+                            openFile(firstFile);
+                        } else {
+                            showToast('沒有找到可開啟的檔案', 'info');
+                        }
+                    }, 500);
+                    
+                } catch (e) {
+                    console.error('解析群組資料失敗', e);
+                    showToast('無法載入檔案資料，請重新嘗試', 'error');
+                }
+            } else {
+                // 載入預設資料
+                loadDefaultGroups();
+            }
         }
-    }
-    
-    // 初始化拖放事件
-    setupGlobalDragAndDrop();
-    setupTabDragAndDrop();
-    
-    // 初始化鍵盤快捷鍵
-    setupKeyboardShortcuts();
-    
-    // 載入最近檔案和已儲存的工作區
-    loadRecentFiles();
-    loadSavedWorkspaces();
+        
+        // 初始化拖放事件
+        setupGlobalDragAndDrop();
+        setupTabDragAndDrop();
+        
+        // 初始化鍵盤快捷鍵
+        setupKeyboardShortcuts();
+        
+        // 載入最近檔案和已儲存的工作區
+        loadRecentFiles();
+        loadSavedWorkspaces();
 
-    // 設置全域拖放標記
-    window.globalDropHandled = false;
+        // 設置全域拖放標記
+        window.globalDropHandled = false;
 
-    // 修復重複拖放事件
-    isDragging = false;    
+        // 修復重複拖放事件
+        isDragging = false;
+    }, 100); // 延遲 100ms 確保 DOM 完全載入
 });
 
 // 載入工作區狀態
 function loadWorkspaceState(state) {
+    console.log('載入工作區狀態:', state);
+    
+    // 重置狀態
+    currentTabs = [];
+    activeTabId = null;
+    splitView = false;
+    splitViewState = { left: null, right: null };
+    tabCounter = 0;
+    
+    // 載入群組
     if (state.groups) {
         groups = state.groups;
+        // 確保檔案都有正確的名稱
+        groups.forEach(group => {
+            if (group.items) {
+                group.items.forEach(item => {
+                    processFileNames(item);
+                });
+            }
+        });
         renderGroups();
     }
     
-    // 載入分割視窗狀態
-    if (state.splitView !== undefined) {
-        splitView = state.splitView;
+    // 載入側邊欄狀態
+    if (state.sidebarCollapsed !== undefined) {
+        sidebarCollapsed = state.sidebarCollapsed;
+        const sidebar = document.getElementById('sidebar');
+        if (sidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+        } else {
+            sidebar.classList.remove('collapsed');
+        }
     }
     
-    // 載入標籤
-    if (state.tabs && state.tabs.length > 0) {
-        state.tabs.forEach((tab, index) => {
-            const shouldSwitch = index === 0 && !splitView;
-            openFile({
-                name: tab.name, 
-                path: tab.path, 
-                color: tab.color,
-                splitPane: tab.splitPane
-            }, shouldSwitch);
-        });
+    // 載入當前檢視
+    if (state.currentView) {
+        // 確保 DOM 已載入
+        setTimeout(() => {
+            currentView = state.currentView;
+            showView(currentView);
+        }, 100);
     }
     
-    // 恢復分割視窗狀態
-    if (state.splitViewState && splitView) {
-        splitViewState = state.splitViewState;
-        setTimeout(() => {
-            toggleSplitView();
-            if (state.splitViewState.left) {
-                const leftTab = currentTabs.find(t => t.path === state.splitViewState.left);
-                if (leftTab) loadFileToPane(leftTab, 'left');
-            }
-            if (state.splitViewState.right) {
-                const rightTab = currentTabs.find(t => t.path === state.splitViewState.right);
-                if (rightTab) loadFileToPane(rightTab, 'right');
-            }
-        }, 1000);
-    } else if (state.activeTabPath || state.activeTab) {
-        // 恢復活動標籤
-        setTimeout(() => {
-            if (state.activeTabPath) {
-                const tab = currentTabs.find(t => t.path === state.activeTabPath);
-                if (tab) {
-                    switchTab(tab.id);
+    // 載入標籤（延遲執行以確保 DOM 準備好）
+    setTimeout(() => {
+        if (state.tabs && state.tabs.length > 0) {
+            const tabPromises = [];
+            
+            state.tabs.forEach((tabData, index) => {
+                const promise = new Promise((resolve) => {
+                    // 重建檔案物件
+                    const file = {
+                        name: tabData.name,
+                        path: tabData.path,
+                        type: 'file',
+                        isLocal: tabData.path.startsWith('/temp/') || tabData.path.startsWith('blob:'),
+                        isEditable: tabData.isEditable || false,
+                        color: tabData.color
+                    };
+                    
+                    // 開啟檔案但不切換標籤（第二個參數為 false）
+                    const tab = openFile(file, false);
+                    
+                    if (tab) {
+                        // 恢復標籤狀態
+                        tab.splitPane = tabData.splitPane || null;
+                        tab.color = tabData.color || tabColors[index % tabColors.length];
+                        
+                        // 如果是可編輯檔案且有內容，恢復內容
+                        if (tabData.isEditable && tabData.content) {
+                            tab.content = tabData.content;
+                        }
+                        
+                        setTimeout(() => {
+                            resolve(tab);
+                        }, 100);
+                    } else {
+                        resolve(null);
+                    }
+                });
+                
+                tabPromises.push(promise);
+            });
+            
+            // 等待所有標籤載入完成
+            Promise.all(tabPromises).then((loadedTabs) => {
+                console.log('所有標籤載入完成:', loadedTabs);
+                
+                // 恢復分割視窗狀態
+                if (state.splitView && state.splitViewState) {
+                    // 先切換到分割視窗模式
+                    splitView = true;
+                    const splitBtn = document.querySelector('.btn-split');
+                    if (splitBtn) {
+                        splitBtn.style.background = '#28a745';
+                        splitBtn.innerHTML = '<i class="fas fa-times"></i> <span>關閉分割</span>';
+                    }
+                    
+                    createSplitView();
+                    document.getElementById('main-toolbar').style.display = 'none';
+                    document.getElementById('split-toolbar').style.display = 'flex';
+                    
+                    // 載入分割視窗內容
+                    setTimeout(() => {
+                        if (state.splitViewState.left) {
+                            const leftTab = currentTabs.find(t => t.path === state.splitViewState.left);
+                            if (leftTab) {
+                                leftTab.splitPane = 'left';
+                                loadFileToPane(leftTab, 'left');
+                            }
+                        }
+                        
+                        if (state.splitViewState.right) {
+                            const rightTab = currentTabs.find(t => t.path === state.splitViewState.right);
+                            if (rightTab) {
+                                rightTab.splitPane = 'right';
+                                loadFileToPane(rightTab, 'right');
+                            }
+                        }
+                        
+                        renderTabs();
+                    }, 500);
+                } else {
+                    // 非分割視窗模式，恢復活動標籤
+                    if (state.activeTabPath) {
+                        const activeTab = currentTabs.find(t => t.path === state.activeTabPath);
+                        if (activeTab) {
+                            switchTab(activeTab.id);
+                        }
+                    } else if (currentTabs.length > 0) {
+                        // 如果沒有指定活動標籤，預設第一個
+                        switchTab(currentTabs[0].id);
+                    }
                 }
-            } else if (state.activeTab) {
-                const tab = currentTabs.find(t => t.id === state.activeTab);
-                if (tab) {
-                    switchTab(tab.id);
-                }
-            }
-        }, 500);
-    }
+            });
+        }
+    }, 500);
 }
 
 // 處理拖放的檔案
@@ -748,7 +845,18 @@ function openFile(file, switchToTab = true) {
     if (!file || !file.path) {
         console.error('檔案資料不完整:', file);
         showToast('檔案資料不完整', 'error');
-        return;
+        return null;
+    }
+    
+    // 清理檔案名稱（移除可能的 * 標記）
+    if (file.name && file.name.endsWith('*')) {
+        file.name = file.name.slice(0, -1);
+    }
+    
+    // 檢查是否為臨時檔案
+    if (file.path.startsWith('/temp/')) {
+        file.isLocal = true;
+        file.isEditable = true;
     }
     
     const existingTab = currentTabs.find(tab => tab.path === file.path);
@@ -917,6 +1025,13 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
             tab.loading = false;
             tab.content = null;
             renderTabs();
+            
+            // 如果是臨時檔案或可編輯檔案，嘗試使用文字編輯器
+            if (tab.isEditable && window.textEditor) {
+                console.log('嘗試使用文字編輯器載入');
+                window.textEditor.loadEditorToTab(tab);
+                return;
+            }
             
             if (tabId === activeTabId) {
                 showErrorState(filePath);
@@ -1504,15 +1619,46 @@ function searchFiles(query) {
 }
 
 // 顯示視圖
-function showView(view) {
+function showView(view, targetElement = null) {
     currentView = view;
     
+    // 移除所有 active 類
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
-    event.currentTarget.classList.add('active');
+    
+    // 添加 active 類到正確的元素
+    if (targetElement) {
+        // 如果有指定元素（從點擊事件來）
+        targetElement.classList.add('active');
+    } else if (event && event.currentTarget) {
+        // 如果有事件對象（向後相容）
+        event.currentTarget.classList.add('active');
+    } else {
+        // 如果都沒有，根據 view 找到對應的導航項
+        let navIndex = 0;
+        switch(view) {
+            case 'files':
+                navIndex = 0;
+                break;
+            case 'recent':
+                navIndex = 1;
+                break;
+            case 'saved':
+                navIndex = 2;
+                break;
+        }
+        const navItems = document.querySelectorAll('.nav-item');
+        if (navItems[navIndex]) {
+            navItems[navIndex].classList.add('active');
+        }
+    }
     
     const container = document.getElementById('groups-container');
+    if (!container) {
+        console.error('找不到 groups-container 元素');
+        return;
+    }
     
     switch(view) {
         case 'files':
@@ -2852,26 +2998,48 @@ async function confirmSave() {
         return;
     }
     
-    // 準備工作區狀態
-    const state = {
-        name: name,
-        groups: groups,
-        tabs: currentTabs.map(tab => ({
+    // 確保儲存完整的標籤資訊
+    const tabsData = currentTabs.map(tab => {
+        const tabData = {
             name: tab.name,
             path: tab.path,
             color: tab.color,
             splitPane: tab.splitPane,
             isEditable: tab.isEditable || false,
-            content: tab.isEditable ? tab.content : null // 儲存文字編輯器的內容
-        })),
+            isLocal: tab.isLocal || false
+        };
+        
+        // 如果是可編輯檔案，儲存內容
+        if (tab.isEditable) {
+            // 從編輯器獲取最新內容
+            const editorId = tab.splitPane ? `${tab.id}-${tab.splitPane}` : tab.id;
+            const editor = window.textEditor?.editors.get(editorId);
+            if (editor) {
+                tabData.content = editor.textarea.value;
+            } else {
+                tabData.content = tab.content || '';
+            }
+        }
+        
+        return tabData;
+    });
+    
+    // 準備工作區狀態
+    const state = {
+        name: name,
+        groups: groups,
+        tabs: tabsData,
         activeTabPath: activeTabId ? currentTabs.find(t => t.id === activeTabId)?.path : null,
         splitView: splitView,
         splitViewState: splitViewState,
         diffMode: diffMode,
-        sidebarCollapsed: sidebarCollapsed, // 儲存側邊欄狀態
-        currentView: currentView, // 儲存當前檢視
-        timestamp: new Date().toISOString()
+        sidebarCollapsed: sidebarCollapsed,
+        currentView: currentView,
+        timestamp: new Date().toISOString(),
+        version: '2.0' // 加入版本號以便未來相容性處理
     };
+    
+    console.log('儲存工作區狀態:', state);
     
     try {
         const response = await fetch('/api/multi_viewer/save', {
@@ -2881,9 +3049,9 @@ async function confirmSave() {
             },
             body: JSON.stringify({
                 state: state,
-                is_public: !isPrivate, // 注意這裡改為 is_public
+                is_public: !isPrivate,
                 password: password,
-                name: name // 加上名稱
+                name: name
             })
         });
         
@@ -2893,13 +3061,14 @@ async function confirmSave() {
             showToast('工作區儲存成功', 'success');
             closeSaveModal();
             
-            window.history.pushState({}, '', `/multi_viewer?state=${result.state_id}`);
+            // 更新 URL 但不重新載入頁面
+            window.history.replaceState({}, '', `/multi_viewer?state=${result.state_id}`);
             currentWorkspaceId = result.state_id;
             
             // 更新已儲存計數
             updateSavedCount();
             
-            // 如果當前檢視是已儲存，重新載入
+            // 如果當前檢視是已儲存，重新載入列表
             if (currentView === 'saved') {
                 renderSavedWorkspaces();
             }

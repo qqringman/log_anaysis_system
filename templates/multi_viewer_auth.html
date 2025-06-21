@@ -2,137 +2,738 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>工作區需要密碼</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>工作區需要密碼 - 日誌分析系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入手機版專用 CSS -->
+    <link href="{{ url_for('static', filename='css/multi_viewer_auth_mobile.css') }}" rel="stylesheet">
     <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: #f0f2f5;
-            height: 100vh;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            padding-top: calc(20px + var(--safe-area-top));
+            padding-bottom: calc(20px + var(--safe-area-bottom));
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 背景裝飾 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--primary-gradient);
+            opacity: 0.05;
+            transform: rotate(-45deg);
+            z-index: -1;
+        }
+        
+        /* 浮動圓圈裝飾 */
+        .floating-circles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            opacity: 0.03;
+            animation: float 20s infinite ease-in-out;
+        }
+        
+        .circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+        
+        .circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            right: -50px;
+            animation-delay: 5s;
+        }
+        
+        .circle:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: -75px;
+            animation-delay: 10s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        
+        .auth-container {
+            background: white;
+            padding: 60px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 100%;
+            position: relative;
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Logo 區域 */
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .auth-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-gradient);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            animation: pulse 2s infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 開鎖動畫的鎖 */
+        .lock-icon {
+            transition: all 0.5s ease;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* 解鎖成功動畫 */
+        .auth-icon.unlocking .lock-icon {
+            animation: unlock 1s ease-out forwards;
+        }
+        
+        @keyframes unlock {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            25% {
+                transform: rotate(-5deg) scale(1.1);
+            }
+            50% {
+                transform: rotate(5deg) scale(1.1);
+            }
+            75% {
+                transform: rotate(0deg) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: rotate(0deg) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        /* 成功的勾勾動畫 */
+        .success-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 40px;
+            color: white;
+            opacity: 0;
+        }
+        
+        .auth-icon.unlocking .success-icon {
+            animation: checkmark 0.8s ease-out 0.5s forwards;
+        }
+        
+        @keyframes checkmark {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4); }
+            100% { transform: scale(1); box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3); }
+        }
+        
+        h2 {
+            text-align: center;
+            color: #1a1a1a;
+            margin: 0 0 10px;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        /* 表單樣式 */
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        label i {
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+        
+        /* 修復輸入框樣式 */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-wrapper:focus-within {
+            background: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 20px;
+            color: #adb5bd;
+            font-size: 18px;
+            transition: color 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .input-wrapper:focus-within .input-icon {
+            color: var(--primary-color);
+        }
+        
+        input[type="password"],
+        input[type="text"] {
+            flex: 1;
+            padding: 16px 50px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            color: #495057;
+            outline: none;
+            width: 100%;
+        }
+        
+        input[type="password"]::placeholder,
+        input[type="text"]::placeholder {
+            color: #adb5bd;
+        }
+        
+        /* 顯示/隱藏密碼按鈕 */
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            background: none;
+            border: none;
+            color: #adb5bd;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+        }
+        
+        .toggle-password:hover {
+            color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        /* 錯誤訊息 - 隱藏原本的 */
+        .error-message {
+            display: none;
+        }
+        
+        /* 錯誤彈窗樣式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+        
+        .error-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 380px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.show .error-modal {
+            transform: scale(1);
+        }
+        
+        .error-icon-wrapper {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px;
+            background: #fee;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
-        .auth-container {
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 90%;
+        .error-icon-wrapper i {
+            font-size: 36px;
+            color: #e53e3e;
         }
         
-        .auth-icon {
-            text-align: center;
-            font-size: 48px;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-        
-        h2 {
-            text-align: center;
+        .error-modal h3 {
+            margin: 0 0 10px;
+            font-size: 22px;
             color: #333;
-            margin-bottom: 10px;
         }
         
-        p {
-            text-align: center;
+        .error-modal p {
+            margin: 0 0 25px;
             color: #666;
-            margin-bottom: 30px;
+            line-height: 1.5;
         }
         
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #333;
-            font-weight: 500;
-        }
-        
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.2s ease;
-        }
-        
-        input[type="password"]:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
+        .error-modal button {
+            padding: 12px 30px;
+            background: var(--primary-gradient);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+        }
+        
+        .error-modal button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* 提交按鈕 */
+        .btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 56px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s ease;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn:hover {
-            background: #5968d9;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
         
-        .error-message {
-            background: #fee;
-            color: #c33;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        /* 載入狀態 */
+        .btn-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn.loading .btn-content {
+            opacity: 0;
+        }
+        
+        .btn-spinner {
+            position: absolute;
             display: none;
+        }
+        
+        .btn.loading .btn-spinner {
+            display: block;
+        }
+        
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 底部連結 */
+        .auth-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .auth-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .auth-footer a:hover {
+            color: var(--secondary-color);
+            text-decoration: underline;
+        }
+        
+        /* 深色模式支援 (僅電腦版) */
+        @media (prefers-color-scheme: dark) and (min-width: 769px) {
+            body {
+                background: #1a1a1a;
+            }
+            
+            body::before {
+                opacity: 0.02;
+            }
+            
+            .auth-container {
+                background: #2a2a2a;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            }
+            
+            h2 {
+                color: #f0f0f0;
+            }
+            
+            .subtitle {
+                color: #aaa;
+            }
+            
+            label {
+                color: #ddd;
+            }
+            
+            .input-wrapper {
+                background: #333;
+                border-color: #444;
+            }
+            
+            .input-wrapper:focus-within {
+                background: #3a3a3a;
+            }
+            
+            input[type="password"],
+            input[type="text"] {
+                color: #f0f0f0;
+            }
+            
+            .toggle-password {
+                color: #aaa;
+            }
+            
+            .toggle-password:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: var(--primary-color);
+            }
+            
+            .auth-footer {
+                border-top-color: #333;
+            }
+            
+            .error-modal {
+                background: #2a2a2a;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            }
+            
+            .error-modal h3 {
+                color: #f0f0f0;
+            }
+            
+            .error-modal p {
+                color: #aaa;
+            }
+            
+            .error-icon-wrapper {
+                background: #3a2020;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- 浮動圓圈裝飾 -->
+    <div class="floating-circles">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+    
     <div class="auth-container">
-        <div class="auth-icon">
-            <i class="fas fa-lock"></i>
+        <div class="auth-logo">
+            <div class="auth-icon" id="auth-icon">
+                <i class="fas fa-shield-alt lock-icon"></i>
+                <i class="fas fa-check success-icon"></i>
+            </div>
         </div>
-        <h2>此工作區需要密碼</h2>
-        <p>請輸入密碼以查看工作區內容</p>
+        
+        <h2>工作區已加密</h2>
+        <p class="subtitle">此工作區包含私密內容<br>請輸入密碼以繼續</p>
         
         <div class="error-message" id="error-message">
-            密碼錯誤，請重試
+            <i class="fas fa-exclamation-circle"></i> 密碼錯誤，請重試
         </div>
         
-        <form method="get" action="/multi_viewer">
+        <form method="get" action="/multi_viewer" id="auth-form">
             <input type="hidden" name="state" value="{{ state_id }}">
+            <input type="hidden" name="error" value="{{ error }}">
+            
             <div class="form-group">
-                <label for="pwd">密碼</label>
-                <input type="password" name="pwd" id="pwd" placeholder="輸入密碼" required autofocus>
+                <label for="pwd">
+                    <i class="fas fa-key"></i> 密碼
+                </label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" name="pwd" id="pwd" placeholder="輸入工作區密碼" required autofocus>
+                    <button type="button" class="toggle-password" onclick="togglePassword()" tabindex="-1">
+                        <i class="fas fa-eye" id="toggle-icon"></i>
+                    </button>
+                </div>
             </div>
-            <button type="submit" class="btn">
-                <i class="fas fa-unlock"></i> 解鎖工作區
+            
+            <button type="submit" class="btn" id="submit-btn">
+                <div class="btn-content">
+                    <i class="fas fa-unlock"></i>
+                    <span>解鎖工作區</span>
+                </div>
+                <div class="btn-spinner">
+                    <div class="spinner"></div>
+                </div>
             </button>
         </form>
+        
+        <div class="auth-footer">
+            <a href="/multi_viewer">
+                <i class="fas fa-arrow-left"></i> 返回工作區列表
+            </a>
+        </div>
+    </div>
+    
+    <!-- 錯誤彈窗 -->
+    <div class="modal-overlay" id="errorModal">
+        <div class="error-modal">
+            <div class="error-icon-wrapper">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3>密碼錯誤</h3>
+            <p>您輸入的密碼不正確<br>請確認後再試一次</p>
+            <button onclick="closeErrorModal()">確定</button>
+        </div>
     </div>
     
     <script>
         // 檢查 URL 參數是否有錯誤
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('error')) {
-            document.getElementById('error-message').style.display = 'block';
+            // 顯示錯誤彈窗
+            setTimeout(() => {
+                document.getElementById('errorModal').classList.add('show');
+            }, 300);
+            
+            // 清除 URL 中的 error 參數
+            const url = new URL(window.location);
+            url.searchParams.delete('error');
+            window.history.replaceState({}, '', url);
         }
         
+        // 關閉錯誤彈窗
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            modal.classList.remove('show');
+            // 聚焦到密碼輸入框
+            setTimeout(() => {
+                document.getElementById('pwd').focus();
+                document.getElementById('pwd').select();
+            }, 300);
+        }
+        
+        // 點擊背景關閉彈窗
+        document.getElementById('errorModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeErrorModal();
+            }
+        });
+        
+        // ESC 鍵關閉彈窗
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('errorModal').classList.contains('show')) {
+                closeErrorModal();
+            }
+        });
+        
         // 自動聚焦密碼輸入框
-        document.getElementById('pwd').focus();
+        setTimeout(() => {
+            document.getElementById('pwd').focus();
+        }, 100);
+        
+        // 顯示/隱藏密碼
+        function togglePassword() {
+            const passwordInput = document.getElementById('pwd');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.className = 'fas fa-eye';
+            }
+        }
+        
+        // 表單提交動畫
+        document.getElementById('auth-form').addEventListener('submit', function(e) {
+            const btn = document.getElementById('submit-btn');
+            const authIcon = document.getElementById('auth-icon');
+            
+            // 按鈕載入狀態
+            btn.classList.add('loading');
+
+            const buttonTextSpan = btn.querySelector('.btn-content span');
+            if (buttonTextSpan) { // 檢查元素是否存在，避免錯誤
+                buttonTextSpan.textContent = '鎖解中...';
+            }
+
+            // 開鎖動畫
+            authIcon.classList.add('unlocking');
+        });
+        
+        // Enter 鍵提交
+        document.getElementById('pwd').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('auth-form').dispatchEvent(new Event('submit'));
+            }
+        });
     </script>
 </body>
 </html>

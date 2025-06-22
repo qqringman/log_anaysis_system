@@ -369,7 +369,7 @@
             });
         });
         
-        return processedResults.map((result, index) => {
+        const html = processedResults.map((result, index) => {
             // 如果同一行有多個匹配，顯示匹配編號
             let matchInfo = '';
             if (result.totalMatchesInLine > 1) {
@@ -393,7 +393,7 @@
             
             return `
                 <div class="search-result-item ${index === 0 ? 'active' : ''}" 
-                    onclick="jumpToSearchResult(${index}, ${result.lineNumber})"
+                    data-index="${index}"
                     data-line="${result.lineNumber}"
                     data-match-index="${result.matchNumberInLine || 0}">
                     <div class="search-result-header">
@@ -410,6 +410,13 @@
                 </div>
             `;
         }).join('');
+        
+        // 在返回 HTML 之前，設置事件監聽器
+        setTimeout(() => {
+            setupSearchResultClickHandlers();
+        }, 100);
+        
+        return html;
     }
 
     // 輔助函數：轉義 HTML
@@ -507,14 +514,6 @@
         }, '*');
     }
     
-    // 更新搜尋導航
-    function updateSearchNavigation() {
-        const countElement = document.querySelector('.search-result-count');
-        if (countElement && window.enhancedSearchResults && window.enhancedSearchResults.length > 0) {
-            countElement.textContent = `${window.currentSearchIndex + 1} / ${window.enhancedSearchResults.length}`;
-        }
-    }
-    
     // 切換搜尋頁籤
     window.switchEnhancedSearchTab = function(tab) {
         document.querySelectorAll('.search-results-tab').forEach(t => {
@@ -594,8 +593,19 @@
     // 更新搜尋導航狀態
     function updateSearchNavigation() {
         const countElement = document.querySelector('.search-result-count');
-        if (countElement && window.searchResultsData && window.searchResultsData.length > 0) {
-            countElement.textContent = `${window.currentSearchIndex + 1} / ${window.searchResultsData.length}`;
+        if (countElement) {
+            if (window.searchResultsData && window.searchResultsData.length > 0) {
+                // 確保 currentSearchIndex 在有效範圍內
+                if (window.currentSearchIndex >= window.searchResultsData.length) {
+                    window.currentSearchIndex = 0;
+                } else if (window.currentSearchIndex < 0) {
+                    window.currentSearchIndex = window.searchResultsData.length - 1;
+                }
+                
+                countElement.textContent = `${window.currentSearchIndex + 1} / ${window.searchResultsData.length}`;
+            } else {
+                countElement.textContent = '0 / 0';
+            }
         }
     }
 

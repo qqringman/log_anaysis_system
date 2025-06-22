@@ -105,6 +105,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loadRecentFiles();
         loadSavedWorkspaces();
 
+        // 初始化搜尋相關
+        window.searchResultsData = [];
+        window.currentSearchIndex = 0;
+        
+        // 設置搜尋鍵盤快捷鍵
         setupSearchModalKeyboard();
 
         // 設置全域拖放標記
@@ -4490,7 +4495,7 @@ function displaySearchResults(data) {
     
     // 保存搜尋結果數據
     window.searchResultsData = data.results || [];
-    window.currentSearchIndex = 0;
+    window.currentSearchIndex = 0;  // 重置為 0
     
     // 清除載入狀態
     resultsDiv.innerHTML = '';
@@ -4511,9 +4516,6 @@ function displaySearchResults(data) {
         if (prevBtn) prevBtn.disabled = false;
         if (nextBtn) nextBtn.disabled = false;
         
-        // 更新導航計數
-        updateSearchNavigation();
-        
         // 檢查是否應該使用分組顯示
         if (window.displayGroupedSearchResults && typeof window.displayGroupedSearchResults === 'function') {
             console.log('使用分群顯示');
@@ -4524,6 +4526,12 @@ function displaySearchResults(data) {
             const html = renderSearchResultsList(window.searchResultsData, data.keyword);
             resultsDiv.innerHTML = html;
         }
+        
+        // 重要：在渲染完成後立即更新導航計數
+        setTimeout(() => {
+            updateSearchNavigation();
+        }, 10);
+        
     } else {
         // 無結果
         if (searchStats) searchStats.style.display = 'none';
@@ -4534,19 +4542,16 @@ function displaySearchResults(data) {
             </div>
         `;
         
-        // 停用導航按鈕
+        // 停用導航按鈕並重置計數
         const prevBtn = document.getElementById('prev-search-btn');
         const nextBtn = document.getElementById('next-search-btn');
         if (prevBtn) prevBtn.disabled = true;
         if (nextBtn) nextBtn.disabled = true;
-    }
-}
-
-// 更新搜尋導航狀態
-function updateSearchNavigation() {
-    const countElement = document.querySelector('.search-result-count');
-    if (countElement && searchResultsData.length > 0) {
-        countElement.textContent = `${currentSearchIndex + 1} / ${searchResultsData.length}`;
+        
+        const countElement = document.querySelector('.search-result-count');
+        if (countElement) {
+            countElement.textContent = '0 / 0';
+        }
     }
 }
 
@@ -4598,14 +4603,6 @@ window.jumpToSearchResult = function(index, lineNumber) {
 // 輔助函數
 function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// 更新搜尋導航狀態
-function updateSearchNavigation() {
-    const countElement = document.querySelector('.search-result-count');
-    if (countElement && searchResultsData.length > 0) {
-        countElement.textContent = `${currentSearchIndex + 1} / ${searchResultsData.length}`;
-    }
 }
 
 // 高亮當前搜尋結果
@@ -4947,6 +4944,11 @@ window.displayGroupedSearchResults = function(data) {
     // 儲存全域搜尋結果
     window.searchResultsData = data.results || [];
     window.currentSearchIndex = 0;
+
+    // 重要：更新導航計數
+    setTimeout(() => {
+        updateSearchNavigation();
+    }, 10);    
 };
 
 // 渲染搜尋結果
@@ -5186,6 +5188,27 @@ function syncSearchKeyword(keyword) {
             }
         });
     }
+}
+
+// 設置搜尋結果點擊處理
+function setupSearchResultClickHandlers() {
+    const resultsContainer = document.getElementById('search-results');
+    if (!resultsContainer) return;
+    
+    // 使用事件委託
+    resultsContainer.addEventListener('click', function(e) {
+        const resultItem = e.target.closest('.search-result-item');
+        if (resultItem) {
+            const index = parseInt(resultItem.dataset.index);
+            const lineNumber = parseInt(resultItem.dataset.line);
+            
+            console.log('點擊搜尋結果:', { index, lineNumber });
+            
+            if (!isNaN(index) && !isNaN(lineNumber)) {
+                jumpToSearchResult(index, lineNumber);
+            }
+        }
+    });
 }
 
 // 綁定到全域

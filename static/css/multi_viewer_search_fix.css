@@ -1,36 +1,626 @@
-/* 搜尋結果中的匹配資訊 */
-.search-result-item .match-info {
-    color: #666;
-    font-size: 12px;
-    font-weight: normal;
-    margin-left: 5px;
+/* 搜尋對話框美化樣式 */
+.search-modal .modal-content {
+    border: none;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    overflow: visible;
 }
 
-/* 行高亮動畫 */
-.highlight-flash {
-    animation: lineHighlightFlash 2s ease-out;
+.search-modal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 30px;
+    border-radius: 20px 20px 0 0;
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes lineHighlightFlash {
-    0% {
-        background-color: rgba(255, 235, 59, 0.5);
-        box-shadow: 0 0 20px rgba(255, 235, 59, 0.5);
-    }
-    50% {
-        background-color: rgba(255, 235, 59, 0.3);
-        box-shadow: 0 0 10px rgba(255, 235, 59, 0.3);
-    }
-    100% {
-        background-color: transparent;
-        box-shadow: none;
-    }
+.search-modal .modal-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: shimmer 3s ease-in-out infinite;
 }
 
-/* 確保搜尋高亮在多個結果時正確顯示 */
-.search-result-content .highlight {
-    background-color: #ffeb3b;
-    color: #000;
-    padding: 2px 4px;
-    border-radius: 3px;
+.search-modal .modal-header h5 {
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
+}
+
+.search-modal .modal-header h5 i {
+    font-size: 28px;
+    margin-right: 15px;
+    opacity: 0.9;
+}
+
+/* 搜尋輸入框美化 */
+.search-input-wrapper {
+    position: relative;
+    margin-bottom: 30px;
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 5px;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.search-input-wrapper .form-control {
+    background: white;
+    border: none;
+    padding: 20px 60px 20px 25px;
+    font-size: 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-input-wrapper .form-control:focus {
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+.search-input-icon {
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 22px;
+    transition: all 0.3s ease;
+}
+
+.search-input-wrapper:hover .search-input-icon {
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* 搜尋選項美化 */
+.search-options {
+    display: flex;
+    gap: 25px;
+    margin-bottom: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.search-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 10px 15px;
+    border-radius: 10px;
+}
+
+.search-option:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.search-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+    position: relative;
+}
+
+.search-option input[type="checkbox"]:checked {
+    animation: checkPulse 0.4s ease;
+}
+
+@keyframes checkPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.search-option label {
+    cursor: pointer;
+    font-size: 15px;
+    color: #495057;
+    margin: 0;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.search-option:hover label {
+    color: #667eea;
+}
+
+/* 美化的統計區域 */
+.search-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px;
+    background: white;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.search-stats::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.search-stats-info {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.search-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    color: #495057;
+    position: relative;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.search-stat-item:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.search-stat-item i {
+    font-size: 20px;
+    color: #667eea;
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+.search-stat-item strong {
+    color: #667eea;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 5px;
+    text-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+/* 分割視窗統計樣式 */
+.search-stats-info small {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    font-size: 14px;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.search-stats-info small span {
+    padding: 5px 12px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 8px;
+    color: #667eea;
     font-weight: 600;
+}
+
+/* 導航按鈕美化 */
+.search-nav-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.search-nav-btn {
+    padding: 10px 20px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.search-nav-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.4s ease;
+}
+
+.search-nav-btn:hover::before {
+    width: 100%;
+    height: 100%;
+}
+
+.search-nav-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+}
+
+.search-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.search-nav-btn:disabled:hover {
+    background: white;
+    color: #6c757d;
+    border-color: #e0e0e0;
+    box-shadow: none;
+}
+
+/* 計數顯示美化 */
+.search-result-count {
+    font-size: 18px;
+    font-weight: 700;
+    color: #667eea;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 8px 20px;
+    border-radius: 30px;
+    min-width: 100px;
+    text-align: center;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.search-result-count::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 30px;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.search-result-count:hover::before {
+    opacity: 0.3;
+}
+
+/* 搜尋結果容器美化 */
+.search-results {
+    max-height: 450px;
+    overflow-y: auto;
+    border: none;
+    border-radius: 16px;
+    background: transparent;
+    padding: 5px;
+}
+
+.search-results::-webkit-scrollbar {
+    width: 10px;
+}
+
+.search-results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* 搜尋結果項目美化 */
+.search-result-item {
+    padding: 20px;
+    background: white;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.search-result-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: scaleY(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-result-item:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-color: #667eea;
+    transform: translateX(8px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+}
+
+.search-result-item:hover::before {
+    transform: scaleY(1);
+}
+
+.search-result-item.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-color: #667eea;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.25);
+}
+
+.search-result-item.active::before {
+    transform: scaleY(1);
+    width: 6px;
+}
+
+/* 行號顯示美化 */
+.line-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+    display: inline-block;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* 搜尋結果頁籤美化 */
+.search-results-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+    margin-bottom: 0;
+    padding: 5px;
+    gap: 5px;
+}
+
+.search-results-tab {
+    flex: 1;
+    padding: 15px 25px;
+    text-align: center;
+    cursor: pointer;
+    background: white;
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    font-size: 15px;
+    font-weight: 500;
+    color: #6c757d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.search-results-tab:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+}
+
+.search-results-tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+}
+
+.search-results-tab.active::after {
+    display: none;
+}
+
+.search-results-tab .tab-count {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    margin-left: 8px;
+    display: inline-block;
+    min-width: 25px;
+    text-align: center;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.search-results-tab:not(.active) .tab-count {
+    background: #e9ecef;
+    color: #495057;
+}
+
+/* 無結果狀態美化 */
+.no-results {
+    text-align: center;
+    padding: 80px 40px;
+    color: #adb5bd;
+}
+
+.no-results i {
+    font-size: 64px;
+    color: #e9ecef;
+    margin-bottom: 20px;
+    display: block;
+    animation: searchPulse 2s ease-in-out infinite;
+}
+
+@keyframes searchPulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.no-results p {
+    font-size: 18px;
+    margin: 0;
+    color: #6c757d;
+}
+
+/* 載入狀態美化 */
+.search-loading {
+    text-align: center;
+    padding: 80px 40px;
+}
+
+.search-loading i {
+    font-size: 48px;
+    color: #667eea;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.search-loading p {
+    font-size: 18px;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* 快捷鍵提示美化 */
+.search-shortcuts {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 2px solid #e9ecef;
+}
+
+.search-shortcut {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #6c757d;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.search-shortcut:hover {
+    background: #e9ecef;
+    transform: translateY(-2px);
+}
+
+.search-shortcut kbd {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    font-weight: 600;
+    color: #495057;
+}
+
+/* 匹配資訊美化 */
+.match-info {
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: 500;
+    margin-left: 10px;
+    background: #e9ecef;
+    padding: 2px 10px;
+    border-radius: 10px;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .search-modal .modal-header {
+        padding: 20px;
+    }
+    
+    .search-modal .modal-header h5 {
+        font-size: 20px;
+    }
+    
+    .search-input-wrapper .form-control {
+        font-size: 16px;
+        padding: 15px 50px 15px 20px;
+    }
+    
+    .search-stats {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .search-stats-info {
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+    }
+    
+    .search-stat-item {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .search-nav-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* 動畫效果 */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-modal.show .modal-content {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes shimmer {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

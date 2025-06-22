@@ -255,6 +255,7 @@
         
         if (window.enhancedSearchResults.length > 0) {
             // 顯示統計
+            // 修改統計顯示部分（約第 250-270 行）
             if (searchStats) {
                 searchStats.style.display = 'flex';
                 const searchCount = document.getElementById('search-count');
@@ -288,18 +289,18 @@
                 if (window.splitView && (leftMatches > 0 || rightMatches > 0)) {
                     let statsText = [];
                     if (leftMatches > 0) {
-                        statsText.push(`左側: ${leftMatches}`);
+                        statsText.push(`<span>左側: ${leftMatches}</span>`);
                     }
                     if (rightMatches > 0) {
-                        statsText.push(`右側: ${rightMatches}`);
+                        statsText.push(`<span>右側: ${rightMatches}</span>`);
                     }
                     if (otherMatches > 0) {
-                        statsText.push(`其他: ${otherMatches}`);
+                        statsText.push(`<span>其他: ${otherMatches}</span>`);
                     }
                     
                     if (searchCount) searchCount.textContent = totalMatches;
                     if (searchLines) {
-                        searchLines.innerHTML = `<small>${statsText.join(' | ')}</small>`;
+                        searchLines.innerHTML = statsText.join('');
                     }
                 } else {
                     if (searchCount) searchCount.textContent = totalMatches;

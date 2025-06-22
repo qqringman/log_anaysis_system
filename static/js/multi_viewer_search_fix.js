@@ -912,6 +912,66 @@
                 }
             }
         }
+        else{
+            console.log('沒有 activeTabId，嘗試直接從 DOM 尋找 iframe');
+            
+            // 方法1：從主檔案檢視器容器尋找 iframe
+            const fileViewer = document.getElementById('file-viewer');
+            if (fileViewer) {
+                const iframe = fileViewer.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    console.log('從 file-viewer 找到 iframe');
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'search',
+                            options: options,
+                            pane: 'main',
+                            source: 'enhanced-search'
+                        }, '*');
+                        console.log('已發送搜尋請求到 iframe');
+                        return;
+                    } catch (error) {
+                        console.error('發送搜尋請求失敗:', error);
+                    }
+                }
+            }
+            
+            // 方法2：尋找所有可見的 iframe
+            const allIframes = document.querySelectorAll('iframe');
+            console.log('找到的 iframe 數量:', allIframes.length);
+            
+            let foundIframe = false;
+            allIframes.forEach((iframe, index) => {
+                // 檢查 iframe 是否可見且有內容
+                if (iframe.offsetParent !== null && iframe.contentWindow) {
+                    console.log(`嘗試發送到第 ${index + 1} 個 iframe`);
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'search',
+                            options: options,
+                            pane: 'main',
+                            source: 'enhanced-search'
+                        }, '*');
+                        foundIframe = true;
+                        console.log(`成功發送搜尋請求到第 ${index + 1} 個 iframe`);
+                    } catch (error) {
+                        console.error(`發送到第 ${index + 1} 個 iframe 失敗:`, error);
+                    }
+                }
+            });
+            
+            if (!foundIframe) {
+                console.error('找不到任何可用的 iframe');
+                // 發送空結果以避免卡住
+                window.postMessage({
+                    type: 'search-results',
+                    keyword: options.keyword,
+                    results: [],
+                    count: 0,
+                    pane: 'main'
+                }, '*');
+            }           
+        }
     }
     
     // 同步關鍵字到所有 iframe

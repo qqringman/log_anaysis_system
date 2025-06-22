@@ -57,44 +57,47 @@
     });
 
     function jumpToLine(lineNumber, matchIndex) {
-        console.log('跳轉到行號:', lineNumber);
+        console.log('跳轉到行號:', lineNumber, '匹配索引:', matchIndex);
         
         lineNumber = parseInt(lineNumber);
         if (!lineNumber || lineNumber < 1) return;
         
-        // 方法1：使用高亮元素
-        if (searchHighlights && searchHighlights[matchIndex]) {
-            scrollToHighlight(matchIndex);
-            return;
+        // 直接尋找行元素
+        const lineElement = document.getElementById(`line-${lineNumber}`);
+        if (lineElement) {
+            // 滾動到元素
+            lineElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+            // 添加臨時高亮效果
+            lineElement.classList.add('highlight-flash');
+            setTimeout(() => {
+                lineElement.classList.remove('highlight-flash');
+            }, 2000);
+            
+            // 如果有特定的匹配索引，嘗試找到並高亮特定的匹配
+            if (typeof matchIndex === 'number' && matchIndex >= 0) {
+                // 找到該行內的所有高亮元素
+                const lineHighlights = lineElement.querySelectorAll('.search-highlight');
+                if (lineHighlights[matchIndex]) {
+                    // 特別標記這個高亮
+                    lineHighlights[matchIndex].classList.add('current-highlight');
+                    lineHighlights[matchIndex].scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }
+            }
+            
+            return true;
+        } else {
+            console.warn('找不到行元素:', `line-${lineNumber}`);
+            // 嘗試其他方式跳轉
+            addLineHighlight(lineNumber);
+            return false;
         }
-        
-        // 方法2：計算行位置並跳轉
-        const fullText = document.body.innerText || '';
-        const lines = fullText.split('\n');
-        
-        if (lineNumber > lines.length) {
-            console.warn('行號超出範圍');
-            return;
-        }
-        
-        // 計算前面行的字符數
-        let charCount = 0;
-        for (let i = 0; i < lineNumber - 1; i++) {
-            charCount += lines[i].length + 1; // +1 for newline
-        }
-        
-        // 估算垂直位置
-        const lineHeight = 20; // 預設行高
-        const estimatedY = (lineNumber - 1) * lineHeight;
-        
-        // 滾動到大概位置
-        window.scrollTo({
-            top: estimatedY,
-            behavior: 'smooth'
-        });
-        
-        // 添加視覺反饋
-        addLineHighlight(lineNumber);
     }
 
     // 新增行高亮效果
@@ -320,8 +323,8 @@
             searchTimeout = null;
         }
         
+        // 方法1：使用儲存的高亮陣列
         searchHighlights.forEach(highlight => {
-            // 檢查高亮元素是否還在 DOM 中
             if (highlight && highlight.parentNode) {
                 const parent = highlight.parentNode;
                 const text = highlight.textContent;
@@ -340,7 +343,7 @@
         searchHighlights = [];
         currentHighlightIndex = 0;
         
-        // 額外的清理：移除所有殘留的高亮
+        // 方法2：額外的清理 - 移除所有殘留的高亮
         const remainingHighlights = document.querySelectorAll('.search-highlight');
         remainingHighlights.forEach(el => {
             if (el && el.parentNode) {
@@ -412,26 +415,40 @@
         try {
             const regex = createSearchRegex(searchKeyword, options);
             
-            // 取得整個文件的純文字內容
-            const fullText = document.body.innerText || '';
-            const lines = fullText.split('\n');
+            // 搜尋所有帶有 line-xxx id 的元素
+            const lineElements = document.querySelectorAll('[id^="line-"]');
+            console.log('找到行元素數量:', lineElements.length);
             
-            // 搜尋每一行
-            lines.forEach((line, index) => {
-                const lineNumber = index + 1;
+            lineElements.forEach(lineElement => {
+                // 從 id 中提取行號
+                const lineNumber = parseInt(lineElement.id.replace('line-', ''));
+                if (isNaN(lineNumber)) return;
+                
+                // 獲取行內容（可能在 .line-content 元素中）
+                let lineContent = '';
+                const contentElement = lineElement.querySelector('.line-content');
+                if (contentElement) {
+                    lineContent = contentElement.textContent || contentElement.innerText || '';
+                } else {
+                    lineContent = lineElement.textContent || lineElement.innerText || '';
+                }
+                
+                // 搜尋匹配
                 let match;
                 regex.lastIndex = 0;
                 
-                while ((match = regex.exec(line)) !== null) {
+                while ((match = regex.exec(lineContent)) !== null) {
+                    // 為每個匹配創建一個結果
                     results.push({
                         lineNumber: lineNumber,
-                        content: line.trim() || line,  // 保留行內容
+                        content: lineContent.trim() || lineContent,
                         matchStart: match.index,
                         matchEnd: match.index + match[0].length,
                         matchText: match[0],
                         pane: eventData.pane || null,
-                        // 加入更多定位資訊
-                        lineText: line,
+                        // 移除 lineElement，因為 DOM 元素無法被序列化
+                        // lineElement: lineElement,  // 移除這行
+                        matchIndex: match.index,
                         fullMatch: {
                             start: match.index,
                             end: match.index + match[0].length,
@@ -445,9 +462,11 @@
                 }
             });
 
+            console.log('搜尋結果數量:', results.length);
+
             // 高亮顯示
             if (results.length > 0) {
-                highlightSearchResults(regex);
+                highlightSearchResultsInElements(results, regex);
             }
             
             // 回傳結果給父視窗
@@ -469,6 +488,65 @@
         } finally {
             isSearching = false;
         }
+    }
+
+    // 在元素中高亮搜尋結果
+    function highlightSearchResultsInElements(results, regex) {
+        // 按行號分組結果
+        const resultsByLine = {};
+        results.forEach(result => {
+            if (!resultsByLine[result.lineNumber]) {
+                resultsByLine[result.lineNumber] = [];
+            }
+            resultsByLine[result.lineNumber].push(result);
+        });
+        
+        // 處理每一行
+        Object.keys(resultsByLine).forEach(lineNumber => {
+            const lineResults = resultsByLine[lineNumber];
+            const lineElement = document.getElementById(`line-${lineNumber}`);
+            if (!lineElement) return;
+            
+            // 找到內容元素
+            let contentElement = lineElement.querySelector('.line-content');
+            if (!contentElement) {
+                // 如果沒有 .line-content，可能整個元素就是內容
+                contentElement = lineElement;
+            }
+            
+            // 獲取所有文字節點
+            const walker = document.createTreeWalker(
+                contentElement,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+            
+            let node;
+            while (node = walker.nextNode()) {
+                const text = node.textContent;
+                if (!text) continue;
+                
+                let matches = [];
+                let match;
+                regex.lastIndex = 0;
+                
+                while ((match = regex.exec(text)) !== null) {
+                    matches.push({
+                        start: match.index,
+                        end: match.index + match[0].length,
+                        text: match[0]
+                    });
+                    if (match.index === regex.lastIndex) {
+                        regex.lastIndex++;
+                    }
+                }
+                
+                if (matches.length > 0) {
+                    highlightMatches(node, matches);
+                }
+            }
+        });
     }
 
     // 高亮搜尋結果

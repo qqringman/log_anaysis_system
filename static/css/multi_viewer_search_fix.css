@@ -1,92 +1,23 @@
-/* 搜尋結果行號高亮 */
-.search-result-item {
-    position: relative;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.search-result-item:hover {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-    transform: translateX(5px);
-}
-
-.search-result-item .line-number {
-    font-weight: 600;
-    color: #667eea;
-    font-size: 14px;
-    background: rgba(102, 126, 234, 0.1);
-    padding: 2px 8px;
-    border-radius: 4px;
-    display: inline-block;
-}
-
-/* 搜尋結果分組頁籤 */
-.search-results-tabs {
-    display: flex;
-    border-bottom: 2px solid #e0e0e0;
-    margin-bottom: 15px;
-    gap: 5px;
-}
-
-.search-results-tab {
-    padding: 10px 20px;
-    background: #f8f9fa;
-    border: none;
-    border-radius: 8px 8px 0 0;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
+/* 搜尋結果中的匹配資訊 */
+.search-result-item .match-info {
     color: #666;
-}
-
-.search-results-tab:hover {
-    background: #e9ecef;
-}
-
-.search-results-tab.active {
-    background: white;
-    color: #667eea;
-    border-bottom: 2px solid #667eea;
-    margin-bottom: -2px;
-}
-
-.search-results-tab .tab-count {
-    background: #667eea;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 10px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: normal;
+    margin-left: 5px;
 }
 
-.search-results-content {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.search-results-pane {
-    display: none;
-}
-
-.search-results-pane.active {
-    display: block;
-}
-
-/* iframe 內的高亮效果 */
+/* 行高亮動畫 */
 .highlight-flash {
-    animation: highlightFlash 2s ease-out;
+    animation: lineHighlightFlash 2s ease-out;
 }
 
-@keyframes highlightFlash {
+@keyframes lineHighlightFlash {
     0% {
-        background-color: #ffeb3b;
+        background-color: rgba(255, 235, 59, 0.5);
         box-shadow: 0 0 20px rgba(255, 235, 59, 0.5);
     }
     50% {
-        background-color: #fff9c4;
+        background-color: rgba(255, 235, 59, 0.3);
         box-shadow: 0 0 10px rgba(255, 235, 59, 0.3);
     }
     100% {
@@ -95,33 +26,9 @@
     }
 }
 
-/* 行號欄位樣式優化 */
-.search-result-line {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: #666;
-}
-
-.search-result-line i {
-    color: #667eea;
-}
-
-/* 搜尋結果內容優化 */
-.search-result-content {
-    margin-top: 8px;
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    word-break: break-word;
-}
-
+/* 確保搜尋高亮在多個結果時正確顯示 */
 .search-result-content .highlight {
-    background: #ffeb3b;
+    background-color: #ffeb3b;
     color: #000;
     padding: 2px 4px;
     border-radius: 3px;

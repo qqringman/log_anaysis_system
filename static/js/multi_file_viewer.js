@@ -4467,18 +4467,18 @@ function updateSearchPosition(current, total) {
 function displaySearchResults(data) {
     console.log('顯示搜尋結果:', data);
     
-    // 清除超時計時器
-    if (window.searchTimeoutId) {
-        clearTimeout(window.searchTimeoutId);
-        window.searchTimeoutId = null;
-    }
-    
     const resultsDiv = document.getElementById('search-results');
     const searchStats = document.getElementById('search-stats');
     
     if (!resultsDiv) {
         console.error('搜尋結果容器不存在');
         return;
+    }
+    
+    // 清除超時計時器
+    if (window.searchTimeoutId) {
+        clearTimeout(window.searchTimeoutId);
+        window.searchTimeoutId = null;
     }
     
     // 確保搜尋對話框是開啟的
@@ -4488,30 +4488,21 @@ function displaySearchResults(data) {
         return;
     }
     
+    // 保存搜尋結果數據
+    window.searchResultsData = data.results || [];
+    window.currentSearchIndex = 0;
+    
     // 清除載入狀態
     resultsDiv.innerHTML = '';
     
-    // 保存搜尋結果數據
-    searchResultsData = data.results || [];
-    currentSearchIndex = 0;
-    
-    // 使用分群顯示函數（如果有的話）
-    if (window.displayGroupedSearchResults) {
-        console.log('使用分群顯示');
-        window.displayGroupedSearchResults(data);
-        return;
-    }
-    
-    // 以下是備用的顯示邏輯（當分群顯示函數未載入時）
-    console.log('使用標準顯示');
-    
-    if (searchResultsData.length > 0) {
+    if (window.searchResultsData.length > 0) {
+        // 顯示統計
         if (searchStats) {
             searchStats.style.display = 'flex';
             const searchCount = document.getElementById('search-count');
             const searchLines = document.getElementById('search-lines');
-            if (searchCount) searchCount.textContent = data.count || searchResultsData.length;
-            if (searchLines) searchLines.textContent = searchResultsData.length;
+            if (searchCount) searchCount.textContent = data.count || window.searchResultsData.length;
+            if (searchLines) searchLines.textContent = window.searchResultsData.length;
         }
         
         // 啟用導航按鈕
@@ -4520,41 +4511,21 @@ function displaySearchResults(data) {
         if (prevBtn) prevBtn.disabled = false;
         if (nextBtn) nextBtn.disabled = false;
         
-        // 建立結果列表（帶動畫）
-        searchResultsData.forEach((result, index) => {
-            setTimeout(() => {
-                const resultItem = document.createElement('div');
-                resultItem.className = `search-result-item ${index === 0 ? 'active' : ''}`;
-                resultItem.style.animation = `slideUp 0.3s ease-out`;
-                resultItem.onclick = () => jumpToSearchResult(index, result.lineNumber);
-                
-                resultItem.innerHTML = `
-                    <div class="search-result-header">
-                        <div class="search-result-line">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>行號</span>
-                            <span class="line-number">${result.lineNumber || '?'}</span>
-                        </div>
-                    </div>
-                    <div class="search-result-content">
-                        ${highlightKeyword(result.content || '', data.keyword)}
-                    </div>
-                `;
-                
-                resultsDiv.appendChild(resultItem);
-                
-                // 第一個結果自動高亮閃爍
-                if (index === 0) {
-                    setTimeout(() => {
-                        resultItem.classList.add('highlight-flash');
-                    }, 100);
-                }
-            }, index * 50); // 每個結果延遲 50ms 顯示
-        });
-        
         // 更新導航計數
         updateSearchNavigation();
+        
+        // 檢查是否應該使用分組顯示
+        if (window.displayGroupedSearchResults && typeof window.displayGroupedSearchResults === 'function') {
+            console.log('使用分群顯示');
+            window.displayGroupedSearchResults(data);
+        } else {
+            console.log('使用標準顯示');
+            // 直接顯示所有結果
+            const html = renderSearchResultsList(window.searchResultsData, data.keyword);
+            resultsDiv.innerHTML = html;
+        }
     } else {
+        // 無結果
         if (searchStats) searchStats.style.display = 'none';
         resultsDiv.innerHTML = `
             <div class="no-results">
@@ -4768,38 +4739,7 @@ function setupSearchModalKeyboard() {
             closeSearchModal();
         }
     });
-    
-    // 對話框 ESC 關閉
-    searchModal.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closeSearchModal();
-        }
-    });
 }
-
-// 上一個搜尋結果
-window.prevSearchResult = function() {
-    if (searchResultsData.length === 0) return;
-    
-    currentSearchIndex--;
-    if (currentSearchIndex < 0) {
-        currentSearchIndex = searchResultsData.length - 1;
-    }
-    
-    highlightCurrentSearchResult();
-};
-
-// 下一個搜尋結果
-window.nextSearchResult = function() {
-    if (searchResultsData.length === 0) return;
-    
-    currentSearchIndex++;
-    if (currentSearchIndex >= searchResultsData.length) {
-        currentSearchIndex = 0;
-    }
-    
-    highlightCurrentSearchResult();
-};
 
 // 顯示標籤計數器
 function showTabsCounter() {

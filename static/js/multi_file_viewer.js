@@ -2487,58 +2487,7 @@ async function executeSearch(keyword, scope, caseSensitive, wholeWord, regex) {
     } else {
         window.expectedSearchResults = 1;
     }
-    
-    // 創建新的訊息處理器 - 修改為累積結果
-    const messageHandler = function(event) {
-        if (event.data.type === 'search-results') {
-            console.log('收到搜尋結果:', event.data);
-            
-            // 檢查是否是當前搜尋的結果
-            if (event.data.keyword !== keyword) {
-                console.log('忽略舊的搜尋結果');
-                return;
-            }
-            
-            // 累積結果
-            window.pendingSearchResults.push(event.data);
-            window.searchResultsReceived++;
-            
-            // 檢查是否收到所有預期的結果
-            if (window.searchResultsReceived >= window.expectedSearchResults) {
-                // 合併所有結果
-                const mergedResults = {
-                    keyword: keyword,
-                    results: [],
-                    count: 0
-                };
-                
-                window.pendingSearchResults.forEach(result => {
-                    if (result.results && result.results.length > 0) {
-                        mergedResults.results = mergedResults.results.concat(result.results);
-                        mergedResults.count += result.count || result.results.length;
-                    }
-                });
-                
-                console.log('合併後的搜尋結果:', mergedResults);
-                
-                // 顯示合併後的結果
-            const searchModal = document.getElementById('search-modal');
-            if (searchModal && searchModal.classList.contains('show')) {
-                    displaySearchResults(mergedResults);
-                }
-                
-                // 清理
-                window.removeEventListener('message', messageHandler);
-                window.searchMessageHandler = null;
-                window.pendingSearchResults = [];
-                window.searchResultsReceived = 0;
-            }
-        } else if (event.data.type === 'search-error') {
-            // 處理搜尋錯誤
-            showToast(event.data.message, 'error');
-        }
-    };
-    
+
     // 儲存處理器引用
     window.searchMessageHandler = messageHandler;
     window.addEventListener('message', messageHandler);

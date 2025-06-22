@@ -118,12 +118,16 @@
                     return;
                 }
                 
-                // 處理結果，確保有行號
-                const processedResults = processSearchResults(event.data.results, event.data.pane);
+                // 處理結果，確保有正確的 pane 資訊
+                const processedResults = processSearchResults(
+                    event.data.results, 
+                    event.data.pane || (window.splitView ? null : 'main')
+                );
                 
                 window.enhancedPendingResults.push({
                     ...event.data,
-                    results: processedResults
+                    results: processedResults,
+                    pane: event.data.pane || 'main'
                 });
                 
                 window.enhancedResultsReceived++;
@@ -192,6 +196,9 @@
     function processSearchResults(results, pane) {
         if (!results || !Array.isArray(results)) return [];
         
+        // 檢查是否為單檔模式
+        const isSingleFileMode = !window.splitView;
+        
         return results.map((result, index) => {
             // 確保有行號
             let lineNumber = result.lineNumber;
@@ -212,11 +219,16 @@
                 lineNumber = index + 1;
             }
             
+            // 單檔模式強制使用 'main' 作為 pane
+            const resultPane = isSingleFileMode ? 'main' : (result.pane || pane || 'main');
+            
             return {
                 ...result,
                 lineNumber: lineNumber,
-                pane: result.pane || pane || null,  // 優先使用結果中的 pane
-                uniqueId: `${result.pane || pane || 'main'}-${lineNumber}-${index}`
+                pane: resultPane,
+                uniqueId: `${resultPane}-${lineNumber}-${index}`,
+                // 保存原始的 pane 資訊（如果有）
+                originalPane: result.pane || pane
             };
         });
     }
@@ -255,56 +267,15 @@
         
         if (window.enhancedSearchResults.length > 0) {
             // 顯示統計
-            // 修改統計顯示部分（約第 250-270 行）
             if (searchStats) {
                 searchStats.style.display = 'flex';
                 const searchCount = document.getElementById('search-count');
                 const searchLines = document.getElementById('search-lines');
                 
-                // 分別統計左右視窗
-                let leftMatches = 0;
-                let rightMatches = 0;
-                let otherMatches = 0;
-                let leftLines = new Set();
-                let rightLines = new Set();
-                let otherLines = new Set();
-                
-                window.enhancedSearchResults.forEach(result => {
-                    if (result.pane === 'left') {
-                        leftMatches++;
-                        if (result.lineNumber) leftLines.add(result.lineNumber);
-                    } else if (result.pane === 'right') {
-                        rightMatches++;
-                        if (result.lineNumber) rightLines.add(result.lineNumber);
-                    } else {
-                        otherMatches++;
-                        if (result.lineNumber) otherLines.add(result.lineNumber);
-                    }
-                });
-                
-                let totalMatches = leftMatches + rightMatches + otherMatches;
-                let totalLines = leftLines.size + rightLines.size + otherLines.size;
-                
-                // 根據是否在分割視窗模式顯示不同的統計
-                if (window.splitView && (leftMatches > 0 || rightMatches > 0)) {
-                    let statsText = [];
-                    if (leftMatches > 0) {
-                        statsText.push(`<span>左側: ${leftMatches}</span>`);
-                    }
-                    if (rightMatches > 0) {
-                        statsText.push(`<span>右側: ${rightMatches}</span>`);
-                    }
-                    if (otherMatches > 0) {
-                        statsText.push(`<span>其他: ${otherMatches}</span>`);
-                    }
-                    
-                    if (searchCount) searchCount.textContent = totalMatches;
-                    if (searchLines) {
-                        searchLines.innerHTML = statsText.join('');
-                    }
-                } else {
-                    if (searchCount) searchCount.textContent = totalMatches;
-                    if (searchLines) searchLines.textContent = totalLines;
+                if (searchCount) searchCount.textContent = window.enhancedSearchResults.length;
+                if (searchLines) {
+                    const uniqueLines = new Set(window.enhancedSearchResults.map(r => r.lineNumber));
+                    searchLines.textContent = uniqueLines.size;
                 }
             }
             
@@ -314,10 +285,12 @@
             if (prevBtn) prevBtn.disabled = false;
             if (nextBtn) nextBtn.disabled = false;
             
-            // 分組顯示結果
-            if (window.splitView) {
+            // 根據模式顯示結果
+            if (window.splitView && hasMultiplePanes(window.enhancedSearchResults)) {
+                // 分割視窗模式且有多個面板的結果
                 displayGroupedResults(resultsDiv, window.enhancedSearchResults, data.keyword);
             } else {
+                // 單檔模式或只有一個面板的結果
                 displayFlatResults(resultsDiv, window.enhancedSearchResults, data.keyword);
             }
             
@@ -337,7 +310,13 @@
             if (nextBtn) nextBtn.disabled = true;
         }
     }
-    
+
+    // 輔助函數：檢查是否有多個面板的結果
+    function hasMultiplePanes(results) {
+        const panes = new Set(results.map(r => r.pane));
+        return panes.size > 1;
+    }
+
     // 分組顯示結果
     function displayGroupedResults(container, results, keyword) {
         const grouped = {};
@@ -388,7 +367,12 @@
     
     // 平面顯示結果
     function displayFlatResults(container, results, keyword) {
-        container.innerHTML = renderSearchResultsList(results, keyword);
+        // 單檔模式直接顯示所有結果，不分組
+        container.innerHTML = `
+            <div class="search-results-single">
+                ${renderSearchResultsList(results, keyword, 'main')}
+            </div>
+        `;
     }
     
     // 渲染搜尋結果列表
@@ -505,7 +489,6 @@
         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    // 新增全域跳轉函數
     window.jumpToEnhancedResult = function(index) {
         console.log('跳轉到搜尋結果:', index);
         
@@ -522,107 +505,97 @@
         // 更新當前索引
         window.currentSearchIndex = index;
         
-    // === 新增：自動切換到對應的頁籤 ===
-    if (window.splitView && result.pane && (result.pane === 'left' || result.pane === 'right')) {
-        // 檢查是否有分頁籤
-        const tabs = document.querySelectorAll('.search-results-tab');
-        if (tabs.length > 0) {
-            // 找到對應的頁籤並點擊
-            tabs.forEach(tab => {
-                const onclick = tab.getAttribute('onclick');
-                if (onclick) {
-                    if (result.pane === 'left' && onclick.includes("'left'")) {
-                        tab.click();
-                    } else if (result.pane === 'right' && onclick.includes("'right'")) {
-                        tab.click();
-                    } else if (!result.pane && onclick.includes("'other'")) {
-                        tab.click();
-                    }
+        // 更新高亮
+        setTimeout(() => {
+            document.querySelectorAll('.search-result-item').forEach((item) => {
+                const itemIndex = parseInt(item.dataset.index);
+                if (itemIndex === index) {
+                    item.classList.add('active');
+                    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    item.classList.remove('active');
                 }
             });
-        }
-    }
-    // === 結束新增 ===
-    
-    // 延遲一下再高亮，確保頁籤切換完成
-    setTimeout(() => {
-        // 高亮當前結果
-        document.querySelectorAll('.search-result-item').forEach((item) => {
-            const itemIndex = parseInt(item.dataset.index);
-            if (itemIndex === index) {
-                item.classList.add('active');
-                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            } else {
-                item.classList.remove('active');
-            }
-        });
-    }, 100);
+        }, 100);
         
         // 更新導航計數
         updateSearchNavigation();
         
-        // 根據 pane 資訊跳轉到對應視窗
-        if (window.splitView && result.pane && (result.pane === 'left' || result.pane === 'right')) {
+        // 檢查是否為單檔模式
+        const isSingleFileMode = !window.splitView;
+        
+        if (isSingleFileMode || result.pane === 'main') {
+            // 單檔模式跳轉
+            console.log(`單檔模式跳轉到第 ${result.lineNumber} 行`);
+            
+            // 方法1：如果有 activeTabId，使用標籤系統
+            if (window.activeTabId && window.currentTabs) {
+                const tab = window.currentTabs.find(t => t.id === window.activeTabId);
+                if (tab && tab.content) {
+                    const iframe = tab.content.querySelector('iframe');
+                    if (iframe && iframe.contentWindow) {
+                        sendJumpMessage(iframe, result);
+                        return;
+                    }
+                }
+            }
+            
+            // 方法2：直接從 DOM 尋找 iframe
+            const fileViewer = document.getElementById('file-viewer');
+            if (fileViewer) {
+                const iframe = fileViewer.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    sendJumpMessage(iframe, result);
+                    return;
+                }
+            }
+            
+            // 方法3：尋找任何可見的 iframe
+            const allIframes = document.querySelectorAll('iframe');
+            for (const iframe of allIframes) {
+                if (iframe.offsetParent !== null && iframe.contentWindow) {
+                    sendJumpMessage(iframe, result);
+                    break;
+                }
+            }
+        } else if (window.splitView && result.pane && (result.pane === 'left' || result.pane === 'right')) {
+            // 分割視窗模式跳轉
             console.log(`跳轉到 ${result.pane} 視窗的第 ${result.lineNumber} 行`);
             
             const content = document.getElementById(`split-${result.pane}-content`);
             if (content) {
                 const iframe = content.querySelector('iframe');
                 if (iframe && iframe.contentWindow) {
-                    // 先確保該視窗是可見的
-                    content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    
-                    // 發送跳轉訊息
-                    setTimeout(() => {
-                        iframe.contentWindow.postMessage({
-                            type: 'jump-to-line',
-                            lineNumber: result.lineNumber,
-                            matchIndex: result.matchNumberInLine || 0,
-                            highlight: true
-                        }, '*');
-                        
-                        // 視覺反饋 - 閃爍效果
-                        iframe.style.transition = 'box-shadow 0.3s ease';
-                        iframe.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.8)';
-                        setTimeout(() => {
-                            iframe.style.boxShadow = '';
-                        }, 1000);
-                    }, 100);
-                    
-                    // 顯示提示
-                    if (window.showToast) {
-                        window.showToast(`已跳轉到${result.pane === 'left' ? '左側' : '右側'}視窗第 ${result.lineNumber} 行`, 'info');
-                    }
-                } else {
-                    console.error(`找不到 ${result.pane} 視窗的 iframe`);
-                }
-            } else {
-                console.error(`找不到 ${result.pane} 視窗內容元素`);
-            }
-        } else {
-            // 一般模式，跳轉到主視窗
-            console.log(`跳轉到主視窗的第 ${result.lineNumber} 行`);
-            
-            if (window.activeTabId) {
-                const tab = window.currentTabs.find(t => t.id === window.activeTabId);
-                if (tab && tab.content) {
-                    const iframe = tab.content.querySelector('iframe');
-                    if (iframe && iframe.contentWindow) {
-                        iframe.contentWindow.postMessage({
-                            type: 'jump-to-line',
-                            lineNumber: result.lineNumber,
-                            matchIndex: result.matchNumberInLine || 0,
-                            highlight: true
-                        }, '*');
-                        
-                        if (window.showToast) {
-                            window.showToast(`已跳轉到第 ${result.lineNumber} 行`, 'info');
-                        }
-                    }
+                    sendJumpMessage(iframe, result);
                 }
             }
         }
     };
+
+    // 輔助函數：發送跳轉訊息
+    function sendJumpMessage(iframe, result) {
+        try {
+            iframe.contentWindow.postMessage({
+                type: 'jump-to-line',
+                lineNumber: result.lineNumber,
+                matchIndex: result.matchIndex || result.matchNumberInLine || 0,
+                highlight: true
+            }, '*');
+            
+            // 視覺反饋
+            iframe.style.transition = 'box-shadow 0.3s ease';
+            iframe.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.8)';
+            setTimeout(() => {
+                iframe.style.boxShadow = '';
+            }, 1000);
+            
+            if (window.showToast) {
+                window.showToast(`已跳轉到第 ${result.lineNumber} 行`, 'info');
+            }
+        } catch (error) {
+            console.error('發送跳轉訊息失敗:', error);
+        }
+    }
 
     // 跳轉到增強搜尋結果
     window.jumpToEnhancedSearchResult = function(index, lineNumber, source) {

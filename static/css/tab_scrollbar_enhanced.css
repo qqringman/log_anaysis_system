@@ -1,0 +1,499 @@
+/* ===== 標籤捲軸修復 ===== */
+
+/* 桌面版標籤捲軸修復 */
+.file-tabs {
+    /* 移除 gap，改用 margin */
+    gap: 0;
+    /* 確保可以滾動 */
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    /* 平滑滾動 */
+    scroll-behavior: smooth;
+    /* 自定義捲軸高度 */
+    scrollbar-width: thin;
+    scrollbar-color: #ddd #f5f5f5;
+    /* 防止換行 */
+    white-space: nowrap;
+    /* 設定最小高度 */
+    min-height: var(--tabs-height, 45px);
+    /* 相對定位，用於標籤拖曳 */
+    position: relative;
+}
+
+/* Webkit 捲軸樣式 */
+.file-tabs::-webkit-scrollbar {
+    height: 6px;
+}
+
+.file-tabs::-webkit-scrollbar-track {
+    background: #f5f5f5;
+    border-radius: 3px;
+}
+
+.file-tabs::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.file-tabs::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+}
+
+/* 標籤項目修正 */
+.file-tab {
+    /* 防止標籤被壓縮 */
+    flex-shrink: 0 !important;
+    /* 設定間距 */
+    margin-right: 3px;
+    /* 確保最小寬度 */
+    min-width: 120px;
+    /* 防止內容換行 */
+    white-space: nowrap;
+    /* 保持原有樣式 */
+    display: inline-flex;
+    align-items: center;
+}
+
+/* 最後一個標籤不需要右邊距 */
+.file-tab:last-of-type {
+    margin-right: 0;
+}
+
+/* 新增標籤按鈕修正 */
+.add-tab-btn {
+    /* 防止被壓縮 */
+    flex-shrink: 0;
+    /* 左邊距 */
+    margin-left: 5px;
+    /* 確保始終可見 */
+    position: sticky;
+    right: 0;
+    background: white;
+    /* 加陰影讓它更明顯 */
+    box-shadow: -5px 0 10px rgba(255, 255, 255, 0.9);
+    z-index: 10;
+}
+
+/* 手機版選單按鈕 */
+.mobile-menu-btn {
+    /* 防止被壓縮 */
+    flex-shrink: 0;
+    /* 固定在左側 */
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 10;
+    /* 加陰影 */
+    box-shadow: 5px 0 10px rgba(255, 255, 255, 0.9);
+}
+
+/* 標籤很多時的特殊樣式 */
+.file-tabs.many-tabs .file-tab {
+    /* 減小寬度以顯示更多標籤 */
+    min-width: 100px;
+    /* 減小字體 */
+    font-size: 12px;
+    /* 減小內距 */
+    padding: 5px 10px;
+    padding-right: 30px;
+}
+
+.file-tabs.many-tabs .tab-title {
+    /* 限制標題長度 */
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 滾動提示 - 桌面版 */
+@media (min-width: 769px) {
+    /* 左側漸變提示 */
+    .file-tabs::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 20px;
+        background: linear-gradient(90deg, white, transparent);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 11;
+    }
+    
+    /* 右側漸變提示 */
+    .file-tabs::after {
+        content: '';
+        position: absolute;
+        right: 40px; /* 避開新增按鈕 */
+        top: 0;
+        bottom: 0;
+        width: 20px;
+        background: linear-gradient(90deg, transparent, white);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 11;
+    }
+    
+    /* 當可以滾動時顯示漸變 */
+    .file-tabs.can-scroll-left::before {
+        opacity: 1;
+    }
+    
+    .file-tabs.can-scroll-right::after {
+        opacity: 1;
+    }
+}
+
+/* ===== 手機版標籤優化 ===== */
+@media (max-width: 768px) {
+    .file-tabs {
+        /* 移除內距，最大化空間 */
+        padding: 0;
+        /* 確保高度一致 */
+        min-height: 40px;
+        height: 40px;
+        /* 隱藏捲軸但保持可滾動 */
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        /* 增加觸控區域 */
+        padding-bottom: 5px;
+        margin-bottom: -5px;
+    }
+    
+    /* 隱藏手機版捲軸 */
+    .file-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* 手機版標籤樣式 */
+    .file-tab {
+        min-width: 100px;
+        height: 35px;
+        padding: 6px 10px;
+        padding-right: 28px;
+        font-size: 12px;
+        margin-right: 2px;
+        /* 圓角減小 */
+        border-radius: 6px 6px 0 0;
+    }
+    
+    /* 標籤圖標在手機版隱藏 */
+    .tab-icon {
+        display: none;
+    }
+    
+    /* 分割圖標保留但縮小 */
+    .tab-split-icon {
+        font-size: 8px;
+        margin-left: 2px;
+    }
+    
+    /* 標題樣式 */
+    .tab-title {
+        font-size: 12px;
+        max-width: 80px;
+    }
+    
+    /* 關閉按鈕優化 */
+    .tab-close {
+        width: 24px;
+        height: 24px;
+        right: 2px;
+        padding: 2px;
+        font-size: 10px;
+    }
+    
+    /* 新增按鈕優化 */
+    .add-tab-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+        margin-left: 2px;
+        /* 始終顯示 */
+        position: sticky;
+        right: 0;
+        background: white;
+        border-left: 1px solid #e0e0e0;
+    }
+    
+    /* 選單按鈕優化 */
+    .mobile-menu-btn {
+        width: 40px;
+        height: 40px;
+        margin-right: 0;
+        border-right: 1px solid #e0e0e0;
+    }
+    
+    /* 超過5個標籤時的處理 */
+    .file-tabs.many-tabs .file-tab {
+        min-width: 90px;
+        font-size: 11px;
+        padding: 5px 8px;
+        padding-right: 26px;
+    }
+    
+    .file-tabs.many-tabs .tab-title {
+        max-width: 65px;
+    }
+    
+    .file-tabs.many-tabs .tab-close {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+    }
+    
+    /* 滑動提示 - 手機版 */
+    .file-tabs-hint {
+        position: absolute;
+        right: 45px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 20;
+    }
+    
+    .file-tabs.show-hint .file-tabs-hint {
+        opacity: 1;
+    }
+    
+    /* 滑動提示動畫 */
+    @keyframes swipeHint {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-10px); }
+    }
+    
+    .file-tabs.show-hint .file-tabs-hint::before {
+        content: '← ';
+        display: inline-block;
+        animation: swipeHint 1.5s ease-in-out infinite;
+    }
+}
+
+/* ===== 標籤計數器改進 ===== */
+@media (max-width: 768px) {
+    .tabs-counter {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--primary-gradient);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 25px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        z-index: 100;
+        display: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        /* 加入安全區域 */
+        bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+    
+    .tabs-counter:active {
+        transform: scale(0.95);
+    }
+    
+    .tabs-counter.show {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        animation: slideInUp 0.3s ease-out;
+    }
+    
+    .tabs-counter::before {
+        content: '\f03a'; /* fa-list */
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+    }
+}
+
+/* ===== 標籤列表 Modal 改進 ===== */
+.tabs-list-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2001;
+    display: flex;
+    align-items: flex-end;
+    animation: fadeIn 0.3s ease;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.tabs-list-content {
+    background: white;
+    width: 100%;
+    max-height: 70vh;
+    border-radius: 20px 20px 0 0;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+.tabs-list-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+}
+
+.tabs-list-header h5 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.tabs-list-header button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.tabs-list-header button:active {
+    background: #e0e0e0;
+}
+
+.tabs-list-body {
+    overflow-y: auto;
+    max-height: calc(70vh - 80px);
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabs-list-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    position: relative;
+}
+
+.tabs-list-item:active {
+    background: #f0f0f0;
+}
+
+.tab-color-indicator {
+    width: 4px;
+    height: 40px;
+    border-radius: 2px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.tab-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.tab-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 2px;
+}
+
+.tab-path {
+    font-size: 12px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tab-close-btn {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 20px;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.tab-close-btn:active {
+    background: rgba(220, 53, 69, 0.1);
+}
+
+/* 無標籤狀態 */
+.tabs-list-empty {
+    padding: 60px 20px;
+    text-align: center;
+    color: #999;
+}
+
+.tabs-list-empty i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.tabs-list-empty p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* 深色模式支援 */
+@media (prefers-color-scheme: dark) {
+    .tabs-list-content {
+        background: #2a2a2a;
+    }
+    
+    .tabs-list-header {
+        background: #333;
+        border-bottom-color: #444;
+    }
+    
+    .tabs-list-header h5 {
+        color: #f0f0f0;
+    }
+    
+    .tabs-list-item {
+        border-bottom-color: #333;
+    }
+    
+    .tabs-list-item:active {
+        background: #333;
+    }
+    
+    .tab-name {
+        color: #f0f0f0;
+    }
+    
+    .tab-path {
+        color: #aaa;
+    }
+}

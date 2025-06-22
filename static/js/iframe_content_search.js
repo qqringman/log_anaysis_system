@@ -55,7 +55,7 @@
             navigateToPrev();
         }
     });
-    
+
     function jumpToLine(lineNumber, matchIndex) {
         // 確保 matchIndex 是有效的數字
         matchIndex = parseInt(matchIndex) || 0;
@@ -68,114 +68,6 @@
         }
     }
 
-    function performSearch(options) {
-        // 先嘗試清理現有高亮
-        try {
-            clearHighlights();
-        } catch (error) {
-            console.warn('清理高亮時發生錯誤，嘗試強制清理:', error);
-            // 強制清理
-            searchHighlights = [];
-            currentHighlightIndex = 0;
-            
-            // 移除所有高亮類別
-            const allHighlights = document.querySelectorAll('.search-highlight');
-            allHighlights.forEach(el => {
-                if (el) {
-                    el.classList.remove('search-highlight', 'current-highlight');
-                    // 嘗試解包元素
-                    if (el.parentNode) {
-                        const parent = el.parentNode;
-                        while (el.firstChild) {
-                            parent.insertBefore(el.firstChild, el);
-                        }
-                        parent.removeChild(el);
-                    }
-                }
-            });
-        }
-        
-        searchKeyword = options.keyword;
-        if (!searchKeyword) return;
-
-        // 確認收到正確的選項
-        console.log('iframe 收到搜尋選項:', options);
-
-        const results = [];
-        const regex = createSearchRegex(searchKeyword, options);
-
-        // 如果是正則表達式模式，顯示實際使用的正則
-        if (options.regex) {
-            console.log('使用正則表達式:', regex);
-        }
-
-        // 獲取所有文字行
-        const lines = document.body.innerText.split('\n');
-        
-        lines.forEach((line, lineIndex) => {
-            let match;
-            while ((match = regex.exec(line)) !== null) {
-                results.push({
-                    lineNumber: lineIndex + 1,
-                    content: line,
-                    matchStart: match.index,
-                    matchEnd: match.index + match[0].length,
-                    matchText: match[0]
-                });
-            }
-        });
-
-        // 高亮顯示
-        const walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
-
-        let node;
-        while (node = walker.nextNode()) {
-            const text = node.textContent;
-            if (!text) continue;
-
-            let matches = [];
-            let match;
-            while ((match = regex.exec(text)) !== null) {
-                matches.push({
-                    start: match.index,
-                    end: match.index + match[0].length,
-                    text: match[0]
-                });
-            }
-
-            if (matches.length > 0) {
-                highlightMatches(node, matches);
-            }
-        }
-
-        // 通知父視窗搜尋結果
-        if (searchHighlights.length > 0) {
-            currentHighlightIndex = 0;
-            scrollToHighlight(0);
-            
-            window.parent.postMessage({
-                type: 'search-results',
-                count: searchHighlights.length,
-                keyword: searchKeyword,
-                results: results, // 傳送行號和內容
-                pane: event.data.pane // 傳回面板資訊
-            }, '*');
-        } else {
-            window.parent.postMessage({
-                type: 'search-results',
-                count: 0,
-                keyword: searchKeyword,
-                results: [],
-                pane: event.data.pane // 傳回面板資訊
-            }, '*');
-        }
-    }
-
     function createSearchRegex(keyword, options) {
         let flags = 'g';
         if (!options.caseSensitive) flags += 'i';
@@ -183,7 +75,9 @@
         // 處理正則表達式選項
         if (options.regex === true) {  // 明確檢查是否為 true
             try {
-                // 直接使用用戶輸入作為正則表達式
+                // 測試正則表達式是否有效
+                new RegExp(keyword, flags);
+                // 如果有效，直接返回
                 return new RegExp(keyword, flags);
             } catch (e) {
                 console.error('無效的正則表達式:', e.message);
@@ -197,7 +91,7 @@
             }
         }
         
-        // 非正則模式
+        // 非正則模式 - 轉義特殊字符
         let pattern = escapeRegex(keyword);
         if (options.wholeWord) {
             pattern = `\\b${pattern}\\b`;
@@ -448,7 +342,7 @@
                     count: searchHighlights.length,
                     keyword: searchKeyword,
                     results: results,
-                    pane: eventData.pane || null,
+                    pane: eventData.pane || null,  // 確保傳遞 pane 資訊
                     source: eventData.source || 'iframe'
                 }, '*');
             } else {
@@ -457,7 +351,7 @@
                     count: 0,
                     keyword: searchKeyword,
                     results: [],
-                    pane: eventData.pane || null,
+                    pane: eventData.pane || null,  // 確保傳遞 pane 資訊
                     source: eventData.source || 'iframe'
                 }, '*');
             }

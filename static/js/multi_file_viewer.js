@@ -850,7 +850,7 @@ function toggleFolder(element) {
 
 // 開啟檔案 - 優化版本
 function openFile(file, switchToTab = true) {
-    console.log('開啟檔案:', file);
+    console.log('開啟檔案:', file, 'switchToTab:', switchToTab, 'splitView:', splitView);
     
     if (!file || !file.path) {
         console.error('檔案資料不完整:', file);
@@ -879,38 +879,58 @@ function openFile(file, switchToTab = true) {
     }
 
     // === 新增：分割視窗智能載入邏輯 ===
-    if (splitView && switchToTab !== false && !file.fromDragDrop) {
+    if (splitView && switchToTab !== false) {
+        console.log('分割視窗模式處理');
+        
         // 檢查兩個視窗的狀態
         const leftContent = document.getElementById('split-left-content');
         const rightContent = document.getElementById('split-right-content');
         
-        // 使用更可靠的方式檢查是否為空
-        const leftEmpty = !leftContent?.dataset.filePath || leftContent.querySelector('.empty-state')?.style.display !== 'none';
-        const rightEmpty = !rightContent?.dataset.filePath || rightContent.querySelector('.empty-state')?.style.display !== 'none';
+        // 檢查是否有檔案載入
+        const leftHasFile = leftContent && (
+            leftContent.dataset.filePath || 
+            (leftContent.querySelector('.empty-state')?.style.display === 'none')
+        );
+        const rightHasFile = rightContent && (
+            rightContent.dataset.filePath || 
+            (rightContent.querySelector('.empty-state')?.style.display === 'none')
+        );
         
-        if (leftEmpty && rightEmpty) {
+        console.log('視窗狀態:', { leftHasFile, rightHasFile });
+        
+        if (!leftHasFile && !rightHasFile) {
             // 兩個視窗都空：顯示選擇對話框
+            console.log('兩個視窗都空，顯示選擇對話框');
             pendingFileForPane = file;
-            // 確保對話框可以顯示
-            setTimeout(() => {
-                showPaneSelectModal();
-            }, 100);
-            return null;
-        } else if (leftEmpty && !rightEmpty) {
+            
+            // 確保對話框元素存在
+            const modal = document.getElementById('pane-select-modal');
+            if (modal) {
+                modal.classList.add('show');
+                return null;
+            } else {
+                console.error('找不到選擇對話框元素');
+                // 預設載入到左側
+                const tab = createAndLoadTab(file, 'left');
+                showToast(`已載入到左側視窗: ${file.name}`, 'success');
+                return tab;
+            }
+        } else if (!leftHasFile && rightHasFile) {
             // 只有左側空：自動載入到左側
             const tab = createAndLoadTab(file, 'left');
             showToast(`已載入到左側視窗: ${file.name}`, 'success');
             return tab;
-        } else if (!leftEmpty && rightEmpty) {
+        } else if (leftHasFile && !rightHasFile) {
             // 只有右側空：自動載入到右側
             const tab = createAndLoadTab(file, 'right');
             showToast(`已載入到右側視窗: ${file.name}`, 'success');
             return tab;
         } else {
-            // 兩個視窗都滿：只創建標籤，不載入
-            const tab = createTabOnly(file);
-            showToast(`已新增標籤: ${file.name}`, 'info');
-            return tab;
+            // 兩個視窗都滿：顯示選擇對話框讓使用者選擇要替換哪個
+            console.log('兩個視窗都有檔案，顯示選擇對話框');
+            pendingFileForPane = file;
+            showPaneSelectModal();
+            return null;
         }
     }
     // === 結束新增 ===
@@ -985,6 +1005,8 @@ function openFile(file, switchToTab = true) {
 
 // 創建並載入標籤到指定面板
 function createAndLoadTab(file, pane) {
+    console.log('創建並載入標籤:', file, '到面板:', pane);
+    
     const tabId = generateTabId();
     const colorIndex = tabCounter % tabColors.length;
     const tab = {
@@ -1004,8 +1026,10 @@ function createAndLoadTab(file, pane) {
     currentTabs.push(tab);
     renderTabs();
     
-    // 載入到指定面板
-    loadFileToPane(tab, pane);
+    // 確保載入到指定面板
+    setTimeout(() => {
+        loadFileToPane(tab, pane);
+    }, 100);
     
     addToRecentFiles(file);
     
@@ -1049,20 +1073,42 @@ function closePaneSelectModal() {
     if (modal) {
         modal.classList.remove('show');
     }
-    pendingFileForPane = null;
-    // 重置替換函數
-    window.selectPaneForReplace = null;
 }
 
 // 選擇面板
 function selectPane(pane) {
+    console.log('選擇面板:', pane, '待載入檔案:', pendingFileForPane);
+    
+    // 先保存檔案資訊，避免被清空
+    const fileToLoad = pendingFileForPane;
+    const replaceFunc = window.selectPaneForReplace;
+    
+    // 關閉對話框
     closePaneSelectModal();
     
-    if (pendingFileForPane) {
-        const tab = createAndLoadTab(pendingFileForPane, pane);
-        showToast(`已載入到${pane === 'left' ? '左側' : '右側'}視窗: ${pendingFileForPane.name}`, 'success');
-        pendingFileForPane = null;
+    if (fileToLoad) {
+        // 如果是替換模式
+        if (replaceFunc) {
+            replaceFunc(pane);
+        } else {
+            // 正常載入模式
+            console.log('開始載入檔案:', fileToLoad.name, '到', pane, '面板');
+            const tab = createAndLoadTab(fileToLoad, pane);
+            if (tab) {
+                showToast(`已載入到${pane === 'left' ? '左側' : '右側'}視窗: ${fileToLoad.name}`, 'success');
+            } else {
+                console.error('創建標籤失敗');
+                showToast('載入檔案失敗', 'error');
+            }
+        }
+    } else {
+        console.error('沒有待載入的檔案');
+        showToast('沒有選擇檔案', 'error');
     }
+    
+    // 在處理完成後才清空
+    pendingFileForPane = null;
+    window.selectPaneForReplace = null;
 }
 
 // 優化的載入檔案內容函數
@@ -1225,21 +1271,30 @@ async function loadFileContentOptimized(filePath, tabId, isLocal = false) {
 
 // 載入檔案內容到特定面板
 async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
-    console.log('載入檔案到面板:', { filePath, tabId, isLocal, pane });
+    console.log('載入檔案內容到面板:', { filePath, tabId, isLocal, pane });
     
     try {
         const content = document.getElementById(`split-${pane}-content`);
         const tab = currentTabs.find(t => t.id === tabId);
         
+        if (!content) {
+            console.error(`找不到面板內容元素: split-${pane}-content`);
+            return;
+        }
+        
+        if (!tab) {
+            console.error('找不到標籤:', tabId);
+            return;
+        }
+        
         // 如果是可編輯檔案，使用文字編輯器
         if (tab && tab.isEditable) {
             window.textEditor.loadEditorToPane(tab, pane);
             return;
-        }        
+        }
+        
         const title = document.getElementById(`split-${pane}-title`);
         const emptyState = document.getElementById(`split-${pane}-empty`);
-        
-        if (!content) return;
         
         // 移除空狀態
         if (emptyState) {
@@ -1262,7 +1317,7 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
         }
 
         const iframe = document.createElement('iframe');
-        iframe.id = `iframe-${pane}-${tabId}`
+        iframe.id = `iframe-${pane}-${tabId}`;
         iframe.style.width = '100%';
         iframe.style.height = '100%';
         iframe.style.border = 'none';
@@ -1282,15 +1337,11 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
             // 儲存到分割視窗狀態
             splitViewState[pane] = filePath;
 
-            // 修復：確保標籤狀態正確更新
+            // 確保標籤狀態正確更新
             const tab = currentTabs.find(t => t.id === tabId);
             if (tab) {
                 tab.loading = false;
                 tab.splitPane = pane;
-                // 確保內容已載入
-                if (!tab.content) {
-                    tab.content = content.innerHTML;
-                }
                 // 立即更新標籤顯示
                 renderTabs();
             }
@@ -1305,6 +1356,7 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
         };
         
         iframe.onerror = () => {
+            console.error('iframe 載入失敗');
             content.innerHTML = `
                 <div class="error-state">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -1321,6 +1373,7 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
         
     } catch (error) {
         console.error('載入到面板失敗:', error);
+        showToast('載入檔案失敗', 'error');
     }
 }
 
@@ -3579,6 +3632,8 @@ function handleDroppedFile(virtualFile, pane) {
 
 // 載入檔案到特定面板
 function loadFileToPane(tab, pane) {
+    console.log('載入檔案到面板:', tab, pane);
+    
     // 確保在分割視窗模式
     if (!splitView) {
         console.error('嘗試在非分割視窗模式下載入檔案到面板');
@@ -3587,51 +3642,65 @@ function loadFileToPane(tab, pane) {
 
     const content = document.getElementById(`split-${pane}-content`);
     const title = document.getElementById(`split-${pane}-title`);
+    const emptyState = document.getElementById(`split-${pane}-empty`);
 
-    if (content && tab) {
-        content.innerHTML = '';
-        content.dataset.tabId = tab.id;
-        content.dataset.filePath = tab.path;
-        
-        // 隱藏空狀態
-        const emptyState = document.getElementById(`split-${pane}-empty`);
-        if (emptyState) emptyState.style.display = 'none';
-
-        // 檢查是否為可編輯檔案
-        if (tab.isEditable && window.textEditor) {
-            window.textEditor.loadEditorToPane(tab, pane);
-        } else if (tab.content && !tab.loading) {
-            // 如果內容已載入，直接複製
-            const iframe = tab.content.querySelector('iframe');
-            if (iframe) {
-                const newIframe = iframe.cloneNode(true);
-                content.appendChild(newIframe);
-            }
-        } else {
-            // 需要載入內容
-            content.innerHTML = `
-                <div class="loading-state">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>載入中...</p>
-                    <div class="loading-progress">
-                        <div class="loading-progress-bar"></div>
-                    </div>
-                </div>
-            `;
-            
-            loadFileContentForPane(tab.path, tab.id, tab.isLocal, pane);
-        }
-        
-        if (title) {
-            title.textContent = tab.name;
-            title.title = tab.path;
-        }
-        
-        // 更新狀態
-        splitViewState[pane] = tab.path;
-        tab.splitPane = pane;
-        renderTabs();
+    if (!content) {
+        console.error(`找不到面板內容元素: split-${pane}-content`);
+        return;
     }
+    
+    if (!tab) {
+        console.error('沒有提供標籤資料');
+        return;
+    }
+
+    // 隱藏空狀態
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
+    
+    // 設置資料屬性
+    content.dataset.tabId = tab.id;
+    content.dataset.filePath = tab.path;
+    
+    // 更新標題
+    if (title) {
+        title.textContent = tab.name;
+        title.title = tab.path;
+    }
+    
+    // 更新狀態
+    splitViewState[pane] = tab.path;
+    tab.splitPane = pane;
+    
+    // 檢查是否為可編輯檔案
+    if (tab.isEditable && window.textEditor) {
+        window.textEditor.loadEditorToPane(tab, pane);
+    } else if (tab.content && !tab.loading) {
+        // 如果內容已載入，直接複製
+        content.innerHTML = '';
+        const iframe = tab.content.querySelector('iframe');
+        if (iframe) {
+            const newIframe = iframe.cloneNode(true);
+            content.appendChild(newIframe);
+        }
+    } else {
+        // 需要載入內容
+        content.innerHTML = `
+            <div class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>載入中...</p>
+                <div class="loading-progress">
+                    <div class="loading-progress-bar"></div>
+                </div>
+            </div>
+        `;
+        
+        // 載入檔案內容
+        loadFileContentForPane(tab.path, tab.id, tab.isLocal, pane);
+    }
+    
+    renderTabs();
 }
 
 // 儲存工作區
@@ -4251,97 +4320,102 @@ function updateSearchPosition(current, total) {
 function displaySearchResults(data) {
     console.log('顯示搜尋結果:', data);
     
-    // 清除超時計時器
-    if (window.searchTimeoutId) {
-        clearTimeout(window.searchTimeoutId);
-        window.searchTimeoutId = null;
-    }
-    
-    const resultsDiv = document.getElementById('search-results');
-    const searchStats = document.getElementById('search-stats');
-    
-    if (!resultsDiv) {
-        console.error('搜尋結果容器不存在');
-        return;
-    }
-    
-    // 確保搜尋對話框是開啟的
-    const searchModal = document.getElementById('search-modal');
-    if (!searchModal || !searchModal.classList.contains('show')) {
-        console.log('搜尋對話框已關閉，忽略結果');
-        return;
-    }
-    
-    // 清除載入狀態
-    resultsDiv.innerHTML = '';
-    
-    // 保存搜尋結果數據
-    searchResultsData = data.results || [];
-    currentSearchIndex = 0;
-    
-    if (searchResultsData.length > 0) {
-        if (searchStats) {
-            searchStats.style.display = 'flex';
-            const searchCount = document.getElementById('search-count');
-            const searchLines = document.getElementById('search-lines');
-            if (searchCount) searchCount.textContent = data.count || searchResultsData.length;
-            if (searchLines) searchLines.textContent = searchResultsData.length;
+    // 使用新的分群顯示函數
+    if (window.displayGroupedSearchResults) {
+        window.displayGroupedSearchResults(data);
+    } else {
+        // 清除超時計時器
+        if (window.searchTimeoutId) {
+            clearTimeout(window.searchTimeoutId);
+            window.searchTimeoutId = null;
         }
         
-        // 啟用導航按鈕
-        const prevBtn = document.getElementById('prev-search-btn');
-        const nextBtn = document.getElementById('next-search-btn');
-        if (prevBtn) prevBtn.disabled = false;
-        if (nextBtn) nextBtn.disabled = false;
+        const resultsDiv = document.getElementById('search-results');
+        const searchStats = document.getElementById('search-stats');
         
-        // 建立結果列表（帶動畫）
-        searchResultsData.forEach((result, index) => {
-            setTimeout(() => {
-                const resultItem = document.createElement('div');
-                resultItem.className = `search-result-item ${index === 0 ? 'active' : ''}`;
-                resultItem.style.animation = `slideUp 0.3s ease-out`;
-                resultItem.onclick = () => jumpToSearchResult(index, result.lineNumber);
-                
-                resultItem.innerHTML = `
-                    <div class="search-result-header">
-                        <div class="search-result-line">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>行號</span>
-                            <span class="line-number">${result.lineNumber || '?'}</span>
+        if (!resultsDiv) {
+            console.error('搜尋結果容器不存在');
+            return;
+        }
+        
+        // 確保搜尋對話框是開啟的
+        const searchModal = document.getElementById('search-modal');
+        if (!searchModal || !searchModal.classList.contains('show')) {
+            console.log('搜尋對話框已關閉，忽略結果');
+            return;
+        }
+        
+        // 清除載入狀態
+        resultsDiv.innerHTML = '';
+        
+        // 保存搜尋結果數據
+        searchResultsData = data.results || [];
+        currentSearchIndex = 0;
+        
+        if (searchResultsData.length > 0) {
+            if (searchStats) {
+                searchStats.style.display = 'flex';
+                const searchCount = document.getElementById('search-count');
+                const searchLines = document.getElementById('search-lines');
+                if (searchCount) searchCount.textContent = data.count || searchResultsData.length;
+                if (searchLines) searchLines.textContent = searchResultsData.length;
+            }
+            
+            // 啟用導航按鈕
+            const prevBtn = document.getElementById('prev-search-btn');
+            const nextBtn = document.getElementById('next-search-btn');
+            if (prevBtn) prevBtn.disabled = false;
+            if (nextBtn) nextBtn.disabled = false;
+            
+            // 建立結果列表（帶動畫）
+            searchResultsData.forEach((result, index) => {
+                setTimeout(() => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = `search-result-item ${index === 0 ? 'active' : ''}`;
+                    resultItem.style.animation = `slideUp 0.3s ease-out`;
+                    resultItem.onclick = () => jumpToSearchResult(index, result.lineNumber);
+                    
+                    resultItem.innerHTML = `
+                        <div class="search-result-header">
+                            <div class="search-result-line">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>行號</span>
+                                <span class="line-number">${result.lineNumber || '?'}</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="search-result-content">
-                        ${highlightKeyword(result.content || '', data.keyword)}
-                    </div>
-                `;
-                
-                resultsDiv.appendChild(resultItem);
-                
-                // 第一個結果自動高亮閃爍
-                if (index === 0) {
-                    setTimeout(() => {
-                        resultItem.classList.add('highlight-flash');
-                    }, 100);
-                }
-            }, index * 50); // 每個結果延遲 50ms 顯示
-        });
-        
-        // 更新導航計數
-        updateSearchNavigation();
-    } else {
-        if (searchStats) searchStats.style.display = 'none';
-        resultsDiv.innerHTML = `
-            <div class="no-results">
-                <i class="fas fa-search"></i>
-                <p>沒有找到「${data.keyword || ''}」的相關結果</p>
-            </div>
-        `;
-        
-        // 停用導航按鈕
-        const prevBtn = document.getElementById('prev-search-btn');
-        const nextBtn = document.getElementById('next-search-btn');
-        if (prevBtn) prevBtn.disabled = true;
-        if (nextBtn) nextBtn.disabled = true;
+                        <div class="search-result-content">
+                            ${highlightKeyword(result.content || '', data.keyword)}
+                        </div>
+                    `;
+                    
+                    resultsDiv.appendChild(resultItem);
+                    
+                    // 第一個結果自動高亮閃爍
+                    if (index === 0) {
+                        setTimeout(() => {
+                            resultItem.classList.add('highlight-flash');
+                        }, 100);
+                    }
+                }, index * 50); // 每個結果延遲 50ms 顯示
+            });
+            
+            // 更新導航計數
+            updateSearchNavigation();
+        } else {
+            if (searchStats) searchStats.style.display = 'none';
+            resultsDiv.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <p>沒有找到「${data.keyword || ''}」的相關結果</p>
+                </div>
+            `;
+            
+            // 停用導航按鈕
+            const prevBtn = document.getElementById('prev-search-btn');
+            const nextBtn = document.getElementById('next-search-btn');
+            if (prevBtn) prevBtn.disabled = true;
+            if (nextBtn) nextBtn.disabled = true;
+        }
     }
 }
 
@@ -4575,3 +4649,197 @@ window.displaySearchResults = displaySearchResults;
 window.showPaneSelectModal = showPaneSelectModal;
 window.closePaneSelectModal = closePaneSelectModal;
 window.selectPane = selectPane;
+
+// 搜尋結果分群顯示功能
+window.displayGroupedSearchResults = function(data) {
+    console.log('顯示分群搜尋結果:', data);
+    
+    const resultsDiv = document.getElementById('search-results');
+    const searchStats = document.getElementById('search-stats');
+    
+    if (!resultsDiv) return;
+    
+    // 分組結果
+    const leftResults = [];
+    const rightResults = [];
+    const otherResults = [];
+    
+    // 分類結果
+    data.results.forEach(result => {
+        if (result.pane === 'left') {
+            leftResults.push(result);
+        } else if (result.pane === 'right') {
+            rightResults.push(result);
+        } else {
+            otherResults.push(result);
+        }
+    });
+    
+    // 建立頁籤 HTML
+    let tabsHtml = '';
+    let contentHtml = '';
+    
+    // 如果在分割視窗模式，顯示頁籤
+    if (window.splitView && (leftResults.length > 0 || rightResults.length > 0)) {
+        tabsHtml = `
+            <div class="search-results-tabs">
+                ${leftResults.length > 0 ? `
+                    <button class="search-results-tab active" onclick="switchSearchTab('left')">
+                        <i class="fas fa-arrow-left"></i> 左側視窗
+                        <span class="tab-count">${leftResults.length}</span>
+                    </button>
+                ` : ''}
+                ${rightResults.length > 0 ? `
+                    <button class="search-results-tab ${leftResults.length === 0 ? 'active' : ''}" onclick="switchSearchTab('right')">
+                        <i class="fas fa-arrow-right"></i> 右側視窗
+                        <span class="tab-count">${rightResults.length}</span>
+                    </button>
+                ` : ''}
+                ${otherResults.length > 0 ? `
+                    <button class="search-results-tab ${leftResults.length === 0 && rightResults.length === 0 ? 'active' : ''}" onclick="switchSearchTab('other')">
+                        <i class="fas fa-file"></i> 其他
+                        <span class="tab-count">${otherResults.length}</span>
+                    </button>
+                ` : ''}
+            </div>
+        `;
+        
+        contentHtml = `
+            <div class="search-results-content">
+                ${leftResults.length > 0 ? `
+                    <div class="search-results-pane active" id="search-results-left">
+                        ${renderSearchResults(leftResults, data.keyword, 'left')}
+                    </div>
+                ` : ''}
+                ${rightResults.length > 0 ? `
+                    <div class="search-results-pane ${leftResults.length === 0 ? 'active' : ''}" id="search-results-right">
+                        ${renderSearchResults(rightResults, data.keyword, 'right')}
+                    </div>
+                ` : ''}
+                ${otherResults.length > 0 ? `
+                    <div class="search-results-pane ${leftResults.length === 0 && rightResults.length === 0 ? 'active' : ''}" id="search-results-other">
+                        ${renderSearchResults(otherResults, data.keyword)}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    } else {
+        // 非分割視窗模式，直接顯示所有結果
+        contentHtml = `
+            <div class="search-results">
+                ${renderSearchResults(data.results, data.keyword)}
+            </div>
+        `;
+    }
+    
+    resultsDiv.innerHTML = tabsHtml + contentHtml;
+    
+    // 顯示統計
+    if (searchStats && data.results.length > 0) {
+        searchStats.style.display = 'flex';
+        const searchCount = document.getElementById('search-count');
+        const searchLines = document.getElementById('search-lines');
+        if (searchCount) searchCount.textContent = data.count || data.results.length;
+        if (searchLines) searchLines.textContent = data.results.length;
+    }
+    
+    // 儲存全域搜尋結果
+    window.searchResultsData = data.results;
+    window.currentSearchIndex = 0;
+};
+
+// 渲染搜尋結果
+function renderSearchResults(results, keyword, pane) {
+    if (results.length === 0) {
+        return '<div class="no-results"><i class="fas fa-search"></i><p>沒有找到結果</p></div>';
+    }
+    
+    return results.map((result, index) => `
+        <div class="search-result-item" onclick="jumpToSearchResultInPane(${index}, ${result.lineNumber}, '${pane || ''}')">
+            <div class="search-result-header">
+                <div class="search-result-line">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>行號</span>
+                    <span class="line-number">${result.lineNumber || '?'}</span>
+                </div>
+            </div>
+            <div class="search-result-content">
+                ${highlightKeyword(result.content || '', keyword)}
+            </div>
+        </div>
+    `).join('');
+}
+
+// 切換搜尋結果頁籤
+window.switchSearchTab = function(tab) {
+    // 切換頁籤樣式
+    document.querySelectorAll('.search-results-tab').forEach(t => {
+        t.classList.remove('active');
+    });
+    event.target.closest('.search-results-tab').classList.add('active');
+    
+    // 切換內容
+    document.querySelectorAll('.search-results-pane').forEach(pane => {
+        pane.classList.remove('active');
+    });
+    const targetPane = document.getElementById(`search-results-${tab}`);
+    if (targetPane) {
+        targetPane.classList.add('active');
+    }
+};
+
+// 跳轉到特定視窗的搜尋結果
+window.jumpToSearchResultInPane = function(index, lineNumber, pane) {
+    // 關閉搜尋對話框
+    closeSearchModal();
+    
+    if (window.splitView && pane) {
+        // 分割視窗模式，跳轉到指定視窗
+        const content = document.getElementById(`split-${pane}-content`);
+        if (content) {
+            const iframe = content.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'jump-to-line',
+                    lineNumber: lineNumber,
+                    matchIndex: index
+                }, '*');
+            }
+        }
+    } else {
+        // 一般模式
+        if (activeTabId) {
+            const tab = currentTabs.find(t => t.id === activeTabId);
+            if (tab && tab.content) {
+                const iframe = tab.content.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({
+                        type: 'jump-to-line',
+                        lineNumber: lineNumber,
+                        matchIndex: index
+                    }, '*');
+                }
+            }
+        }
+    }
+};
+
+// 高亮關鍵字
+function highlightKeyword(text, keyword) {
+    if (!keyword) return text;
+    
+    const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+    return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// 取消面板選擇
+window.cancelPaneSelect = function() {
+    pendingFileForPane = null;
+    window.selectPaneForReplace = null;
+    closePaneSelectModal();
+    showToast('已取消選擇', 'info');
+};

@@ -536,3 +536,88 @@
         font-size: 16px;
     }
 }
+
+/* 搜尋結果頁籤樣式 */
+.search-results-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    margin-bottom: 0;
+    border: 1px solid #e0e0e0;
+    border-bottom: none;
+}
+
+.search-results-tab {
+    flex: 1;
+    padding: 12px 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #f8f9fa;
+    border: none;
+    transition: all 0.2s ease;
+    position: relative;
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+}
+
+.search-results-tab:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.search-results-tab.active {
+    background: white;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.search-results-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #667eea;
+}
+
+.search-results-tab .tab-count {
+    background: #667eea;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-left: 5px;
+    display: inline-block;
+    min-width: 20px;
+    text-align: center;
+}
+
+.search-results-tab:not(.active) .tab-count {
+    background: #6c757d;
+}
+
+.search-results-content {
+    border: 1px solid #e0e0e0;
+    border-radius: 0 0 8px 8px;
+    background: #fafafa;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.search-results-pane {
+    display: none;
+}
+
+.search-results-pane.active {
+    display: block;
+}
+
+/* 分隔線 */
+.search-results-divider {
+    height: 1px;
+    background: #e0e0e0;
+    margin: 10px 0;
+}

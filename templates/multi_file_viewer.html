@@ -18,6 +18,8 @@
     <link href="{{ url_for('static', filename='css/iframe_search.css') }}" rel="stylesheet">    
     <link href="{{ url_for('static', filename='css/multi_viewer_diff.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/split_pane_fixes.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/search_modal_enhanced.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/confirm_dialog.css') }}" rel="stylesheet">
 
 </head>
 <body>
@@ -277,45 +279,68 @@
     <div id="search-modal" class="modal search-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h5><i class="fas fa-search me-2"></i>搜尋檔案內容</h5>
+                <h5><i class="fas fa-search"></i>搜尋檔案內容</h5>
                 <button onclick="closeSearchModal()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">搜尋關鍵字</label>
-                    <input type="text" class="form-control" id="search-keyword" placeholder="輸入要搜尋的內容" onkeyup="performSearch()">
+                <!-- 搜尋輸入 -->
+                <div class="search-input-wrapper">
+                    <input type="text" class="form-control" id="search-keyword" 
+                        placeholder="輸入要搜尋的內容..." onkeyup="performSearch()">
+                    <i class="fas fa-search search-input-icon"></i>
                 </div>
-                <div class="search-scope mb-3">
-                    <label class="form-label">搜尋範圍</label>
-                    <select class="form-control" id="search-scope">
-                        <option value="all">所有視窗</option>
-                        <option value="active">當前視窗</option>
-                        <option value="left">左側視窗</option>
-                        <option value="right">右側視窗</option>
-                    </select>
-                </div>
+                
+                <!-- 搜尋選項 -->
                 <div class="search-options">
                     <div class="search-option">
-                        <input type="checkbox" id="search-case-sensitive">
+                        <input type="checkbox" id="search-case-sensitive" onchange="performSearch()">
                         <label for="search-case-sensitive">區分大小寫</label>
                     </div>
                     <div class="search-option">
-                        <input type="checkbox" id="search-whole-word">
+                        <input type="checkbox" id="search-whole-word" onchange="performSearch()">
                         <label for="search-whole-word">全字匹配</label>
                     </div>
                     <div class="search-option">
-                        <input type="checkbox" id="search-regex">
-                        <label for="search-regex">使用正則表達式</label>
+                        <input type="checkbox" id="search-regex" onchange="performSearch()">
+                        <label for="search-regex">正則表達式</label>
                     </div>
                 </div>
-                <div class="search-results" id="search-results">
-                    <!-- 搜尋結果將動態載入 -->
+                
+                <!-- 搜尋統計 -->
+                <div class="search-stats" id="search-stats" style="display: none;">
+                    <div class="search-stats-info">
+                        <div class="search-stat-item">
+                            <i class="fas fa-file-alt"></i>
+                            <span>找到 <strong id="search-count">0</strong> 個結果</span>
+                        </div>
+                        <div class="search-stat-item">
+                            <i class="fas fa-hashtag"></i>
+                            <span><strong id="search-lines">0</strong> 行</span>
+                        </div>
+                    </div>
+                    <div class="search-nav-buttons">
+                        <button class="search-nav-btn" onclick="prevSearchResult()" id="prev-search-btn">
+                            <i class="fas fa-chevron-up"></i> 上一個
+                        </button>
+                        <button class="search-nav-btn" onclick="nextSearchResult()" id="next-search-btn">
+                            <i class="fas fa-chevron-down"></i> 下一個
+                        </button>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeSearchModal()">關閉</button>
+                
+                <!-- 搜尋結果 -->
+                <div class="search-results" id="search-results">
+                    <div class="search-loading" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>搜尋中...</p>
+                    </div>
+                    <div class="no-results" id="no-results">
+                        <i class="fas fa-search"></i>
+                        <p>輸入關鍵字開始搜尋</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -457,5 +482,6 @@
     <script src="{{ url_for('static', filename='js/multi_viewer_diff.js') }}"></script>
     <script src="{{ url_for('static', filename='js/text_editor.js') }}"></script>
     <script src="{{ url_for('static', filename='js/fullscreen_handler.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/confirm_dialog.js') }}"></script>
 </body>
 </html>

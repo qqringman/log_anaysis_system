@@ -6,7 +6,11 @@
 
     // 監聽來自父視窗的搜尋訊息
     window.addEventListener('message', function(event) {
-        if (event.data.type === 'search') {
+        if (event.data.type === 'jump-to-line') {
+            const { lineNumber, matchIndex } = event.data;
+            jumpToLine(lineNumber, matchIndex);
+        }
+        else if (event.data.type === 'search') {
             const { options } = event.data;
             performSearch(options);
         } else if (event.data.type === 'clear-search') {
@@ -18,17 +22,39 @@
         }
     });
 
+    function jumpToLine(lineNumber, matchIndex) {
+        // 找到對應的高亮元素
+        if (searchHighlights[matchIndex]) {
+            scrollToHighlight(matchIndex);
+        }
+    }
+
     function performSearch(options) {
-        // 清除之前的高亮
         clearHighlights();
         
         searchKeyword = options.keyword;
         if (!searchKeyword) return;
 
-        const content = document.body.innerText || document.body.textContent || '';
+        const results = [];
         const regex = createSearchRegex(searchKeyword, options);
         
-        // 查找所有匹配
+        // 獲取所有文字行
+        const lines = document.body.innerText.split('\n');
+        
+        lines.forEach((line, lineIndex) => {
+            let match;
+            while ((match = regex.exec(line)) !== null) {
+                results.push({
+                    lineNumber: lineIndex + 1,
+                    content: line,
+                    matchStart: match.index,
+                    matchEnd: match.index + match[0].length,
+                    matchText: match[0]
+                });
+            }
+        });
+
+        // 高亮顯示
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -41,8 +67,8 @@
             const text = node.textContent;
             if (!text) continue;
 
+            let matches = [];
             let match;
-            const matches = [];
             while ((match = regex.exec(text)) !== null) {
                 matches.push({
                     start: match.index,
@@ -56,22 +82,23 @@
             }
         }
 
-        // 更新計數並跳到第一個結果
+        // 通知父視窗搜尋結果
         if (searchHighlights.length > 0) {
             currentHighlightIndex = 0;
             scrollToHighlight(0);
             
-            // 通知父視窗搜尋結果
             window.parent.postMessage({
                 type: 'search-results',
                 count: searchHighlights.length,
-                keyword: searchKeyword
+                keyword: searchKeyword,
+                results: results // 傳送行號和內容
             }, '*');
         } else {
             window.parent.postMessage({
                 type: 'search-results',
                 count: 0,
-                keyword: searchKeyword
+                keyword: searchKeyword,
+                results: []
             }, '*');
         }
     }

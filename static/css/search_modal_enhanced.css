@@ -1,0 +1,339 @@
+/* 搜尋對話框美化樣式 */
+.search-modal .modal-content {
+    max-width: 700px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.search-modal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px 30px;
+    border: none;
+}
+
+.search-modal .modal-header h5 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-modal .modal-header button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: white;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.search-modal .modal-header button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.search-modal .modal-body {
+    padding: 30px;
+}
+
+/* 搜尋輸入框 */
+.search-input-wrapper {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.search-input-wrapper .form-control {
+    padding: 15px 50px 15px 20px;
+    font-size: 16px;
+    border-radius: 12px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.search-input-wrapper .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.search-input-icon {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+    font-size: 18px;
+}
+
+/* 搜尋選項 */
+.search-options {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.search-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.search-option label {
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    margin: 0;
+}
+
+/* 搜尋統計 */
+.search-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+}
+
+.search-stats-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.search-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.search-stat-item i {
+    color: #667eea;
+}
+
+.search-stat-item strong {
+    color: #333;
+}
+
+/* 搜尋導航按鈕 */
+.search-nav-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.search-nav-btn {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.search-nav-btn:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.search-nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 搜尋結果列表 */
+.search-results {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+.search-results::-webkit-scrollbar {
+    width: 8px;
+}
+
+.search-results::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+
+.search-results::-webkit-scrollbar-thumb:hover {
+    background: #999;
+}
+
+.search-result-item {
+    padding: 15px 20px;
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background: #f8f9fa;
+    transform: translateX(5px);
+}
+
+.search-result-item.active {
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 3px solid #667eea;
+}
+
+.search-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.search-result-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.search-result-line i {
+    color: #667eea;
+}
+
+.line-number {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.search-result-content {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #333;
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 8px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+.search-result-content .highlight {
+    background: #ffeb3b;
+    color: #000;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+/* 空結果狀態 */
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.no-results i {
+    font-size: 48px;
+    color: #e0e0e0;
+    margin-bottom: 15px;
+}
+
+.no-results p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* 載入狀態 */
+.search-loading {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.search-loading i {
+    font-size: 36px;
+    color: #667eea;
+    animation: spin 1s linear infinite;
+}
+
+.search-loading p {
+    margin-top: 15px;
+    color: #666;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 範圍選擇器美化 */
+.search-scope {
+    margin-bottom: 20px;
+}
+
+.search-scope .form-control {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #e0e0e0;
+    font-size: 14px;
+}
+
+.search-scope .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 手機版優化 */
+@media (max-width: 768px) {
+    .search-modal .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .search-modal .modal-body {
+        padding: 20px;
+    }
+    
+    .search-options {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .search-stats {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .search-results {
+        max-height: 300px;
+    }
+}

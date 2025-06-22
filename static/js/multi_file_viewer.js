@@ -3623,10 +3623,19 @@ function updateRecentCount() {
 }
 
 // 刪除最近檔案
-window.deleteRecentFile = function(event, index) {
-    event.stopPropagation(); // 防止觸發項目的點擊事件
+window.deleteRecentFile = async function(event, index) {
+    event.stopPropagation();
     
-    if (confirm('確定要從最近檔案中移除嗎？')) {
+    const file = recentFiles[index];
+    const confirmed = await confirmDialog.show({
+        type: 'danger',
+        title: '刪除最近檔案',
+        message: `確定要從最近檔案中移除「${file.name}」嗎？`,
+        confirmText: '刪除',
+        cancelText: '取消'
+    });
+    
+    if (confirmed) {
         recentFiles.splice(index, 1);
         
         // 更新 localStorage
@@ -3648,9 +3657,21 @@ window.deleteRecentFile = function(event, index) {
 
 // 刪除工作區
 window.deleteWorkspace = async function(event, workspaceId) {
-    event.stopPropagation(); // 防止觸發項目的點擊事件
+    event.stopPropagation();
     
-    if (confirm('確定要刪除此工作區嗎？此操作無法復原。')) {
+    // 獲取工作區名稱
+    const workspaceItem = document.querySelector(`[data-workspace-id="${workspaceId}"]`);
+    const workspaceName = workspaceItem?.querySelector('.workspace-name')?.textContent || '此工作區';
+    
+    const confirmed = await confirmDialog.show({
+        type: 'danger',
+        title: '刪除工作區',
+        message: `確定要刪除工作區「${workspaceName}」嗎？此操作無法復原。`,
+        confirmText: '永久刪除',
+        cancelText: '取消'
+    });
+    
+    if (confirmed) {
         try {
             const response = await fetch(`/api/multi_viewer/delete/${workspaceId}`, {
                 method: 'DELETE'

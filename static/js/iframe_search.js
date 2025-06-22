@@ -60,20 +60,25 @@ class IframeSearch {
                 if (event.source !== iframe.contentWindow) return;
                 
                 if (event.data.type === 'search-results') {
-                    const { count, keyword: resultKeyword } = event.data;
+                    const { count, keyword: resultKeyword, results } = event.data;
                     
                     if (resultKeyword === keyword) {
+                        // 同步關鍵字到 enhanced_file_viewer.html
+                        this.syncSearchKeyword(keyword);
+                        
+                        // 顯示搜尋結果
+                        this.displaySearchResults(results, keyword);
+                        
                         if (count > 0) {
                             window.showToast(`找到 ${count} 個結果`, 'success');
-                            this.updateSearchCount(pane || 'main', count);
+                            this.updateSearchStats(count, results.length);
                         } else {
                             window.showToast('沒有找到匹配的內容', 'info');
+                            this.showNoResults();
                         }
                         
                         window.removeEventListener('message', handleSearchResults);
                     }
-                } else if (event.data.type === 'search-position') {
-                    this.updateSearchPosition(pane || 'main', event.data.current, event.data.total);
                 }
             };
             
@@ -237,6 +242,81 @@ class IframeSearch {
             window.openPaneSearchModal('left');
         }
     }
+
+    // 新增函數：同步搜尋關鍵字
+    syncSearchKeyword(keyword) {
+        // 發送訊息到 iframe 以同步關鍵字
+        const iframes = document.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+            if (iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    type: 'sync-keyword',
+                    keyword: keyword
+                }, '*');
+            }
+        });
+    }
+
+    // 新增函數：顯示搜尋結果
+    displaySearchResults(results, keyword) {
+        const resultsContainer = document.getElementById('search-results');
+        const noResults = document.getElementById('no-results');
+        const searchStats = document.getElementById('search-stats');
+        
+        if (results.length === 0) {
+            noResults.style.display = 'block';
+            searchStats.style.display = 'none';
+            resultsContainer.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <p>沒有找到匹配的內容</p>
+                </div>
+            `;
+            return;
+        }
+        
+        noResults.style.display = 'none';
+        searchStats.style.display = 'flex';
+        
+        let html = '';
+        results.forEach((result, index) => {
+            const highlightedContent = this.highlightKeyword(result.content, keyword);
+            html += `
+                <div class="search-result-item" onclick="jumpToSearchResult(${index}, ${result.lineNumber})">
+                    <div class="search-result-header">
+                        <div class="search-result-line">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>行號</span>
+                            <span class="line-number">${result.lineNumber}</span>
+                        </div>
+                    </div>
+                    <div class="search-result-content">
+                        ${highlightedContent}
+                    </div>
+                </div>
+            `;
+        });
+        
+        resultsContainer.innerHTML = html;
+    }
+
+    // 新增函數：高亮關鍵字
+    highlightKeyword(text, keyword) {
+        const regex = new RegExp(`(${this.escapeRegex(keyword)})`, 'gi');
+        return text.replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    // 新增函數：更新搜尋統計
+    updateSearchStats(totalCount, lineCount) {
+        document.getElementById('search-count').textContent = totalCount;
+        document.getElementById('search-lines').textContent = lineCount;
+    }
+
+    // 新增函數：顯示無結果
+    showNoResults() {
+        const searchStats = document.getElementById('search-stats');
+        searchStats.style.display = 'none';
+    }    
 }
 
 // 初始化搜尋功能
@@ -255,4 +335,25 @@ window.prevPaneSearchResult = function() {
     if (window.currentSearchPane) {
         window.iframeSearch.prevResult(window.currentSearchPane);
     }
+};
+
+// 新增全域函數：跳轉到搜尋結果
+window.jumpToSearchResult = function(index, lineNumber) {
+    const iframe = document.querySelector('.file-viewer-container iframe');
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+            type: 'jump-to-line',
+            lineNumber: lineNumber,
+            matchIndex: index
+        }, '*');
+    }
+    
+    // 高亮當前選中的結果
+    document.querySelectorAll('.search-result-item').forEach((item, i) => {
+        if (i === index) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
 };

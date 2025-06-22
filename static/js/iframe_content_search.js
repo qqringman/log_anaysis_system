@@ -57,14 +57,173 @@
     });
 
     function jumpToLine(lineNumber, matchIndex) {
-        // 確保 matchIndex 是有效的數字
-        matchIndex = parseInt(matchIndex) || 0;
+        console.log('跳轉到行號:', lineNumber);
         
-        // 找到對應的高亮元素
+        lineNumber = parseInt(lineNumber);
+        if (!lineNumber || lineNumber < 1) return;
+        
+        // 方法1：使用高亮元素
         if (searchHighlights && searchHighlights[matchIndex]) {
             scrollToHighlight(matchIndex);
-        } else {
-            console.warn('找不到指定的搜尋結果:', matchIndex);
+            return;
+        }
+        
+        // 方法2：計算行位置並跳轉
+        const fullText = document.body.innerText || '';
+        const lines = fullText.split('\n');
+        
+        if (lineNumber > lines.length) {
+            console.warn('行號超出範圍');
+            return;
+        }
+        
+        // 計算前面行的字符數
+        let charCount = 0;
+        for (let i = 0; i < lineNumber - 1; i++) {
+            charCount += lines[i].length + 1; // +1 for newline
+        }
+        
+        // 估算垂直位置
+        const lineHeight = 20; // 預設行高
+        const estimatedY = (lineNumber - 1) * lineHeight;
+        
+        // 滾動到大概位置
+        window.scrollTo({
+            top: estimatedY,
+            behavior: 'smooth'
+        });
+        
+        // 添加視覺反饋
+        addLineHighlight(lineNumber);
+    }
+
+    // 新增行高亮效果
+    function addLineHighlight(lineNumber) {
+        // 創建或更新樣式
+        let style = document.getElementById('temp-line-highlight-style');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'temp-line-highlight-style';
+            document.head.appendChild(style);
+        }
+        
+        style.textContent = `
+            @keyframes flash-highlight {
+                0% { background-color: #ffeb3b; }
+                50% { background-color: #fff59d; }
+                100% { background-color: transparent; }
+            }
+            .temp-line-highlight {
+                animation: flash-highlight 2s ease-out;
+            }
+        `;
+        
+        // 嘗試找到並高亮對應的元素
+        setTimeout(() => {
+            const elements = document.querySelectorAll('*');
+            elements.forEach(el => {
+                if (el.innerText && el.innerText.includes(searchKeyword)) {
+                    el.classList.add('temp-line-highlight');
+                    setTimeout(() => {
+                        el.classList.remove('temp-line-highlight');
+                    }, 2000);
+                }
+            });
+        }, 300);
+    }
+
+    // 根據行號跳轉
+    function jumpToLineNumber(targetLine) {
+        console.log('跳轉到行號:', targetLine);
+        
+        const textContent = document.body.innerText || document.body.textContent || '';
+        const lines = textContent.split('\n');
+        
+        if (targetLine > lines.length) {
+            console.warn('行號超出範圍');
+            return;
+        }
+        
+        // 創建一個臨時元素來計算位置
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.visibility = 'hidden';
+        tempDiv.style.whiteSpace = 'pre-wrap';
+        tempDiv.style.width = document.body.clientWidth + 'px';
+        document.body.appendChild(tempDiv);
+        
+        // 計算目標行的大概位置
+        let textUpToLine = lines.slice(0, targetLine - 1).join('\n');
+        tempDiv.textContent = textUpToLine;
+        const approximateY = tempDiv.offsetHeight;
+        
+        document.body.removeChild(tempDiv);
+        
+        // 滾動到計算出的位置
+        window.scrollTo({
+            top: approximateY,
+            behavior: 'smooth'
+        });
+        
+        // 嘗試高亮該行
+        highlightLine(targetLine);
+    }
+
+    // 高亮指定行
+    function highlightLine(lineNumber) {
+        // 清除之前的行高亮
+        document.querySelectorAll('.line-highlight').forEach(el => {
+            el.classList.remove('line-highlight');
+        });
+        
+        // 添加臨時高亮樣式
+        const style = document.getElementById('line-highlight-style');
+        if (!style) {
+            const newStyle = document.createElement('style');
+            newStyle.id = 'line-highlight-style';
+            newStyle.textContent = `
+                .line-highlight {
+                    background-color: #ffeb3b !important;
+                    animation: highlight-fade 2s ease-out;
+                }
+                @keyframes highlight-fade {
+                    0% { background-color: #ffeb3b; }
+                    100% { background-color: transparent; }
+                }
+            `;
+            document.head.appendChild(newStyle);
+        }
+        
+        // 嘗試找到並高亮該行的元素
+        // 這部分可能需要根據實際的 HTML 結構調整
+        const allTextNodes = [];
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+        
+        let node;
+        let currentLine = 1;
+        
+        while (node = walker.nextNode()) {
+            const text = node.textContent;
+            const lines = text.split('\n');
+            
+            if (currentLine <= lineNumber && lineNumber < currentLine + lines.length) {
+                // 找到包含目標行的節點
+                if (node.parentElement) {
+                    node.parentElement.classList.add('line-highlight');
+                    node.parentElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }
+                break;
+            }
+            
+            currentLine += lines.length - 1;
         }
     }
 
@@ -236,63 +395,50 @@
     }
 
     function performSearch(options, eventData) {
-        // 設置預設值，避免 undefined 錯誤
         eventData = eventData || {};
         
-        // 先嘗試清理現有高亮
-        try {
-            clearHighlights();
-        } catch (error) {
-            console.warn('清理高亮時發生錯誤，嘗試強制清理:', error);
-            // 強制清理
-            searchHighlights = [];
-            currentHighlightIndex = 0;
-            
-            // 移除所有高亮類別
-            const allHighlights = document.querySelectorAll('.search-highlight');
-            allHighlights.forEach(el => {
-                if (el) {
-                    el.classList.remove('search-highlight', 'current-highlight');
-                    // 嘗試解包元素
-                    if (el.parentNode) {
-                        const parent = el.parentNode;
-                        while (el.firstChild) {
-                            parent.insertBefore(el.firstChild, el);
-                        }
-                        parent.removeChild(el);
-                    }
-                }
-            });
-        }
+        // 清理現有高亮
+        clearHighlights();
         
         searchKeyword = options.keyword;
         if (!searchKeyword) {
-            // 沒有關鍵字，重置搜尋狀態
             isSearching = false;
             return;
         }
 
-        console.log('開始搜尋:', options);
+        console.log('搜尋檔案內容:', options);
         const results = [];
         
         try {
             const regex = createSearchRegex(searchKeyword, options);
             
-            // 獲取所有文字行
-            const lines = document.body.innerText.split('\n');
+            // 取得整個文件的純文字內容
+            const fullText = document.body.innerText || '';
+            const lines = fullText.split('\n');
             
-            lines.forEach((line, lineIndex) => {
+            // 搜尋每一行
+            lines.forEach((line, index) => {
+                const lineNumber = index + 1;
                 let match;
-                regex.lastIndex = 0; // 重置正則表達式
+                regex.lastIndex = 0;
+                
                 while ((match = regex.exec(line)) !== null) {
                     results.push({
-                        lineNumber: lineIndex + 1,
-                        content: line,
+                        lineNumber: lineNumber,
+                        content: line.trim() || line,  // 保留行內容
                         matchStart: match.index,
                         matchEnd: match.index + match[0].length,
-                        matchText: match[0]
+                        matchText: match[0],
+                        pane: eventData.pane || null,
+                        // 加入更多定位資訊
+                        lineText: line,
+                        fullMatch: {
+                            start: match.index,
+                            end: match.index + match[0].length,
+                            text: match[0]
+                        }
                     });
-                    // 防止無限循環（對於空字串匹配）
+                    
                     if (match.index === regex.lastIndex) {
                         regex.lastIndex++;
                     }
@@ -300,74 +446,63 @@
             });
 
             // 高亮顯示
-            const walker = document.createTreeWalker(
-                document.body,
-                NodeFilter.SHOW_TEXT,
-                null,
-                false
-            );
-
-            let node;
-            while (node = walker.nextNode()) {
-                const text = node.textContent;
-                if (!text) continue;
-
-                let matches = [];
-                let match;
-                regex.lastIndex = 0; // 重置正則表達式
-                while ((match = regex.exec(text)) !== null) {
-                    matches.push({
-                        start: match.index,
-                        end: match.index + match[0].length,
-                        text: match[0]
-                    });
-                    // 防止無限循環
-                    if (match.index === regex.lastIndex) {
-                        regex.lastIndex++;
-                    }
-                }
-
-                if (matches.length > 0) {
-                    highlightMatches(node, matches);
-                }
+            if (results.length > 0) {
+                highlightSearchResults(regex);
             }
-
-            // 通知父視窗搜尋結果
-            if (searchHighlights.length > 0) {
-                currentHighlightIndex = 0;
-                scrollToHighlight(0);
-                
-                window.parent.postMessage({
-                    type: 'search-results',
-                    count: searchHighlights.length,
-                    keyword: searchKeyword,
-                    results: results,
-                    pane: eventData.pane || null,  // 確保傳遞 pane 資訊
-                    source: eventData.source || 'iframe'
-                }, '*');
-            } else {
-                window.parent.postMessage({
-                    type: 'search-results',
-                    count: 0,
-                    keyword: searchKeyword,
-                    results: [],
-                    pane: eventData.pane || null,  // 確保傳遞 pane 資訊
-                    source: eventData.source || 'iframe'
-                }, '*');
-            }
+            
+            // 回傳結果給父視窗
+            window.parent.postMessage({
+                type: 'search-results',
+                count: results.length,
+                keyword: searchKeyword,
+                results: results,
+                pane: eventData.pane || null,
+                source: 'iframe-content'
+            }, '*');
+            
         } catch (error) {
-            console.error('搜尋過程發生錯誤:', error);
-            // 發送錯誤訊息
+            console.error('搜尋錯誤:', error);
             window.parent.postMessage({
                 type: 'search-error',
-                message: error.message,
-                keyword: searchKeyword
+                message: error.message
             }, '*');
         } finally {
-            // 確保搜尋狀態被重置
-            setTimeout(() => {
-                isSearching = false;
-            }, 100);
+            isSearching = false;
+        }
+    }
+
+    // 高亮搜尋結果
+    function highlightSearchResults(regex) {
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+
+        let node;
+        while (node = walker.nextNode()) {
+            const text = node.textContent;
+            if (!text) continue;
+
+            let matches = [];
+            let match;
+            regex.lastIndex = 0;
+            
+            while ((match = regex.exec(text)) !== null) {
+                matches.push({
+                    start: match.index,
+                    end: match.index + match[0].length,
+                    text: match[0]
+                });
+                if (match.index === regex.lastIndex) {
+                    regex.lastIndex++;
+                }
+            }
+
+            if (matches.length > 0) {
+                highlightMatches(node, matches);
+            }
         }
     }
 
@@ -387,4 +522,96 @@
         }
     `;
     document.head.appendChild(style);
+})();
+
+
+// iframe 內的搜尋同步處理
+(function() {
+    console.log('iframe 搜尋同步腳本已載入');
+    
+    // 監聽來自父視窗的訊息
+    window.addEventListener('message', function(event) {
+        // 忽略非同步訊息
+        if (!event.data || !event.data.type) return;
+        
+        // 處理搜尋輸入同步
+        if (event.data.type === 'sync-search-input') {
+            const keyword = event.data.keyword;
+            const targetId = event.data.targetId || 'search-input';
+            
+            console.log(`同步關鍵字 "${keyword}" 到 #${targetId}`);
+            
+            // 找到目標輸入框
+            const searchInput = document.getElementById(targetId);
+            
+            if (searchInput) {
+                // 設置值
+                searchInput.value = keyword;
+                
+                // 觸發事件以確保其他功能正常運作
+                // 觸發 input 事件
+                const inputEvent = new Event('input', {
+                    bubbles: true,
+                    cancelable: true,
+                });
+                searchInput.dispatchEvent(inputEvent);
+                
+                // 觸發 change 事件
+                const changeEvent = new Event('change', {
+                    bubbles: true,
+                    cancelable: true,
+                });
+                searchInput.dispatchEvent(changeEvent);
+                
+                // 觸發 keyup 事件（某些腳本可能監聽這個）
+                const keyupEvent = new KeyboardEvent('keyup', {
+                    bubbles: true,
+                    cancelable: true,
+                    key: keyword.slice(-1),  // 最後一個字符
+                    code: 'Key' + keyword.slice(-1).toUpperCase()
+                });
+                searchInput.dispatchEvent(keyupEvent);
+                
+                console.log(`成功同步關鍵字到 #${targetId}`);
+            } else {
+                console.warn(`找不到 ID 為 "${targetId}" 的輸入框`);
+                
+                // 嘗試其他方式尋找搜尋框
+                const possibleSelectors = [
+                    'input#search-input',
+                    'input.search-input',
+                    'input[placeholder*="搜尋"]',
+                    'input[type="search"]'
+                ];
+                
+                for (const selector of possibleSelectors) {
+                    const input = document.querySelector(selector);
+                    if (input) {
+                        console.log(`使用選擇器 "${selector}" 找到搜尋框`);
+                        input.value = keyword;
+                        
+                        // 觸發事件
+                        ['input', 'change', 'keyup'].forEach(eventType => {
+                            const event = new Event(eventType, {
+                                bubbles: true,
+                                cancelable: true,
+                            });
+                            input.dispatchEvent(event);
+                        });
+                        
+                        break;
+                    }
+                }
+            }
+        }
+    });
+    
+    // 偵測頁面載入完成
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM 載入完成，搜尋同步功能已就緒');
+        });
+    } else {
+        console.log('搜尋同步功能已就緒');
+    }
 })();

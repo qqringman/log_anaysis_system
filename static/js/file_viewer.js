@@ -1724,3 +1724,31 @@ window.changeNumber = function(inputId, delta) {
     input.val(newValue);
 };
 window.hideMarksPanel = hideMarksPanel;
+
+// 監聽來自父視窗的訊息
+window.addEventListener('message', function(event) {
+    // 同步搜尋關鍵字
+    if (event.data.type === 'sync-search') {
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.value = event.data.keyword;
+            // 觸發搜尋
+            performSearch();
+        }
+    }
+    
+    // 跳轉到指定行
+    if (event.data.type === 'jump-to-line') {
+        jumpToLine(event.data.lineNumber);
+        if (event.data.highlight) {
+            // 高亮該行
+            const line = document.getElementById(`line-${event.data.lineNumber}`);
+            if (line) {
+                line.classList.add('highlight-line');
+                setTimeout(() => {
+                    line.classList.remove('highlight-line');
+                }, 3000);
+            }
+        }
+    }
+});

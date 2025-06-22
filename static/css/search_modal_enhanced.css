@@ -255,6 +255,26 @@
     font-weight: 600;
 }
 
+/* 搜尋結果計數 */
+.search-result-count {
+    font-weight: 500;
+    color: #666;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* 搜尋載入狀態 */
+.search-loading {
+    text-align: center;
+    padding: 40px;
+    color: #667eea;
+}
+
+.search-loading i {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
 /* 空結果狀態 */
 .no-results {
     text-align: center;
@@ -266,6 +286,7 @@
     font-size: 48px;
     color: #e0e0e0;
     margin-bottom: 15px;
+    display: block;
 }
 
 .no-results p {

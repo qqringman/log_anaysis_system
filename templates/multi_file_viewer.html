@@ -317,29 +317,23 @@
                         </div>
                         <div class="search-stat-item">
                             <i class="fas fa-hashtag"></i>
-                            <span><strong id="search-lines">0</strong> 行</span>
+                            <span>在 <strong id="search-lines">0</strong> 行中</span>
                         </div>
                     </div>
                     <div class="search-nav-buttons">
-                        <button class="search-nav-btn" onclick="prevSearchResult()" id="prev-search-btn">
+                        <button class="search-nav-btn" onclick="prevSearchResult()" id="prev-search-btn" disabled>
                             <i class="fas fa-chevron-up"></i> 上一個
                         </button>
-                        <button class="search-nav-btn" onclick="nextSearchResult()" id="next-search-btn">
+                        <span class="search-result-count mx-2">0 / 0</span>
+                        <button class="search-nav-btn" onclick="nextSearchResult()" id="next-search-btn" disabled>
                             <i class="fas fa-chevron-down"></i> 下一個
                         </button>
                     </div>
                 </div>
                 
-                <!-- 搜尋結果 -->
+                <!-- 搜尋結果容器 -->
                 <div class="search-results" id="search-results">
-                    <div class="search-loading" style="display: none;">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>搜尋中...</p>
-                    </div>
-                    <div class="no-results" id="no-results">
-                        <i class="fas fa-search"></i>
-                        <p>輸入關鍵字開始搜尋</p>
-                    </div>
+                    <!-- 搜尋結果將動態載入 -->
                 </div>
             </div>
         </div>

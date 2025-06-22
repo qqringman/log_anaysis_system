@@ -215,8 +215,8 @@
             return {
                 ...result,
                 lineNumber: lineNumber,
-                pane: pane || result.pane,
-                uniqueId: `${pane || 'main'}-${lineNumber}-${index}`
+                pane: result.pane || pane || null,  // 優先使用結果中的 pane
+                uniqueId: `${result.pane || pane || 'main'}-${lineNumber}-${index}`
             };
         });
     }
@@ -259,8 +259,52 @@
                 searchStats.style.display = 'flex';
                 const searchCount = document.getElementById('search-count');
                 const searchLines = document.getElementById('search-lines');
-                if (searchCount) searchCount.textContent = data.count || window.enhancedSearchResults.length;
-                if (searchLines) searchLines.textContent = window.enhancedSearchResults.length;
+                
+                // 分別統計左右視窗
+                let leftMatches = 0;
+                let rightMatches = 0;
+                let otherMatches = 0;
+                let leftLines = new Set();
+                let rightLines = new Set();
+                let otherLines = new Set();
+                
+                window.enhancedSearchResults.forEach(result => {
+                    if (result.pane === 'left') {
+                        leftMatches++;
+                        if (result.lineNumber) leftLines.add(result.lineNumber);
+                    } else if (result.pane === 'right') {
+                        rightMatches++;
+                        if (result.lineNumber) rightLines.add(result.lineNumber);
+                    } else {
+                        otherMatches++;
+                        if (result.lineNumber) otherLines.add(result.lineNumber);
+                    }
+                });
+                
+                let totalMatches = leftMatches + rightMatches + otherMatches;
+                let totalLines = leftLines.size + rightLines.size + otherLines.size;
+                
+                // 根據是否在分割視窗模式顯示不同的統計
+                if (window.splitView && (leftMatches > 0 || rightMatches > 0)) {
+                    let statsText = [];
+                    if (leftMatches > 0) {
+                        statsText.push(`左側: ${leftMatches}`);
+                    }
+                    if (rightMatches > 0) {
+                        statsText.push(`右側: ${rightMatches}`);
+                    }
+                    if (otherMatches > 0) {
+                        statsText.push(`其他: ${otherMatches}`);
+                    }
+                    
+                    if (searchCount) searchCount.textContent = totalMatches;
+                    if (searchLines) {
+                        searchLines.innerHTML = `<small>${statsText.join(' | ')}</small>`;
+                    }
+                } else {
+                    if (searchCount) searchCount.textContent = totalMatches;
+                    if (searchLines) searchLines.textContent = totalLines;
+                }
             }
             
             // 啟用導航按鈕
@@ -310,7 +354,7 @@
         let firstTab = true;
         Object.keys(grouped).forEach(source => {
             const tabName = source === 'left' ? '左側視窗' : 
-                          source === 'right' ? '右側視窗' : '主視窗';
+                        source === 'right' ? '右側視窗' : '主視窗';
             const icon = source === 'left' ? 'fa-arrow-left' : 
                         source === 'right' ? 'fa-arrow-right' : 'fa-file';
             
@@ -330,8 +374,8 @@
         Object.keys(grouped).forEach(source => {
             html += `
                 <div class="search-results-pane ${firstPane ? 'active' : ''}" 
-                     id="search-results-${source}">
-                    ${renderSearchResultsList(grouped[source], keyword, source)}
+                    id="search-results-${source}">
+                    ${renderSearchResultsList(results, keyword, source)}  <!-- 傳入完整的 results -->
                 </div>
             `;
             firstPane = false;
@@ -347,29 +391,46 @@
     }
     
     // 渲染搜尋結果列表
-    function renderSearchResultsList(results, keyword) {
+    function renderSearchResultsList(results, keyword, source) {
         if (!results || results.length === 0) {
             return '<div class="no-results"><i class="fas fa-search"></i><p>沒有找到結果</p></div>';
         }
         
+        // 如果有 source，只顯示該 source 的結果，但保持全域索引
+        let filteredResults = results;
+        if (source && source !== 'all') {
+            filteredResults = results.map((result, globalIndex) => ({
+                ...result,
+                globalIndex: globalIndex  // 保存全域索引
+            })).filter(result => result.pane === source || (!result.pane && source === 'main'));
+        } else {
+            // 沒有 source 時，添加全域索引
+            filteredResults = results.map((result, globalIndex) => ({
+                ...result,
+                globalIndex: globalIndex
+            }));
+        }
+        
+        if (filteredResults.length === 0) {
+            return '<div class="no-results"><i class="fas fa-search"></i><p>沒有找到結果</p></div>';
+        }
+        
         // 為同一行的多個結果添加索引
-        const processedResults = [];
         const lineMatches = {};
         
-        results.forEach(result => {
+        filteredResults.forEach(result => {
             const lineNum = result.lineNumber;
             if (!lineMatches[lineNum]) {
                 lineMatches[lineNum] = 0;
             }
             
-            processedResults.push({
-                ...result,
-                matchNumberInLine: lineMatches[lineNum]++,
-                totalMatchesInLine: results.filter(r => r.lineNumber === lineNum).length
-            });
+            result.matchNumberInLine = lineMatches[lineNum]++;
+            result.totalMatchesInLine = filteredResults.filter(r => r.lineNumber === lineNum).length;
         });
         
-        const html = processedResults.map((result, index) => {
+        const html = filteredResults.map((result) => {
+            const index = result.globalIndex !== undefined ? result.globalIndex : results.indexOf(result);
+            
             // 如果同一行有多個匹配，顯示匹配編號
             let matchInfo = '';
             if (result.totalMatchesInLine > 1) {
@@ -379,7 +440,6 @@
             // 高亮特定的匹配
             let highlightedContent = result.content || result.lineText || '';
             if (result.matchStart !== undefined && result.matchEnd !== undefined) {
-                // 只高亮當前這個特定的匹配
                 highlightedContent = 
                     escapeHtml(highlightedContent.substring(0, result.matchStart)) + 
                     '<span class="highlight">' + 
@@ -387,15 +447,16 @@
                     '</span>' + 
                     escapeHtml(highlightedContent.substring(result.matchEnd));
             } else {
-                // 後備方案：高亮所有匹配
                 highlightedContent = highlightKeyword(highlightedContent, keyword);
             }
             
             return `
-                <div class="search-result-item ${index === 0 ? 'active' : ''}" 
+                <div class="search-result-item ${index === window.currentSearchIndex ? 'active' : ''}" 
                     data-index="${index}"
                     data-line="${result.lineNumber}"
-                    data-match-index="${result.matchNumberInLine || 0}">
+                    data-match-index="${result.matchNumberInLine || 0}"
+                    data-pane="${result.pane || 'main'}"
+                    onclick="window.jumpToEnhancedResult(${index})">
                     <div class="search-result-header">
                         <div class="search-result-line">
                             <i class="fas fa-map-marker-alt"></i>
@@ -442,7 +503,126 @@
     function escapeRegex(str) {
         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
+
+    // 新增全域跳轉函數
+    window.jumpToEnhancedResult = function(index) {
+        console.log('跳轉到搜尋結果:', index);
+        
+        if (!window.enhancedSearchResults || index >= window.enhancedSearchResults.length) {
+            console.error('無效的搜尋結果索引');
+            return;
+        }
+        
+        const result = window.enhancedSearchResults[index];
+        if (!result) return;
+        
+        console.log('搜尋結果詳情:', result);
+        
+        // 更新當前索引
+        window.currentSearchIndex = index;
+        
+    // === 新增：自動切換到對應的頁籤 ===
+    if (window.splitView && result.pane && (result.pane === 'left' || result.pane === 'right')) {
+        // 檢查是否有分頁籤
+        const tabs = document.querySelectorAll('.search-results-tab');
+        if (tabs.length > 0) {
+            // 找到對應的頁籤並點擊
+            tabs.forEach(tab => {
+                const onclick = tab.getAttribute('onclick');
+                if (onclick) {
+                    if (result.pane === 'left' && onclick.includes("'left'")) {
+                        tab.click();
+                    } else if (result.pane === 'right' && onclick.includes("'right'")) {
+                        tab.click();
+                    } else if (!result.pane && onclick.includes("'other'")) {
+                        tab.click();
+                    }
+                }
+            });
+        }
+    }
+    // === 結束新增 ===
     
+    // 延遲一下再高亮，確保頁籤切換完成
+    setTimeout(() => {
+        // 高亮當前結果
+        document.querySelectorAll('.search-result-item').forEach((item) => {
+            const itemIndex = parseInt(item.dataset.index);
+            if (itemIndex === index) {
+                item.classList.add('active');
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }, 100);
+        
+        // 更新導航計數
+        updateSearchNavigation();
+        
+        // 根據 pane 資訊跳轉到對應視窗
+        if (window.splitView && result.pane && (result.pane === 'left' || result.pane === 'right')) {
+            console.log(`跳轉到 ${result.pane} 視窗的第 ${result.lineNumber} 行`);
+            
+            const content = document.getElementById(`split-${result.pane}-content`);
+            if (content) {
+                const iframe = content.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    // 先確保該視窗是可見的
+                    content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    
+                    // 發送跳轉訊息
+                    setTimeout(() => {
+                        iframe.contentWindow.postMessage({
+                            type: 'jump-to-line',
+                            lineNumber: result.lineNumber,
+                            matchIndex: result.matchNumberInLine || 0,
+                            highlight: true
+                        }, '*');
+                        
+                        // 視覺反饋 - 閃爍效果
+                        iframe.style.transition = 'box-shadow 0.3s ease';
+                        iframe.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.8)';
+                        setTimeout(() => {
+                            iframe.style.boxShadow = '';
+                        }, 1000);
+                    }, 100);
+                    
+                    // 顯示提示
+                    if (window.showToast) {
+                        window.showToast(`已跳轉到${result.pane === 'left' ? '左側' : '右側'}視窗第 ${result.lineNumber} 行`, 'info');
+                    }
+                } else {
+                    console.error(`找不到 ${result.pane} 視窗的 iframe`);
+                }
+            } else {
+                console.error(`找不到 ${result.pane} 視窗內容元素`);
+            }
+        } else {
+            // 一般模式，跳轉到主視窗
+            console.log(`跳轉到主視窗的第 ${result.lineNumber} 行`);
+            
+            if (window.activeTabId) {
+                const tab = window.currentTabs.find(t => t.id === window.activeTabId);
+                if (tab && tab.content) {
+                    const iframe = tab.content.querySelector('iframe');
+                    if (iframe && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            type: 'jump-to-line',
+                            lineNumber: result.lineNumber,
+                            matchIndex: result.matchNumberInLine || 0,
+                            highlight: true
+                        }, '*');
+                        
+                        if (window.showToast) {
+                            window.showToast(`已跳轉到第 ${result.lineNumber} 行`, 'info');
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     // 跳轉到增強搜尋結果
     window.jumpToEnhancedSearchResult = function(index, lineNumber, source) {
         console.log('跳轉到增強搜尋結果:', { index, lineNumber, source });
@@ -516,6 +696,8 @@
     
     // 切換搜尋頁籤
     window.switchEnhancedSearchTab = function(tab) {
+        console.log('切換到頁籤:', tab);
+        
         document.querySelectorAll('.search-results-tab').forEach(t => {
             t.classList.remove('active');
         });
@@ -534,35 +716,69 @@
         const targetPane = document.getElementById(`search-results-${tab}`);
         if (targetPane) {
             targetPane.classList.add('active');
+            
+            // === 新增：切換頁籤後重新高亮當前結果 ===
+            setTimeout(() => {
+                if (window.currentSearchIndex !== undefined) {
+                    document.querySelectorAll('.search-result-item').forEach((item) => {
+                        const itemIndex = parseInt(item.dataset.index);
+                        if (itemIndex === window.currentSearchIndex) {
+                            item.classList.add('active');
+                            // 如果當前結果在這個頁籤中，滾動到可見
+                            if (item.offsetParent !== null) {
+                                item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                        } else {
+                            item.classList.remove('active');
+                        }
+                    });
+                }
+            }, 50);
         }
     };
     
-    // 覆蓋導航函數
-    // 上一個搜尋結果
+    // 覆蓋全域的導航函數
     window.prevSearchResult = function() {
-        if (!window.searchResultsData || window.searchResultsData.length === 0) return;
+        console.log('上一個搜尋結果');
+        
+        if (!window.enhancedSearchResults || window.enhancedSearchResults.length === 0) {
+            console.log('沒有搜尋結果');
+            return;
+        }
         
         window.currentSearchIndex--;
         if (window.currentSearchIndex < 0) {
-            window.currentSearchIndex = window.searchResultsData.length - 1;
+            window.currentSearchIndex = window.enhancedSearchResults.length - 1;
         }
         
-        highlightCurrentSearchResult();
-        jumpToCurrentSearchResult();
+        jumpToCurrentResult();
     };
 
-    // 下一個搜尋結果
     window.nextSearchResult = function() {
-        if (!window.searchResultsData || window.searchResultsData.length === 0) return;
+        console.log('下一個搜尋結果');
+        
+        if (!window.enhancedSearchResults || window.enhancedSearchResults.length === 0) {
+            console.log('沒有搜尋結果');
+            return;
+        }
         
         window.currentSearchIndex++;
-        if (window.currentSearchIndex >= window.searchResultsData.length) {
+        if (window.currentSearchIndex >= window.enhancedSearchResults.length) {
             window.currentSearchIndex = 0;
         }
         
-        highlightCurrentSearchResult();
-        jumpToCurrentSearchResult();
-    };    
+        jumpToCurrentResult();
+    };
+
+    // 跳轉到當前索引的結果
+    function jumpToCurrentResult() {
+        if (!window.enhancedSearchResults || window.currentSearchIndex >= window.enhancedSearchResults.length) {
+            return;
+        }
+        
+        // 使用已定義的跳轉函數
+        window.jumpToEnhancedResult(window.currentSearchIndex);
+    }
 
     // 高亮當前搜尋結果
     function highlightCurrentSearchResult() {
@@ -594,15 +810,14 @@
     function updateSearchNavigation() {
         const countElement = document.querySelector('.search-result-count');
         if (countElement) {
-            if (window.searchResultsData && window.searchResultsData.length > 0) {
-                // 確保 currentSearchIndex 在有效範圍內
-                if (window.currentSearchIndex >= window.searchResultsData.length) {
+            if (window.enhancedSearchResults && window.enhancedSearchResults.length > 0) {
+                if (window.currentSearchIndex >= window.enhancedSearchResults.length) {
                     window.currentSearchIndex = 0;
                 } else if (window.currentSearchIndex < 0) {
-                    window.currentSearchIndex = window.searchResultsData.length - 1;
+                    window.currentSearchIndex = window.enhancedSearchResults.length - 1;
                 }
                 
-                countElement.textContent = `${window.currentSearchIndex + 1} / ${window.searchResultsData.length}`;
+                countElement.textContent = `${window.currentSearchIndex + 1} / ${window.enhancedSearchResults.length}`;
             } else {
                 countElement.textContent = '0 / 0';
             }
@@ -654,13 +869,23 @@
                 iframe.contentWindow.postMessage({
                     type: 'search',
                     options: options,
-                    pane: pane,
+                    pane: pane,  // 確保傳遞 pane 資訊
                     source: 'enhanced-search'
                 }, '*');
                 console.log(`已發送搜尋請求到 ${pane} 面板`);
             } catch (error) {
                 console.error(`發送搜尋請求失敗 (${pane}):`, error);
             }
+        } else {
+            console.warn(`找不到 ${pane} 面板的 iframe`);
+            // 如果找不到 iframe，仍然要處理結果
+            window.postMessage({
+                type: 'search-results',
+                keyword: options.keyword,
+                results: [],
+                count: 0,
+                pane: pane  // 確保傳遞 pane 資訊
+            }, '*');
         }
     }
     

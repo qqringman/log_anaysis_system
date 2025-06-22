@@ -10,18 +10,6 @@ class IframeSearch {
     init() {
         // 監聽搜尋訊息
         window.addEventListener('message', this.handleSearchMessage.bind(this));
-        
-        // 監聽鍵盤快捷鍵
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-                e.preventDefault();
-                if (window.splitView) {
-                    this.openSearchForActivePane();
-                } else {
-                    window.openSearchModal();
-                }
-            }
-        });
     }
     
     handleSearchMessage(event) {

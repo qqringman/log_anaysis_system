@@ -3,16 +3,29 @@
     let searchHighlights = [];
     let currentHighlightIndex = 0;
     let searchKeyword = '';
+    let isSearching = false; // 新增：防止重複搜尋
 
     // 監聽來自父視窗的搜尋訊息
     window.addEventListener('message', function(event) {
+        // 防止重複處理
+        if (isSearching) {
+            console.log('搜尋進行中，忽略新請求');
+            return;
+        }
+        
         if (event.data.type === 'jump-to-line') {
             const { lineNumber, matchIndex } = event.data;
             jumpToLine(lineNumber, matchIndex);
         }
         else if (event.data.type === 'search') {
+            isSearching = true;
             const { options } = event.data;
-            performSearch(options);
+            
+            // 延遲執行，確保 DOM 穩定
+            setTimeout(() => {
+                performSearch(options);
+                isSearching = false;
+            }, 100);
         } else if (event.data.type === 'clear-search') {
             clearHighlights();
         } else if (event.data.type === 'next-result') {
@@ -30,7 +43,31 @@
     }
 
     function performSearch(options) {
-        clearHighlights();
+        // 先嘗試清理現有高亮
+        try {
+            clearHighlights();
+        } catch (error) {
+            console.warn('清理高亮時發生錯誤，嘗試強制清理:', error);
+            // 強制清理
+            searchHighlights = [];
+            currentHighlightIndex = 0;
+            
+            // 移除所有高亮類別
+            const allHighlights = document.querySelectorAll('.search-highlight');
+            allHighlights.forEach(el => {
+                if (el) {
+                    el.classList.remove('search-highlight', 'current-highlight');
+                    // 嘗試解包元素
+                    if (el.parentNode) {
+                        const parent = el.parentNode;
+                        while (el.firstChild) {
+                            parent.insertBefore(el.firstChild, el);
+                        }
+                        parent.removeChild(el);
+                    }
+                }
+            });
+        }
         
         searchKeyword = options.keyword;
         if (!searchKeyword) return;
@@ -121,6 +158,13 @@
 
     function highlightMatches(textNode, matches) {
         const parent = textNode.parentNode;
+        
+        // 檢查父節點是否有效
+        if (!parent) {
+            console.warn('文字節點沒有父節點');
+            return;
+        }
+        
         const text = textNode.textContent;
         const fragment = document.createDocumentFragment();
         
@@ -138,6 +182,8 @@
             span.className = 'search-highlight';
             span.textContent = text.substring(match.start, match.end);
             fragment.appendChild(span);
+            
+            // 確保元素在 DOM 中才加入陣列
             searchHighlights.push(span);
             
             lastIndex = match.end;
@@ -150,19 +196,50 @@
             );
         }
         
-        parent.replaceChild(fragment, textNode);
+        try {
+            parent.replaceChild(fragment, textNode);
+        } catch (error) {
+            console.error('替換文字節點時發生錯誤:', error);
+        }
     }
 
     function clearHighlights() {
         searchHighlights.forEach(highlight => {
-            const parent = highlight.parentNode;
-            const text = highlight.textContent;
-            const textNode = document.createTextNode(text);
-            parent.replaceChild(textNode, highlight);
-            parent.normalize();
+            // 檢查高亮元素是否還在 DOM 中
+            if (highlight && highlight.parentNode) {
+                const parent = highlight.parentNode;
+                const text = highlight.textContent;
+                const textNode = document.createTextNode(text);
+                
+                try {
+                    parent.replaceChild(textNode, highlight);
+                    parent.normalize();
+                } catch (error) {
+                    console.warn('清除高亮時發生錯誤:', error);
+                }
+            }
         });
+        
+        // 清空陣列
         searchHighlights = [];
         currentHighlightIndex = 0;
+        
+        // 額外的清理：移除所有殘留的高亮
+        const remainingHighlights = document.querySelectorAll('.search-highlight');
+        remainingHighlights.forEach(el => {
+            if (el && el.parentNode) {
+                const parent = el.parentNode;
+                const text = el.textContent;
+                const textNode = document.createTextNode(text);
+                
+                try {
+                    parent.replaceChild(textNode, el);
+                    parent.normalize();
+                } catch (error) {
+                    console.warn('清除殘留高亮時發生錯誤:', error);
+                }
+            }
+        });
     }
 
     function scrollToHighlight(index) {

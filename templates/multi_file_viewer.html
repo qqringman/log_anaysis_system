@@ -288,7 +288,9 @@
                 <!-- 搜尋輸入 -->
                 <div class="search-input-wrapper">
                     <input type="text" class="form-control" id="search-keyword" 
-                        placeholder="輸入要搜尋的內容..." onkeyup="performSearch()">
+                        placeholder="輸入要搜尋的內容..." 
+                        onkeyup="performSearch()"
+                        autocomplete="off">
                     <i class="fas fa-search search-input-icon"></i>
                 </div>
                 
@@ -306,6 +308,17 @@
                         <input type="checkbox" id="search-regex" onchange="performSearch()">
                         <label for="search-regex">正則表達式</label>
                     </div>
+                </div>
+                
+                <!-- 搜尋範圍（分割視窗時顯示） -->
+                <div class="search-scope" id="search-scope-container" style="display: none;">
+                    <label class="form-label" style="font-weight: 500; margin-bottom: 8px;">搜尋範圍</label>
+                    <select class="form-control" id="search-scope" onchange="performSearch()">
+                        <option value="all">所有視窗</option>
+                        <option value="left">左側視窗</option>
+                        <option value="right">右側視窗</option>
+                        <option value="active">當前檔案</option>
+                    </select>
                 </div>
                 
                 <!-- 搜尋統計 -->
@@ -333,7 +346,26 @@
                 
                 <!-- 搜尋結果容器 -->
                 <div class="search-results" id="search-results">
-                    <!-- 搜尋結果將動態載入 -->
+                    <div class="no-results">
+                        <i class="fas fa-search"></i>
+                        <p>輸入關鍵字開始搜尋</p>
+                    </div>
+                </div>
+                
+                <!-- 快捷鍵提示 -->
+                <div class="search-shortcuts">
+                    <div class="search-shortcut">
+                        <kbd>Enter</kbd>
+                        <span>下一個結果</span>
+                    </div>
+                    <div class="search-shortcut">
+                        <kbd>Shift</kbd>+<kbd>Enter</kbd>
+                        <span>上一個結果</span>
+                    </div>
+                    <div class="search-shortcut">
+                        <kbd>Esc</kbd>
+                        <span>關閉搜尋</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -463,7 +495,37 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- 選擇面板對話框 -->
+    <div id="pane-select-modal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h5 style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-columns"></i>
+                    選擇載入位置
+                </h5>
+                <button onclick="closePaneSelectModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 30px;">
+                <p style="text-align: center; margin-bottom: 30px; font-size: 16px; color: #666;">
+                    請選擇要將檔案載入到哪個視窗：
+                </p>
+                <div style="display: flex; gap: 20px; justify-content: center;">
+                    <button class="btn btn-primary" style="flex: 1; padding: 25px 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="selectPane('left')">
+                        <i class="fas fa-arrow-left" style="font-size: 28px; margin-bottom: 10px; display: block;"></i>
+                        <span style="font-size: 16px; font-weight: 500;">左側視窗</span>
+                    </button>
+                    <button class="btn btn-primary" style="flex: 1; padding: 25px 20px; position: relative; overflow: hidden; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="selectPane('right')">
+                        <i class="fas fa-arrow-right" style="font-size: 28px; margin-bottom: 10px; display: block;"></i>
+                        <span style="font-size: 16px; font-weight: 500;">右側視窗</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.45/diff2html.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/5.1.0/diff.min.js"></script>
     <script>

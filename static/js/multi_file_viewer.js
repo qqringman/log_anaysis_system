@@ -1575,19 +1575,47 @@ function createTabElement(tab) {
         }
     };
 
-    // 雙擊事件
+    // 確保 ondblclick 事件正確設置（雙擊顯示顏色選擇器）
     tabDiv.ondblclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
         
-        // 檢查是否為觸控設備
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        
-        if (isTouchDevice || window.innerWidth <= 768) {
-            // 手機版或觸控設備，雙擊顯示顏色選擇器
+        // 檢查是否為手機版
+        if (window.innerWidth <= 768) {
             showTabContextMenu(e, tab);
         }
     };
+
+    // 雙擊事件
+    let tapTimeout = null;
+    let tapCount = 0;
+
+    tabDiv.addEventListener('click', (e) => {
+        // 只在手機版處理
+        if (window.innerWidth > 768) return;
+        
+        // 如果點擊的是關閉按鈕或顏色選擇器，不處理
+        if (e.target.closest('.tab-close') || e.target.closest('.color-picker')) {
+            return;
+        }
+        
+        tapCount++;
+        
+        if (tapCount === 1) {
+            tapTimeout = setTimeout(() => {
+                tapCount = 0;
+                // 單擊切換標籤的邏輯已在 onclick 處理
+            }, 300);
+        } else if (tapCount === 2) {
+            clearTimeout(tapTimeout);
+            tapCount = 0;
+            
+            // 真正的雙擊才顯示顏色選擇器
+            e.preventDefault();
+            e.stopPropagation();
+            showTabContextMenu(e, tab);
+        }
+    });
 
     tabDiv.oncontextmenu = (e) => showTabContextMenu(e, tab);
     tabDiv.title = tab.path;
@@ -1637,15 +1665,43 @@ function createTabElement(tab) {
         colorOption.className = 'color-option';
         colorOption.setAttribute('data-color', index + 1);
         colorOption.style.background = color;
-        colorOption.onclick = (e) => {
+        
+        // 修改點擊事件，支援觸控
+        const handleColorSelect = (e) => {
+            e.preventDefault();
             e.stopPropagation();
+            
+            console.log('選擇顏色:', color); // 除錯用
+            
             changeTabColor(tab.id, color);
             colorPicker.classList.remove('show');
+            colorPicker.style.display = 'none';
+            
+            // 清理事件監聽器
+            if (window.colorPickerCloseHandler) {
+                document.removeEventListener('click', window.colorPickerCloseHandler);
+                document.removeEventListener('touchstart', window.colorPickerCloseHandler);
+                window.colorPickerCloseHandler = null;
+            }
         };
+        
+        // 同時支援點擊和觸控
+        colorOption.onclick = handleColorSelect;
+        colorOption.addEventListener('touchend', handleColorSelect);
+        
         colorPicker.appendChild(colorOption);
     });
     tabDiv.appendChild(colorPicker);
-    
+
+    // 根據設備類型決定添加位置
+    if (window.innerWidth <= 768) {
+        // 手機版：添加到 body
+        document.body.appendChild(colorPicker);
+    } else {
+        // 桌面版：添加到標籤
+        tabDiv.appendChild(colorPicker);
+    }
+
     return tabDiv;
 }
 
@@ -1670,30 +1726,34 @@ function showTabContextMenu(e, tab) {
         const isMobile = window.innerWidth <= 768;
         
         if (isMobile) {
-            // 手機版：顯示在螢幕中央
+            // 手機版：顯示在標籤下方
             colorPicker.style.position = 'fixed';
             colorPicker.style.left = '50%';
-            colorPicker.style.top = '30%'; // 改為 30% 避免被擋住
+            colorPicker.style.top = '60px';
+            colorPicker.style.bottom = 'auto';
             colorPicker.style.transform = 'translateX(-50%)';
-            colorPicker.style.zIndex = '3000'; // 提高 z-index
+            colorPicker.style.zIndex = '99999';
+            
+            // 確保顏色選擇器在最上層
+            document.body.appendChild(colorPicker);
         } else {
             // 桌面版：保持原有邏輯
             let left = rect.left;
             let top = rect.bottom + 5;
             
-            // 檢查是否會超出右邊界
             if (left + 160 > window.innerWidth) {
                 left = window.innerWidth - 170;
             }
             
-            // 檢查是否會超出下邊界
             if (top + 80 > window.innerHeight) {
                 top = rect.top - 85;
             }
             
+            colorPicker.style.position = 'fixed';
             colorPicker.style.left = `${left}px`;
             colorPicker.style.top = `${top}px`;
             colorPicker.style.transform = 'none';
+            colorPicker.style.zIndex = '99999';
         }
         
         colorPicker.style.display = 'grid';
@@ -1702,17 +1762,39 @@ function showTabContextMenu(e, tab) {
         // 儲存當前顯示的顏色選擇器 ID
         window.currentColorPickerId = `color-picker-${tab.id}`;
         
-        // 點擊其他地方關閉
+        // 移除舊的事件監聽器
+        if (window.colorPickerCloseHandler) {
+            document.removeEventListener('click', window.colorPickerCloseHandler);
+            document.removeEventListener('touchstart', window.colorPickerCloseHandler);
+        }
+        
+        // 點擊其他地方關閉（支援觸控）
+        window.colorPickerCloseHandler = function(e) {
+            // 如果點擊的是顏色選擇器內部，不關閉
+            if (e.target.closest('.color-picker')) {
+                return;
+            }
+            
+            // 如果點擊的是標籤，也不關閉（避免雙擊時立即關閉）
+            if (e.target.closest('.file-tab')) {
+                return;
+            }
+            
+            // 關閉顏色選擇器
+            colorPicker.classList.remove('show');
+            colorPicker.style.display = 'none';
+            window.currentColorPickerId = null;
+            
+            // 移除事件監聽器
+            document.removeEventListener('click', window.colorPickerCloseHandler);
+            document.removeEventListener('touchstart', window.colorPickerCloseHandler);
+            window.colorPickerCloseHandler = null;
+        };
+        
+        // 延遲添加事件監聽器，避免立即觸發
         setTimeout(() => {
-            const closeHandler = function(e) {
-                if (!e.target.closest('.color-picker') && !e.target.closest('.file-tab')) {
-                    colorPicker.classList.remove('show');
-                    colorPicker.style.display = 'none';
-                    window.currentColorPickerId = null;
-                    document.removeEventListener('click', closeHandler);
-                }
-            };
-            document.addEventListener('click', closeHandler);
+            document.addEventListener('click', window.colorPickerCloseHandler);
+            document.addEventListener('touchstart', window.colorPickerCloseHandler);
         }, 100);
     }
 }

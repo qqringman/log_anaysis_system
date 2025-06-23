@@ -497,3 +497,13 @@
         color: #aaa;
     }
 }
+
+/* 移除標籤的十字游標 */
+.file-tab {
+    cursor: pointer !important;  /* 改為一般指標游標 */
+}
+
+/* 確保拖曳時才顯示移動游標 */
+.file-tab.dragging {
+    cursor: grabbing !important;
+}

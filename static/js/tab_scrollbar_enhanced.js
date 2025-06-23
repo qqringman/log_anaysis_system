@@ -268,3 +268,102 @@ if (window.innerWidth <= 768) {
         setTimeout(addSwipeHint, 1000);
     });
 }
+
+// 手機版顏色選擇器修復
+(function() {
+    // 創建全屏遮罩
+    function createBackdrop() {
+        let backdrop = document.getElementById('color-picker-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.id = 'color-picker-backdrop';
+            backdrop.className = 'color-picker-backdrop';
+            document.body.appendChild(backdrop);
+        }
+        return backdrop;
+    }
+    
+    // 修改顏色選擇器顯示邏輯
+    window.showTabContextMenuMobile = function(e, tab) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // 關閉所有顏色選擇器
+        document.querySelectorAll('.color-picker').forEach(picker => {
+            picker.classList.remove('show');
+            picker.style.display = 'none';
+        });
+        
+        // 隱藏遮罩
+        const backdrop = document.getElementById('color-picker-backdrop');
+        if (backdrop) {
+            backdrop.classList.remove('show');
+        }
+        
+        const colorPicker = document.getElementById(`color-picker-${tab.id}`);
+        if (!colorPicker) return;
+        
+        // 將顏色選擇器移到 body 下
+        document.body.appendChild(colorPicker);
+        
+        // 顯示遮罩
+        const newBackdrop = createBackdrop();
+        newBackdrop.classList.add('show');
+        
+        // 設置位置（螢幕中央）
+        colorPicker.style.position = 'fixed';
+        colorPicker.style.left = '50%';
+        colorPicker.style.top = '50%';
+        colorPicker.style.transform = 'translate(-50%, -50%)';
+        colorPicker.style.zIndex = '999999';
+        colorPicker.classList.add('show');
+        
+        // 防止頁面滾動
+        document.body.style.overflow = 'hidden';
+        
+        // 點擊遮罩關閉
+        const closeHandler = function(e) {
+            if (e.target === newBackdrop || e.target.classList.contains('color-option')) {
+                colorPicker.classList.remove('show');
+                newBackdrop.classList.remove('show');
+                document.body.style.overflow = '';
+                newBackdrop.removeEventListener('click', closeHandler);
+            }
+        };
+        
+        setTimeout(() => {
+            newBackdrop.addEventListener('click', closeHandler);
+        }, 100);
+    };
+    
+    // 替換原有的雙擊處理
+    document.addEventListener('DOMContentLoaded', function() {
+        // 監聽標籤的觸控事件
+        let lastTap = 0;
+        
+        document.addEventListener('touchend', function(e) {
+            const tab = e.target.closest('.file-tab');
+            if (!tab) return;
+            
+            // 忽略關閉按鈕和顏色選擇器
+            if (e.target.closest('.tab-close') || e.target.closest('.color-picker')) {
+                return;
+            }
+            
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                // 雙擊
+                e.preventDefault();
+                const tabId = tab.dataset.tabId;
+                const tabData = window.currentTabs.find(t => t.id === tabId);
+                if (tabData) {
+                    window.showTabContextMenuMobile(e, tabData);
+                }
+            }
+            
+            lastTap = currentTime;
+        }, { passive: false });
+    });
+})();

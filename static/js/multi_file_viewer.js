@@ -1404,6 +1404,28 @@ function generateTabId() {
 function renderTabs() {
     const tabsContainer = document.getElementById('file-tabs');
 
+    // 保存當前顯示的顏色選擇器
+    let activeColorPicker = null;
+    let activeColorPickerTabId = null;
+    if (window.currentColorPickerId) {
+        const picker = document.getElementById(window.currentColorPickerId);
+        if (picker && picker.classList.contains('show')) {
+            activeColorPicker = {
+                id: window.currentColorPickerId,
+                style: {
+                    position: picker.style.position,
+                    left: picker.style.left,
+                    top: picker.style.top,
+                    transform: picker.style.transform,
+                    zIndex: picker.style.zIndex,
+                    display: picker.style.display
+                }
+            };
+            // 從 ID 中提取 tab ID
+            activeColorPickerTabId = window.currentColorPickerId.replace('color-picker-', '');
+        }
+    }
+
     // 檢查標籤數量，如果超過 10 個則加入特殊類別
     if (currentTabs.length > 10) {
         tabsContainer.classList.add('many-tabs');
@@ -1440,6 +1462,29 @@ function renderTabs() {
             tabsContainer.appendChild(tabElement);
         }
     });
+
+    // 在渲染完成後恢復顏色選擇器
+    if (activeColorPicker && activeColorPickerTabId) {
+        setTimeout(() => {
+            const newPicker = document.getElementById(activeColorPicker.id);
+            if (newPicker) {
+                // 恢復樣式
+                Object.assign(newPicker.style, activeColorPicker.style);
+                newPicker.classList.add('show');
+                
+                // 重新設置關閉處理器
+                const closeHandler = function(e) {
+                    if (!e.target.closest('.color-picker') && !e.target.closest('.file-tab')) {
+                        newPicker.classList.remove('show');
+                        newPicker.style.display = 'none';
+                        window.currentColorPickerId = null;
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                document.addEventListener('click', closeHandler);
+            }
+        }, 50);
+    }    
 }
 
 // 創建標籤元素
@@ -1621,34 +1666,53 @@ function showTabContextMenu(e, tab) {
         const tabElement = e.currentTarget;
         const rect = tabElement.getBoundingClientRect();
         
-        // 計算位置，確保不會超出視窗
-        let left = rect.left;
-        let top = rect.bottom + 5;
+        // 檢測是否為手機版
+        const isMobile = window.innerWidth <= 768;
         
-        // 檢查是否會超出右邊界
-        if (left + 160 > window.innerWidth) {
-            left = window.innerWidth - 170;
+        if (isMobile) {
+            // 手機版：顯示在螢幕中央
+            colorPicker.style.position = 'fixed';
+            colorPicker.style.left = '50%';
+            colorPicker.style.top = '30%'; // 改為 30% 避免被擋住
+            colorPicker.style.transform = 'translateX(-50%)';
+            colorPicker.style.zIndex = '3000'; // 提高 z-index
+        } else {
+            // 桌面版：保持原有邏輯
+            let left = rect.left;
+            let top = rect.bottom + 5;
+            
+            // 檢查是否會超出右邊界
+            if (left + 160 > window.innerWidth) {
+                left = window.innerWidth - 170;
+            }
+            
+            // 檢查是否會超出下邊界
+            if (top + 80 > window.innerHeight) {
+                top = rect.top - 85;
+            }
+            
+            colorPicker.style.left = `${left}px`;
+            colorPicker.style.top = `${top}px`;
+            colorPicker.style.transform = 'none';
         }
         
-        // 檢查是否會超出下邊界
-        if (top + 80 > window.innerHeight) {
-            top = rect.top - 85;
-        }
-        
-        colorPicker.style.left = `${left}px`;
-        colorPicker.style.top = `${top}px`;
         colorPicker.style.display = 'grid';
         colorPicker.classList.add('show');
         
+        // 儲存當前顯示的顏色選擇器 ID
+        window.currentColorPickerId = `color-picker-${tab.id}`;
+        
         // 點擊其他地方關閉
         setTimeout(() => {
-            document.addEventListener('click', function hideColorPicker(e) {
-                if (!e.target.closest('.color-picker')) {
+            const closeHandler = function(e) {
+                if (!e.target.closest('.color-picker') && !e.target.closest('.file-tab')) {
                     colorPicker.classList.remove('show');
                     colorPicker.style.display = 'none';
-                    document.removeEventListener('click', hideColorPicker);
+                    window.currentColorPickerId = null;
+                    document.removeEventListener('click', closeHandler);
                 }
-            }, { once: true });
+            };
+            document.addEventListener('click', closeHandler);
         }, 100);
     }
 }
@@ -1658,7 +1722,17 @@ function changeTabColor(tabId, color) {
     const tab = currentTabs.find(t => t.id === tabId);
     if (tab) {
         tab.color = color;
-        renderTabs();
+        
+        // 不要立即渲染，只更新當前標籤的顏色
+        const tabElement = document.querySelector(`[data-tab-id="${tabId}"]`);
+        if (tabElement) {
+            tabElement.style.setProperty('--tab-color', color);
+        }
+        
+        // 延遲渲染，避免顏色選擇器立即消失
+        setTimeout(() => {
+            renderTabs();
+        }, 300);
     }
 }
 

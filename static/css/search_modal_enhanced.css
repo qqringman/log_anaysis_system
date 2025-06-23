@@ -9,17 +9,22 @@
 
 /* 搜尋對話框美化樣式 */
 .search-modal .modal-content {
-    max-width: 700px;
+    /* 修改：從 700px 改為 500px，與設定視窗一致 */
+    max-width: 500px;
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
 
 .search-modal .modal-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* 修改背景色，使用與設定視窗一致的漸變色 */
+    background: linear-gradient(135deg, #56CCF2 0%, #2F80ED 100%);
     color: white;
-    padding: 25px 30px;
+    padding: 20px;
     border: none;
+    border-radius: 15px 15px 0 0;
+    position: relative;
+    overflow: hidden;
 }
 
 .search-modal .modal-header h5 {
@@ -54,14 +59,18 @@
 /* 搜尋輸入框 */
 .search-input-wrapper {
     position: relative;
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .search-input-wrapper .form-control {
-    padding: 15px 50px 15px 20px;
-    font-size: 16px;
-    border-radius: 12px;
+    /* 簡化樣式 */
+    background: white;
     border: 2px solid #e0e0e0;
+    padding: 12px 45px 12px 15px;
+    font-size: 16px;
+    border-radius: 10px;
+    /* 簡化陰影 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
 }
 
@@ -72,21 +81,32 @@
 
 .search-input-icon {
     position: absolute;
-    right: 20px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    color: #667eea;
+    color: #999;
     font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+/* 移除hover效果 */
+.search-input-wrapper:hover .search-input-icon {
+    /* transform: translateY(-50%) scale(1.1); */
+    color: #667eea;
 }
 
 /* 搜尋選項 */
 .search-options {
     display: flex;
-    gap: 20px;
-    margin-bottom: 25px;
+    /* 修改：從 25px 改為 15px */
+    gap: 15px;
+    /* 修改：從 30px 改為 20px */
+    margin-bottom: 20px;
+    /* 修改：從 25px 改為 20px */
     padding: 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .search-option {
@@ -114,11 +134,16 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 15px 20px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border-radius: 12px;
+    /* 修改：從 25px 改為 20px */
+    padding: 20px;
+    background: white;
+    border-radius: 20px;
+    /* 修改：從 25px 改為 20px */
     margin-bottom: 20px;
-    border: 1px solid #e0e0e0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    position: relative;
+    overflow: hidden;
 }
 
 .search-stats-info {
@@ -174,20 +199,31 @@
 
 /* 搜尋結果列表 */
 .search-results {
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
     border: 1px solid #e0e0e0;
-    border-radius: 12px;
+    border-radius: 8px;
     background: #fafafa;
+    /* 新增：內邊距避免內容貼邊 */
+    padding: 5px;
+    /* 新增：確保滾動條在容器內 */
+    position: relative;
 }
 
 .search-results::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+}
+
+.search-results::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+    /* 新增：右邊距 */
+    margin-right: 2px;
 }
 
 .search-results::-webkit-scrollbar-thumb {
     background: #ccc;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .search-results::-webkit-scrollbar-thumb:hover {
@@ -196,27 +232,18 @@
 
 /* 找到 .search-result-item，完整替換為 */
 .search-result-item {
-    padding: 18px 20px;
+    padding: 12px;
     background: white;
     border: 1px solid #f0f0f0;
-    border-radius: 12px;
-    margin-bottom: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
-    overflow: hidden;
 }
 
 .search-result-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--search-primary);
-    transform: scaleY(0);
-    transition: transform 0.3s ease;
+    width: 3px
 }
 
 .search-result-item:hover {
@@ -418,29 +445,46 @@
 /* 快捷鍵提示樣式 */
 .search-shortcuts {
     display: flex;
-    gap: 15px;
+    gap: 10px;
     justify-content: center;
-    margin-top: 20px;
-    padding-top: 20px;
+    margin-top: 15px;
+    padding-top: 15px;
     border-top: 1px solid #e0e0e0;
+    /* 新增：允許換行 */
+    flex-wrap: wrap;
 }
 
 .search-shortcut {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
+    gap: 6px;
+    font-size: 12px;
     color: #666;
+    /* 簡化樣式 */
+    padding: 6px 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    /* 確保不會擠在一起 */
+    white-space: nowrap;
+}
+
+/* 移除hover效果，保持簡潔 */
+.search-shortcut:hover {
+    background: #e9ecef;
+    /* 移除上移效果 */
+    /* transform: translateY(-2px); */
 }
 
 .search-shortcut kbd {
-    background: #f8f9fa;
+    background: white;
     border: 1px solid #dee2e6;
     border-radius: 4px;
     padding: 2px 6px;
-    font-family: monospace;
-    font-size: 12px;
-    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 11px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    font-weight: 500;
+    color: #495057;
 }
 
 
@@ -470,7 +514,7 @@
 
 @keyframes shimmer {
     0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    100% { transform: rotate(180deg); }
 }
 
 .modal-header h5 {
@@ -522,18 +566,29 @@
 
 /* 響應式調整 */
 @media (max-width: 768px) {
-    .modal-header {
-        padding: 18px 20px;
+    /* 快捷鍵提示在手機版 */
+    .search-shortcuts {
+        /* 手機版改為垂直排列 */
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+        /* 限制高度避免佔用太多空間 */
+        max-height: 120px;
+        overflow-y: auto;
     }
     
-    .modal-header h5 {
-        font-size: 16px;
+    .search-shortcut {
+        width: 100%;
+        justify-content: center;
     }
     
-    .modal-header button {
-        width: 32px;
-        height: 32px;
-        font-size: 16px;
+    /* 簡化搜尋選項在手機版的顯示 */
+    .search-options {
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+        /* 使用更簡單的背景 */
+        background: #f8f9fa;
     }
 }
 

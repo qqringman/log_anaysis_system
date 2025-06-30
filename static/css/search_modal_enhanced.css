@@ -9,18 +9,20 @@
 
 /* 搜尋對話框美化樣式 */
 .search-modal .modal-content {
-    /* 修改：從 700px 改為 500px，與設定視窗一致 */
-    max-width: 500px;
+    max-width: 600px;
     border-radius: 20px;
-    overflow: hidden;
+    overflow: hidden;  /* 確保內容不會超出圓角 */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;  /* 限制最大高度 */
 }
 
 .search-modal .modal-header {
     /* 修改背景色，使用與設定視窗一致的漸變色 */
-    background: linear-gradient(135deg, #56CCF2 0%, #2F80ED 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 20px;
+    padding: 15px 20px;
     border: none;
     border-radius: 15px 15px 0 0;
     position: relative;
@@ -28,12 +30,12 @@
 }
 
 .search-modal .modal-header h5 {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 500;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .search-modal .modal-header button {
@@ -53,7 +55,26 @@
 }
 
 .search-modal .modal-body {
-    padding: 30px;
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;  /* 重要：允許 flex 項目收縮 */
+    max-height: calc(85vh - 120px);  /* 減去 header 高度 */
+}
+
+/* 確保 modal-body 的滾動條也正常 */
+.search-modal .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.search-modal .modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.search-modal .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
 }
 
 /* 搜尋輸入框 */
@@ -66,8 +87,8 @@
     /* 簡化樣式 */
     background: white;
     border: 2px solid #e0e0e0;
-    padding: 12px 45px 12px 15px;
-    font-size: 16px;
+    padding: 10px 40px 10px 15px;
+    font-size: 15px;
     border-radius: 10px;
     /* 簡化陰影 */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -98,12 +119,9 @@
 /* 搜尋選項 */
 .search-options {
     display: flex;
-    /* 修改：從 25px 改為 15px */
-    gap: 15px;
-    /* 修改：從 30px 改為 20px */
-    margin-bottom: 20px;
-    /* 修改：從 25px 改為 20px */
-    padding: 20px;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 15px;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     border-radius: 16px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
@@ -134,13 +152,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* 修改：從 25px 改為 20px */
-    padding: 20px;
+    padding: 12px 16px;  /* 從 20px 改為 12px 16px */
     background: white;
-    border-radius: 20px;
-    /* 修改：從 25px 改為 20px */
-    margin-bottom: 20px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;  /* 從 20px 改為 12px */
+    margin-bottom: 12px;  /* 從 20px 改為 12px */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);  /* 降低陰影 */
     border: 1px solid rgba(102, 126, 234, 0.1);
     position: relative;
     overflow: hidden;
@@ -155,22 +171,34 @@
 .search-stat-item {
     display: flex;
     align-items: center;
-    gap: 5px;
-    font-size: 14px;
+    gap: 6px;  /* 從 10px 改為 6px */
+    font-size: 13px;  /* 從 16px 改為 13px */
+    color: #495057;
+    padding: 6px 12px;  /* 從 10px 20px 改為 6px 12px */
+    background: #f8f9fa;
+    border-radius: 8px;  /* 從 12px 改為 8px */
 }
 
 .search-stat-item i {
+    font-size: 14px;  /* 從 20px 改為 14px */
     color: #667eea;
+    /* 移除動畫效果 */
+    animation: none;
 }
 
 .search-stat-item strong {
-    color: #333;
+    color: #667eea;
+    font-size: 16px;  /* 從 24px 改為 16px */
+    font-weight: 600;  /* 從 700 改為 600 */
+    margin: 0 3px;  /* 從 0 5px 改為 0 3px */
+    text-shadow: none;  /* 移除文字陰影 */
 }
 
 /* 搜尋導航按鈕 */
 .search-nav-buttons {
     display: flex;
-    gap: 10px;
+    gap: 8px;  /* 從 15px 改為 8px */
+    align-items: center;
 }
 
 .search-nav-btn {
@@ -199,15 +227,18 @@
 
 /* 搜尋結果列表 */
 .search-results {
-    max-height: 300px;
+    max-height: 400px;  /* 從 350px 改為 400px */
     overflow-y: auto;
+    overflow-x: hidden;  /* 隱藏橫向滾動條 */
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background: #fafafa;
-    /* 新增：內邊距避免內容貼邊 */
-    padding: 5px;
-    /* 新增：確保滾動條在容器內 */
+    padding: 8px;
     position: relative;
+    box-sizing: border-box;
+    /* 確保滾動條在容器內 */
+    margin: 0;
+    width: 100%;
 }
 
 .search-results::-webkit-scrollbar {
@@ -217,8 +248,6 @@
 .search-results::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 3px;
-    /* 新增：右邊距 */
-    margin-right: 2px;
 }
 
 .search-results::-webkit-scrollbar-thumb {
@@ -232,11 +261,11 @@
 
 /* 找到 .search-result-item，完整替換為 */
 .search-result-item {
-    padding: 12px;
+    padding: 12px;  /* 保持適中的 padding */
     background: white;
     border: 1px solid #f0f0f0;
-    border-radius: 8px;
-    margin-bottom: 8px;
+    border-radius: 6px;  /* 從 8px 改為 6px */
+    margin-bottom: 6px;  /* 從 8px 改為 6px */
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
@@ -271,40 +300,50 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 6px;  /* 從 8px 改為 6px */
 }
 
 .search-result-line {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
+    gap: 6px;  /* 從 8px 改為 6px */
+    font-size: 12px;  /* 從 13px 改為 12px */
     color: #666;
 }
 
 .search-result-line i {
     color: #667eea;
+    font-size: 12px;  /* 統一圖標大小 */
 }
 
 .line-number {
     background: #667eea;
     color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
+    padding: 1px 6px;  /* 從 2px 8px 改為 1px 6px */
+    border-radius: 3px;  /* 從 4px 改為 3px */
+    font-size: 11px;
+    font-weight: 500;  /* 從 600 改為 500 */
+    min-width: auto;
+    display: inline-block;
 }
 
 .search-result-content {
     font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 13px;
+    font-size: 12px;  /* 從 13px 改為 12px */
     line-height: 1.6;
     color: #333;
     background: #f8f9fa;
-    padding: 10px 15px;
-    border-radius: 8px;
+    padding: 10px 12px;  /* 從 12px 15px 改為 10px 12px */
+    border-radius: 6px;  /* 從 8px 改為 6px */
+    /* 修復文字折行問題 */
     word-break: break-word;
     overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+    box-sizing: border-box;
+    /* 確保文字不會被截斷 */
+    overflow: visible;
+    text-overflow: clip;   
 }
 
 .search-result-content .highlight {
@@ -317,10 +356,15 @@
 
 /* 搜尋結果計數 */
 .search-result-count {
-    font-weight: 500;
-    color: #666;
-    min-width: 60px;
+    font-size: 13px;  /* 從 18px 改為 13px */
+    font-weight: 600;  /* 從 700 改為 600 */
+    color: #667eea;
+    background: #f0f2ff;  /* 更簡潔的背景色 */
+    padding: 4px 12px;  /* 從 8px 20px 改為 4px 12px */
+    border-radius: 16px;  /* 從 30px 改為 16px */
+    min-width: 60px;  /* 從 100px 改為 60px */
     text-align: center;
+    box-shadow: none;  /* 移除陰影 */
 }
 
 /* 搜尋載入狀態 */
@@ -394,28 +438,47 @@
 
 /* 手機版優化 */
 @media (max-width: 768px) {
+    /* Modal 在手機上全屏顯示 */
     .search-modal .modal-content {
-        width: 95%;
-        margin: 10px;
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        margin: 0;
+        border-radius: 0;
     }
     
-    .search-modal .modal-body {
-        padding: 20px;
+    /* 調整標題 */
+    .search-modal .modal-header h5 {
+        font-size: 16px;
     }
     
-    .search-options {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
+    /* 調整統計區域 */
     .search-stats {
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
+        padding: 10px;
         text-align: center;
     }
     
+    .search-stats-info {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .search-stat-item {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* 搜尋結果 */
     .search-results {
         max-height: 300px;
+    }
+    
+    .search-result-content {
+        font-size: 11px;
+        padding: 8px;
     }
 }
 

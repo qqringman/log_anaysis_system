@@ -2385,3 +2385,143 @@ input:checked + .toggle-slider:before {
 }
 
 /*----------------------------------------------*/
+
+@media (max-width: 768px) {
+    .search-modal .modal-content {
+        width: 95%;
+        margin: 10px;
+        max-height: 90vh;  /* 新增最大高度限制 */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .search-modal .modal-body {
+        padding: 15px;  /* 從 20px 改為 15px */
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;  /* 確保能正確收縮 */
+    }
+    
+    /* 搜尋輸入框手機版 */
+    .search-input-wrapper .form-control {
+        font-size: 16px;  /* 保持 16px 避免 iOS 自動縮放 */
+        padding: 12px 40px 12px 12px;  /* 調整 padding */
+    }
+    
+    /* 搜尋選項手機版 */
+    .search-options {
+        padding: 12px;  /* 減少 padding */
+        gap: 8px;
+    }
+    
+    .search-option label {
+        font-size: 13px;  /* 從 14px 改為 13px */
+    }
+    
+    /* 搜尋結果手機版 */
+    .search-results {
+        max-height: 250px;  /* 從 300px 改為 250px */
+        padding: 5px;
+    }
+    
+    .search-result-item {
+        padding: 10px;  /* 手機版更小的 padding */
+    }
+    
+    .search-result-content {
+        font-size: 12px;  /* 手機版更小的字體 */
+        padding: 8px 10px;
+    }
+    
+    /* 快捷鍵提示手機版隱藏或簡化 */
+    .search-shortcuts {
+        display: none;  /* 手機版隱藏快捷鍵提示 */
+    }
+}
+
+/*----------------------------------------------*/
+
+/* 確保對話框內容不會溢出 */
+.search-modal .modal-body {
+    max-height: calc(90vh - 120px);  /* 視窗高度減去標題和 padding */
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 優化間距 */
+.search-modal .form-group {
+    margin-bottom: 15px;  /* 統一間距 */
+}
+
+/* 優化按鈕大小 */
+.search-nav-btn {
+    padding: 5px 10px;  /* 從 6px 12px 改小 */
+    font-size: 12px;  /* 從 13px 改為 12px */
+}
+
+/* 行號標籤優化 */
+.line-number {
+    padding: 2px 8px;  /* 從 2px 8px 保持不變，但確保顯示正常 */
+    font-size: 11px;  /* 從 12px 改為 11px */
+    min-width: auto;  /* 從 60px 改為 auto */
+}
+
+/*----------------------------------------------*/
+
+/* 或者降低動畫強度 */
+@keyframes shimmer {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(90deg); }  /* 從 180deg 改為 90deg */
+}
+
+/*----------------------------------------------*/
+
+/* 分割視窗焦點樣式 */
+.split-pane {
+    transition: box-shadow 0.3s ease;
+}
+
+.split-pane.focused {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.5) !important;
+}
+
+/* 分割視窗工具列焦點樣式 */
+.split-pane-toolbar {
+    transition: all 0.3s ease;
+}
+
+.split-pane-toolbar.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+}
+
+.split-pane-toolbar.active .split-pane-title,
+.split-pane-toolbar.active .split-pane-btn {
+    color: white !important;
+}
+
+.split-pane-toolbar.active .split-pane-btn {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.split-pane-toolbar.active .split-pane-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: white;
+}
+
+/* 搜尋結果跳轉動畫 */
+@keyframes searchJumpPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    }
+}
+
+.split-pane.search-jumping {
+    animation: searchJumpPulse 1s;
+}

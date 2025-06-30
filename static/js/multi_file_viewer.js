@@ -93,7 +93,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadDefaultGroups();
             }
         }
-        
+
+        // 檢測並修復分割視窗狀態
+        setTimeout(() => {
+            // 檢測是否有分割視窗容器
+            const splitContainer = document.querySelector('.split-container');
+            const fileViewer = document.getElementById('file-viewer');
+            
+            if (splitContainer && fileViewer && fileViewer.contains(splitContainer)) {
+                console.log('檢測到分割視窗容器，修復狀態');
+                
+                // 強制設置分割視窗狀態
+                window.splitView = true;
+                splitView = true;
+                
+                // 從 DOM 恢復視窗狀態
+                const leftContent = document.getElementById('split-left-content');
+                const rightContent = document.getElementById('split-right-content');
+                
+                window.splitViewState = {
+                    left: leftContent?.dataset.filePath || null,
+                    right: rightContent?.dataset.filePath || null
+                };
+                
+                splitViewState = window.splitViewState;
+                
+                // 更新工具列顯示
+                document.getElementById('main-toolbar').style.display = 'none';
+                document.getElementById('split-toolbar').style.display = 'flex';
+                
+                // 更新按鈕狀態
+                const splitBtn = document.querySelector('.btn-split');
+                if (splitBtn) {
+                    splitBtn.style.background = '#28a745';
+                    splitBtn.innerHTML = '<i class="fas fa-times"></i> <span>關閉分割</span>';
+                }
+                
+                console.log('分割視窗狀態已修復:', {
+                    splitView: window.splitView,
+                    splitViewState: window.splitViewState
+                });
+                
+                // 確保 iframe 通信已設置
+                if (leftContent && leftContent.querySelector('iframe')) {
+                    const iframe = leftContent.querySelector('iframe');
+                    setupIframeCommunication(iframe, 'left');
+                }
+                
+                if (rightContent && rightContent.querySelector('iframe')) {
+                    const iframe = rightContent.querySelector('iframe');
+                    setupIframeCommunication(iframe, 'right');
+                }
+            }
+        }, 500); // 增加延遲確保 DOM 完全載入
+                
         // 初始化拖放事件
         setupGlobalDragAndDrop();
         setupTabDragAndDrop();
@@ -212,6 +265,11 @@ function loadWorkspaceState(state) {
                 
                 // 恢復分割視窗狀態
                 if (state.splitView && state.splitViewState) {
+                    
+                    // 先設置全域變數
+                    window.splitView = true;
+                    window.splitViewState = state.splitViewState || { left: null, right: null };
+
                     // 先切換到分割視窗模式
                     splitView = true;
                     const splitBtn = document.querySelector('.btn-split');
@@ -1333,31 +1391,40 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
             iframe.src = `/file_viewer?path=${encodeURIComponent(filePath)}`;
         }
         
+        // 重要：確保 iframe 載入完成後設置通信
         iframe.onload = () => {
             console.log(`檔案載入完成到 ${pane} 面板`);
-                
+            
             content.dataset.tabId = tabId;
             content.dataset.filePath = filePath;
-
-            // 儲存到分割視窗狀態
-            splitViewState[pane] = filePath;
-
+            
+            // 更新全域狀態
+            window.splitViewState = window.splitViewState || { left: null, right: null };
+            window.splitViewState[pane] = filePath;
+            splitViewState = window.splitViewState;
+            
             // 確保標籤狀態正確更新
-            const tab = currentTabs.find(t => t.id === tabId);
             if (tab) {
                 tab.loading = false;
                 tab.splitPane = pane;
-                // 立即更新標籤顯示
                 renderTabs();
             }
-
-            // 設置同步滾動
-            if (syncScroll) {
-                window.diffViewer && window.diffViewer.setupSyncScroll();
-            }
-
-            // 啟用 iframe 內的訊息通信
-            setupIframeCommunication(iframe, pane);            
+            
+            // 設置 iframe 通信 - 重要！
+            setupIframeCommunication(iframe, pane);
+            
+            // 延遲一下確保 iframe 內容完全載入
+            setTimeout(() => {
+                // 發送初始化訊息
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({
+                        type: 'init',
+                        pane: pane
+                    }, '*');
+                }
+                
+                console.log(`${pane} 視窗已完全準備好`);
+            }, 500);
         };
         
         iframe.onerror = () => {
@@ -1384,15 +1451,21 @@ async function loadFileContentForPane(filePath, tabId, isLocal = false, pane) {
 
 // 設置 iframe 通信
 function setupIframeCommunication(iframe, pane) {
-    // 等待 iframe 載入完成後發送初始化訊息
-    setTimeout(() => {
-        if (iframe.contentWindow) {
-            iframe.contentWindow.postMessage({
-                type: 'init',
-                pane: pane
-            }, '*');
-        }
-    }, 500);
+    if (!iframe || !iframe.contentWindow) {
+        console.error('無法設置 iframe 通信:', pane);
+        return;
+    }
+    
+    // 立即發送初始化訊息
+    try {
+        iframe.contentWindow.postMessage({
+            type: 'init',
+            pane: pane
+        }, '*');
+        console.log(`已設置 ${pane} 視窗的 iframe 通信`);
+    } catch (error) {
+        console.error(`設置 ${pane} 視窗通信失敗:`, error);
+    }
 }
 
 // 生成標籤ID
@@ -2831,6 +2904,11 @@ function toggleSplitView() {
 
 // 創建分割視窗 - 增強版
 function createSplitView() {
+    // 確保設置全域狀態
+    window.splitView = true;
+    if (!window.splitViewState) {
+        window.splitViewState = { left: null, right: null };
+    }    
     const viewerContainer = document.getElementById('file-viewer');
     viewerContainer.innerHTML = `
         <div class="split-container">
@@ -3717,11 +3795,26 @@ async function handleFilesAsync(files) {
 
 // 處理拖放的檔案
 function handleDroppedFile(virtualFile, pane) {
+    // 再次確保分割視窗狀態正確
+    const splitContainer = document.querySelector('.split-container');
+    if (splitContainer && !window.splitView) {
+        console.log('修正分割視窗狀態');
+        window.splitView = true;
+        splitView = true;
+        
+        if (!window.splitViewState) {
+            window.splitViewState = { left: null, right: null };
+        }
+        splitViewState = window.splitViewState;
+    }
+    
     // 確保在分割視窗模式
     if (!splitView) {
         showToast('請先開啟分割視窗模式', 'error');
         return;
     }
+    
+    console.log(`處理拖放檔案到 ${pane} 視窗:`, virtualFile);
     
     // 檢查是否已經開啟
     const existingTab = currentTabs.find(tab => tab.path === virtualFile.path);
@@ -3732,34 +3825,58 @@ function handleDroppedFile(virtualFile, pane) {
         loadFileToPane(existingTab, pane);
         renderTabs();
     } else {
-        // 開啟新檔案 - 重要：第二個參數設為 false，不要切換到新標籤
+        // 開啟新檔案
         const tab = openFile(virtualFile, false);
         
         if (tab) {
-            // 等待標籤創建完成
-            setTimeout(() => {
-                const createdTab = currentTabs.find(t => t.path === virtualFile.path);
-                if (createdTab) {
-                    createdTab.splitPane = pane;
-                    // 確保檔案內容載入到正確的面板
-                    if (!createdTab.content || createdTab.loading) {
-                        // 直接載入到指定面板
-                        const content = document.getElementById(`split-${pane}-content`);
-                        if (content) {
-                            const emptyState = content.querySelector('.empty-state');
-                            if (emptyState) emptyState.style.display = 'none';
+            // 確保檔案完全載入
+            const ensureLoaded = () => {
+                return new Promise((resolve) => {
+                    let checkCount = 0;
+                    const maxChecks = 40; // 最多檢查 4 秒
+                    
+                    const checkInterval = setInterval(() => {
+                        const createdTab = currentTabs.find(t => t.path === virtualFile.path);
+                        checkCount++;
+                        
+                        if (createdTab || checkCount >= maxChecks) {
+                            clearInterval(checkInterval);
+                            
+                            if (createdTab) {
+                                createdTab.splitPane = pane;
+                                
+                                // 載入到指定面板
+                                const content = document.getElementById(`split-${pane}-content`);
+                                if (content) {
+                                    const emptyState = content.querySelector('.empty-state');
+                                    if (emptyState) emptyState.style.display = 'none';
+                                    
+                                    // 更新分割視窗狀態
+                                    window.splitViewState[pane] = createdTab.path;
+                                    splitViewState[pane] = createdTab.path;
+                                    
+                                    loadFileContentForPane(createdTab.path, createdTab.id, createdTab.isLocal, pane);
+                                }
+                                
+                                renderTabs();
+                                resolve(true);
+                            } else {
+                                resolve(false);
+                            }
                         }
-                        loadFileContentForPane(createdTab.path, createdTab.id, createdTab.isLocal, pane);
-                    } else {                    
-                        loadFileToPane(createdTab, pane);
-                    }
-                    renderTabs();
+                    }, 100);
+                });
+            };
+            
+            ensureLoaded().then((success) => {
+                if (success) {
+                    showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${virtualFile.name}`, 'success');
+                } else {
+                    showToast('載入檔案失敗', 'error');
                 }
-            }, 100);
+            });
         }
     }
-    
-    showToast(`已在${pane === 'left' ? '左側' : '右側'}視窗開啟 ${virtualFile.name}`, 'success');
 }
 
 // 載入檔案到特定面板
@@ -3770,6 +3887,12 @@ function loadFileToPane(tab, pane) {
     if (!splitView) {
         console.error('嘗試在非分割視窗模式下載入檔案到面板');
         return;
+    }
+
+    // 確保全域變數正確設置
+    window.splitView = true;
+    if (!window.splitViewState) {
+        window.splitViewState = { left: null, right: null };
     }
 
     const content = document.getElementById(`split-${pane}-content`);
@@ -3803,6 +3926,7 @@ function loadFileToPane(tab, pane) {
     
     // 更新狀態
     splitViewState[pane] = tab.path;
+    window.splitViewState[pane] = tab.path;  // 確保更新到 window 物件
     tab.splitPane = pane;
     
     // 檢查是否為可編輯檔案
@@ -4588,20 +4712,61 @@ function openSearchModal() {
     if (searchScopeContainer) {
         if (splitView) {
             searchScopeContainer.style.display = 'block';
+            
             if (searchScope) {
-                // 智能設置預設搜尋範圍
-                const leftHasContent = splitViewState.left;
-                const rightHasContent = splitViewState.right;
+                // 檢查兩側視窗的內容狀態
+                const leftContent = document.getElementById('split-left-content');
+                const rightContent = document.getElementById('split-right-content');
                 
+                const leftHasContent = leftContent && 
+                    (leftContent.dataset.filePath || leftContent.dataset.tabId) &&
+                    leftContent.querySelector('.empty-state')?.style.display === 'none';
+                    
+                const rightHasContent = rightContent && 
+                    (rightContent.dataset.filePath || rightContent.dataset.tabId) &&
+                    rightContent.querySelector('.empty-state')?.style.display === 'none';
+                
+                console.log('視窗內容狀態:', { leftHasContent, rightHasContent });
+                
+                // 智能設置預設搜尋範圍
                 if (leftHasContent && rightHasContent) {
                     searchScope.value = 'all';
-                } else if (leftHasContent) {
+                } else if (leftHasContent && !rightHasContent) {
                     searchScope.value = 'left';
-                } else if (rightHasContent) {
+                    // 禁用右側選項
+                    const rightOption = searchScope.querySelector('option[value="right"]');
+                    if (rightOption) rightOption.disabled = true;
+                } else if (!leftHasContent && rightHasContent) {
                     searchScope.value = 'right';
+                    // 禁用左側選項
+                    const leftOption = searchScope.querySelector('option[value="left"]');
+                    if (leftOption) leftOption.disabled = true;
                 } else {
                     searchScope.value = 'all';
+                    // 顯示提示
+                    setTimeout(() => {
+                        const resultsDiv = document.getElementById('search-results');
+                        if (resultsDiv) {
+                            resultsDiv.innerHTML = `
+                                <div class="no-results">
+                                    <i class="fas fa-info-circle"></i>
+                                    <p>請先載入檔案到視窗中</p>
+                                </div>
+                            `;
+                        }
+                    }, 100);
                 }
+                
+                // 恢復所有選項的狀態
+                searchScope.querySelectorAll('option').forEach(option => {
+                    if (option.value === 'all') {
+                        option.disabled = false;
+                    } else if (option.value === 'left') {
+                        option.disabled = !leftHasContent;
+                    } else if (option.value === 'right') {
+                        option.disabled = !rightHasContent;
+                    }
+                });
             }
         } else {
             searchScopeContainer.style.display = 'none';
@@ -5083,3 +5248,160 @@ function setupSearchResultClickHandlers() {
 
 // 綁定到全域
 window.syncSearchKeyword = syncSearchKeyword;
+
+// 除錯函數：檢查分割視窗狀態
+window.debugSplitSearch = function() {
+    console.log('=== 分割視窗搜尋除錯 ===');
+    
+    const leftContent = document.getElementById('split-left-content');
+    const rightContent = document.getElementById('split-right-content');
+    
+    console.log('左側視窗:', {
+        有內容: !!leftContent,
+        檔案路徑: leftContent?.dataset.filePath,
+        標籤ID: leftContent?.dataset.tabId,
+        iframe載入: leftContent?.dataset.iframeLoaded,
+        有iframe: !!leftContent?.querySelector('iframe')
+    });
+    
+    console.log('右側視窗:', {
+        有內容: !!rightContent,
+        檔案路徑: rightContent?.dataset.filePath,
+        標籤ID: rightContent?.dataset.tabId,
+        iframe載入: rightContent?.dataset.iframeLoaded,
+        有iframe: !!rightContent?.querySelector('iframe')
+    });
+    
+    console.log('分割視窗狀態:', window.splitViewState);
+    console.log('當前是否為分割視窗模式:', window.splitView);
+};
+
+// 檢測分割視窗內容狀態
+window.checkSplitPaneContent = function() {
+    const leftContent = document.getElementById('split-left-content');
+    const rightContent = document.getElementById('split-right-content');
+    
+    const status = {
+        left: {
+            exists: !!leftContent,
+            hasFile: leftContent?.dataset.filePath || leftContent?.dataset.tabId || false,
+            isEmpty: leftContent?.querySelector('.empty-state')?.style.display !== 'none',
+            hasIframe: !!leftContent?.querySelector('iframe')
+        },
+        right: {
+            exists: !!rightContent,
+            hasFile: rightContent?.dataset.filePath || rightContent?.dataset.tabId || false,
+            isEmpty: rightContent?.querySelector('.empty-state')?.style.display !== 'none',
+            hasIframe: !!rightContent?.querySelector('iframe')
+        }
+    };
+    
+    console.log('分割視窗內容狀態:', status);
+    return status;
+};
+
+// 診斷搜尋問題
+window.diagnoseSplitSearch = function() {
+    console.log('=== 分割視窗搜尋診斷 ===');
+    
+    // 檢查全域狀態
+    console.log('全域狀態:', {
+        'window.splitView': window.splitView,
+        'window.splitViewState': window.splitViewState,
+        'splitView (local)': typeof splitView !== 'undefined' ? splitView : 'undefined',
+        'splitViewState (local)': typeof splitViewState !== 'undefined' ? splitViewState : 'undefined'
+    });
+    
+    // 檢查 DOM 狀態
+    const splitContainer = document.querySelector('.split-container');
+    console.log('DOM 狀態:', {
+        '有分割容器': !!splitContainer,
+        '容器在 file-viewer 內': splitContainer?.parentElement?.id === 'file-viewer'
+    });
+    
+    // 檢查視窗內容
+    const leftContent = document.getElementById('split-left-content');
+    const rightContent = document.getElementById('split-right-content');
+    
+    console.log('左側視窗:', {
+        存在: !!leftContent,
+        檔案路徑: leftContent?.dataset.filePath,
+        標籤ID: leftContent?.dataset.tabId,
+        有iframe: !!leftContent?.querySelector('iframe'),
+        iframe準備: leftContent?.querySelector('iframe')?.contentDocument?.readyState,
+        空狀態顯示: leftContent?.querySelector('.empty-state')?.style.display
+    });
+    
+    console.log('右側視窗:', {
+        存在: !!rightContent,
+        檔案路徑: rightContent?.dataset.filePath,
+        標籤ID: rightContent?.dataset.tabId,
+        有iframe: !!rightContent?.querySelector('iframe'),
+        iframe準備: rightContent?.querySelector('iframe')?.contentDocument?.readyState,
+        空狀態顯示: rightContent?.querySelector('.empty-state')?.style.display
+    });
+    
+    // 測試訊息通信
+    console.log('\n測試 iframe 通信...');
+    
+    if (leftContent?.querySelector('iframe')?.contentWindow) {
+        console.log('發送測試訊息到左側...');
+        leftContent.querySelector('iframe').contentWindow.postMessage({
+            type: 'ping',
+            source: 'diagnosis'
+        }, '*');
+    }
+    
+    if (rightContent?.querySelector('iframe')?.contentWindow) {
+        console.log('發送測試訊息到右側...');
+        rightContent.querySelector('iframe').contentWindow.postMessage({
+            type: 'ping',
+            source: 'diagnosis'
+        }, '*');
+    }
+};
+
+// 手動修復分割視窗狀態
+window.fixSplitState = function() {
+    console.log('手動修復分割視窗狀態...');
+    
+    const splitContainer = document.querySelector('.split-container');
+    if (!splitContainer) {
+        console.error('找不到分割視窗容器');
+        return;
+    }
+    
+    // 強制設置狀態
+    window.splitView = true;
+    
+    const leftContent = document.getElementById('split-left-content');
+    const rightContent = document.getElementById('split-right-content');
+    
+    window.splitViewState = {
+        left: leftContent?.dataset.filePath || null,
+        right: rightContent?.dataset.filePath || null
+    };
+    
+    // 如果有全域變數，也更新它們
+    if (typeof splitView !== 'undefined') {
+        splitView = true;
+    }
+    if (typeof splitViewState !== 'undefined') {
+        splitViewState = window.splitViewState;
+    }
+    
+    console.log('狀態已修復:', {
+        splitView: window.splitView,
+        splitViewState: window.splitViewState
+    });
+    
+    // 重新設置 iframe 通信
+    if (leftContent?.querySelector('iframe')) {
+        setupIframeCommunication(leftContent.querySelector('iframe'), 'left');
+    }
+    if (rightContent?.querySelector('iframe')) {
+        setupIframeCommunication(rightContent.querySelector('iframe'), 'right');
+    }
+    
+    console.log('修復完成，請重試搜尋');
+};

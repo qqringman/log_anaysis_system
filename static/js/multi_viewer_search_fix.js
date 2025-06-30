@@ -101,9 +101,34 @@
         window.enhancedResultsReceived = 0;
         window.enhancedExpectedResults = 0;
         
-        // 計算預期的結果數量
+        // 計算預期的結果數量 - 重要修改
         if (scope === 'all' && window.splitView) {
-            window.enhancedExpectedResults = 2;
+            // 確保檢查兩個視窗是否都有內容
+            const leftContent = document.getElementById('split-left-content');
+            const rightContent = document.getElementById('split-right-content');
+            
+            let expectedCount = 0;
+            
+            // 檢查左側視窗
+            if (leftContent) {
+                const leftIframe = leftContent.querySelector('iframe');
+                if (leftIframe && (leftContent.dataset.filePath || leftContent.dataset.tabId)) {
+                    expectedCount++;
+                    console.log('左側視窗有內容，將搜尋');
+                }
+            }
+            
+            // 檢查右側視窗
+            if (rightContent) {
+                const rightIframe = rightContent.querySelector('iframe');
+                if (rightIframe && (rightContent.dataset.filePath || rightContent.dataset.tabId)) {
+                    expectedCount++;
+                    console.log('右側視窗有內容，將搜尋');
+                }
+            }
+            
+            window.enhancedExpectedResults = expectedCount;
+            console.log('預期收到結果數:', expectedCount);
         } else {
             window.enhancedExpectedResults = 1;
         }
@@ -118,7 +143,7 @@
                     return;
                 }
                 
-                // 處理結果，確保有正確的 pane 資訊
+                // 處理結果
                 const processedResults = processSearchResults(
                     event.data.results, 
                     event.data.pane || (window.splitView ? null : 'main')
@@ -131,7 +156,9 @@
                 });
                 
                 window.enhancedResultsReceived++;
+                console.log(`收到結果 ${window.enhancedResultsReceived}/${window.enhancedExpectedResults}`);
                 
+                // 檢查是否收到所有預期的結果
                 if (window.enhancedResultsReceived >= window.enhancedExpectedResults) {
                     // 合併所有結果
                     const mergedResults = mergeSearchResults(window.enhancedPendingResults);
@@ -147,8 +174,12 @@
                     // 清理
                     window.removeEventListener('message', messageHandler);
                     window.enhancedSearchHandler = null;
-                    window.enhancedPendingResults = [];
-                    window.enhancedResultsReceived = 0;
+                    
+                    // 清除超時計時器
+                    if (window.searchTimeoutId) {
+                        clearTimeout(window.searchTimeoutId);
+                        window.searchTimeoutId = null;
+                    }
                 }
             }
         };
@@ -156,22 +187,37 @@
         window.enhancedSearchHandler = messageHandler;
         window.addEventListener('message', messageHandler);
         
-        // 執行搜尋
-        if (scope === 'all' && window.splitView) {
-            searchInPane('left', searchOptions);
-            searchInPane('right', searchOptions);
-        } else if (scope === 'left') {
-            searchInPane('left', searchOptions);
-        } else if (scope === 'right') {
-            searchInPane('right', searchOptions);
-        } else {
-            searchInActiveTab(searchOptions);
-        }
-        
-        // 設置超時
+        // 延遲一下再執行搜尋，確保 iframe 都載入完成
         setTimeout(() => {
+            // 執行搜尋
+            if (scope === 'all' && window.splitView) {
+                const leftContent = document.getElementById('split-left-content');
+                const rightContent = document.getElementById('split-right-content');
+                
+                // 確保兩邊都搜尋
+                if (leftContent && (leftContent.dataset.filePath || leftContent.dataset.tabId)) {
+                    console.log('搜尋左側視窗');
+                    searchInPane('left', searchOptions);
+                }
+                
+                if (rightContent && (rightContent.dataset.filePath || rightContent.dataset.tabId)) {
+                    console.log('搜尋右側視窗');
+                    searchInPane('right', searchOptions);
+                }
+            } else if (scope === 'left') {
+                searchInPane('left', searchOptions);
+            } else if (scope === 'right') {
+                searchInPane('right', searchOptions);
+            } else {
+                searchInActiveTab(searchOptions);
+            }
+        }, 100); // 給 iframe 一點時間準備
+        
+        // 設置超時 - 增加超時時間
+        window.searchTimeoutId = setTimeout(() => {
             const resultsDiv = document.getElementById('search-results');
             if (resultsDiv && resultsDiv.querySelector('.search-loading')) {
+                console.log('搜尋超時，顯示部分結果');
                 if (window.enhancedPendingResults.length > 0) {
                     const mergedResults = mergeSearchResults(window.enhancedPendingResults);
                     displayEnhancedSearchResults(mergedResults);
@@ -189,7 +235,7 @@
                     window.enhancedSearchHandler = null;
                 }
             }
-        }, 5000);
+        }, 8000); // 從 5000ms 增加到 8000ms
     }
     
     // 處理搜尋結果，確保有行號
@@ -203,32 +249,28 @@
             // 確保有行號
             let lineNumber = result.lineNumber;
             
-            // 如果沒有 lineNumber，嘗試從其他欄位獲取
             if (!lineNumber) {
                 if (result.line) lineNumber = result.line;
                 else if (result.lineNo) lineNumber = result.lineNo;
                 else if (result.content) {
-                    // 嘗試從內容解析行號
                     const match = result.content.match(/^(\d+)[:：]/);
                     if (match) lineNumber = parseInt(match[1]);
                 }
             }
             
-            // 如果還是沒有行號，使用索引 + 1
             if (!lineNumber) {
                 lineNumber = index + 1;
             }
             
-            // 單檔模式強制使用 'main' 作為 pane
+            // 保留原始的 pane 資訊
             const resultPane = isSingleFileMode ? 'main' : (result.pane || pane || 'main');
             
             return {
                 ...result,
                 lineNumber: lineNumber,
                 pane: resultPane,
-                uniqueId: `${resultPane}-${lineNumber}-${index}`,
-                // 保存原始的 pane 資訊（如果有）
-                originalPane: result.pane || pane
+                originalPane: pane, // 保存原始 pane 資訊
+                uniqueId: `${resultPane}-${lineNumber}-${index}`
             };
         });
     }
@@ -521,57 +563,120 @@
         // 更新導航計數
         updateSearchNavigation();
         
+        // 檢查結果屬於哪個視窗
+        const pane = result.pane || result.originalPane;
+        
         // 檢查是否為單檔模式
         const isSingleFileMode = !window.splitView;
         
-        if (isSingleFileMode || result.pane === 'main') {
+        if (isSingleFileMode || pane === 'main') {
             // 單檔模式跳轉
             console.log(`單檔模式跳轉到第 ${result.lineNumber} 行`);
-            
-            // 方法1：如果有 activeTabId，使用標籤系統
-            if (window.activeTabId && window.currentTabs) {
-                const tab = window.currentTabs.find(t => t.id === window.activeTabId);
-                if (tab && tab.content) {
-                    const iframe = tab.content.querySelector('iframe');
-                    if (iframe && iframe.contentWindow) {
-                        sendJumpMessage(iframe, result);
-                        return;
-                    }
-                }
-            }
-            
-            // 方法2：直接從 DOM 尋找 iframe
-            const fileViewer = document.getElementById('file-viewer');
-            if (fileViewer) {
-                const iframe = fileViewer.querySelector('iframe');
+            jumpToSingleFileResult(result);
+        } else if (window.splitView && pane && (pane === 'left' || pane === 'right')) {
+            // 分割視窗模式跳轉
+            console.log(`跳轉到 ${pane} 視窗的第 ${result.lineNumber} 行`);
+            jumpToSplitPaneResult(result, pane);
+        }
+    };
+
+    // 新增：跳轉到單檔結果
+    function jumpToSingleFileResult(result) {
+        // 方法1：如果有 activeTabId，使用標籤系統
+        if (window.activeTabId && window.currentTabs) {
+            const tab = window.currentTabs.find(t => t.id === window.activeTabId);
+            if (tab && tab.content) {
+                const iframe = tab.content.querySelector('iframe');
                 if (iframe && iframe.contentWindow) {
                     sendJumpMessage(iframe, result);
                     return;
                 }
             }
-            
-            // 方法3：尋找任何可見的 iframe
-            const allIframes = document.querySelectorAll('iframe');
-            for (const iframe of allIframes) {
-                if (iframe.offsetParent !== null && iframe.contentWindow) {
-                    sendJumpMessage(iframe, result);
-                    break;
-                }
-            }
-        } else if (window.splitView && result.pane && (result.pane === 'left' || result.pane === 'right')) {
-            // 分割視窗模式跳轉
-            console.log(`跳轉到 ${result.pane} 視窗的第 ${result.lineNumber} 行`);
-            
-            const content = document.getElementById(`split-${result.pane}-content`);
-            if (content) {
-                const iframe = content.querySelector('iframe');
-                if (iframe && iframe.contentWindow) {
-                    sendJumpMessage(iframe, result);
-                }
+        }
+        
+        // 方法2：直接從 DOM 尋找 iframe
+        const fileViewer = document.getElementById('file-viewer');
+        if (fileViewer) {
+            const iframe = fileViewer.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                sendJumpMessage(iframe, result);
+                return;
             }
         }
-    };
+    }
 
+    // 新增：跳轉到分割視窗結果
+    function jumpToSplitPaneResult(result, pane) {
+        const content = document.getElementById(`split-${pane}-content`);
+        if (content) {
+            // 先確保該視窗是可見的（視覺提示）
+            highlightPane(pane);
+            
+            const iframe = content.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                sendJumpMessage(iframe, result);
+                
+                // 聚焦到對應的 iframe
+                setTimeout(() => {
+                    try {
+                        iframe.focus();
+                        // 嘗試聚焦 iframe 內部的內容
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.focus();
+                        }
+                    } catch (e) {
+                        console.warn('無法聚焦 iframe:', e);
+                    }
+                }, 100);
+            }
+        }
+    }
+
+    // 新增：高亮顯示目標視窗
+    function highlightPane(pane) {
+        // 移除所有視窗的高亮
+        document.querySelectorAll('.split-pane').forEach(p => {
+            p.style.transition = 'box-shadow 0.3s ease';
+            p.style.boxShadow = '';
+        });
+        
+        // 高亮目標視窗
+        const targetPane = document.getElementById(`split-${pane}`);
+        if (targetPane) {
+            targetPane.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.5)';
+            
+            // 3秒後移除高亮
+            setTimeout(() => {
+                targetPane.style.boxShadow = '';
+            }, 3000);
+        }
+        
+        // 更新標題欄顏色以顯示當前活動視窗
+        const leftTitle = document.querySelector('#split-left .split-pane-toolbar');
+        const rightTitle = document.querySelector('#split-right .split-pane-toolbar');
+        
+        if (leftTitle && rightTitle) {
+            if (pane === 'left') {
+                leftTitle.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                leftTitle.style.color = 'white';
+                rightTitle.style.background = '#f8f9fa';
+                rightTitle.style.color = '#666';
+            } else {
+                rightTitle.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                rightTitle.style.color = 'white';
+                leftTitle.style.background = '#f8f9fa';
+                leftTitle.style.color = '#666';
+            }
+            
+            // 3秒後恢復原狀
+            setTimeout(() => {
+                leftTitle.style.background = '#f8f9fa';
+                leftTitle.style.color = '#666';
+                rightTitle.style.background = '#f8f9fa';
+                rightTitle.style.color = '#666';
+            }, 3000);
+        }
+    }    
     // 輔助函數：發送跳轉訊息
     function sendJumpMessage(iframe, result) {
         try {
@@ -589,8 +694,15 @@
                 iframe.style.boxShadow = '';
             }, 1000);
             
+            // 顯示提示訊息，包含視窗位置
+            const paneText = result.pane === 'left' ? '左側視窗' : 
+                            result.pane === 'right' ? '右側視窗' : '';
+            const message = paneText ? 
+                `已跳轉到${paneText}第 ${result.lineNumber} 行` :
+                `已跳轉到第 ${result.lineNumber} 行`;
+                
             if (window.showToast) {
-                window.showToast(`已跳轉到第 ${result.lineNumber} 行`, 'info');
+                window.showToast(message, 'info');
             }
         } catch (error) {
             console.error('發送跳轉訊息失敗:', error);
@@ -725,6 +837,9 @@
             window.currentSearchIndex = window.enhancedSearchResults.length - 1;
         }
         
+        // 如果在分割視窗模式，自動切換頁籤
+        autoSwitchSearchTab();
+        
         jumpToCurrentResult();
     };
 
@@ -741,6 +856,9 @@
             window.currentSearchIndex = 0;
         }
         
+        // 如果在分割視窗模式，自動切換頁籤
+        autoSwitchSearchTab();
+        
         jumpToCurrentResult();
     };
 
@@ -752,6 +870,31 @@
         
         // 使用已定義的跳轉函數
         window.jumpToEnhancedResult(window.currentSearchIndex);
+    }
+
+    // 新增：自動切換到對應的搜尋結果頁籤
+    function autoSwitchSearchTab() {
+        if (!window.splitView || !window.enhancedSearchResults[window.currentSearchIndex]) {
+            return;
+        }
+        
+        const currentResult = window.enhancedSearchResults[window.currentSearchIndex];
+        const pane = currentResult.pane;
+        
+        // 檢查是否有多個頁籤
+        const tabs = document.querySelectorAll('.search-results-tab');
+        if (tabs.length <= 1) return;
+        
+        // 找到對應的頁籤並切換
+        const targetTab = Array.from(tabs).find(tab => {
+            const onclick = tab.onclick?.toString() || '';
+            return onclick.includes(`'${pane}'`);
+        });
+        
+        if (targetTab && !targetTab.classList.contains('active')) {
+            console.log(`自動切換到 ${pane} 頁籤`);
+            window.switchEnhancedSearchTab(pane);
+        }
     }
 
     // 高亮當前搜尋結果
@@ -836,29 +979,54 @@
         console.log(`在 ${pane} 面板搜尋:`, options);
         
         const content = document.getElementById(`split-${pane}-content`);
-        const iframe = content?.querySelector('iframe');
+        if (!content) {
+            console.warn(`找不到 ${pane} 面板`);
+            return;
+        }
+        
+        const iframe = content.querySelector('iframe');
         
         if (iframe && iframe.contentWindow) {
-            try {
-                iframe.contentWindow.postMessage({
-                    type: 'search',
-                    options: options,
-                    pane: pane,  // 確保傳遞 pane 資訊
-                    source: 'enhanced-search'
-                }, '*');
-                console.log(`已發送搜尋請求到 ${pane} 面板`);
-            } catch (error) {
-                console.error(`發送搜尋請求失敗 (${pane}):`, error);
+            // 確保 iframe 已經載入完成
+            if (iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+                try {
+                    iframe.contentWindow.postMessage({
+                        type: 'search',
+                        options: options,
+                        pane: pane,
+                        source: 'enhanced-search'
+                    }, '*');
+                    console.log(`已發送搜尋請求到 ${pane} 面板`);
+                } catch (error) {
+                    console.error(`發送搜尋請求失敗 (${pane}):`, error);
+                }
+            } else {
+                // 如果 iframe 還沒載入完成，等待一下再試
+                console.log(`${pane} 面板的 iframe 還在載入中，等待...`);
+                iframe.addEventListener('load', function onLoad() {
+                    iframe.removeEventListener('load', onLoad);
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'search',
+                            options: options,
+                            pane: pane,
+                            source: 'enhanced-search'
+                        }, '*');
+                        console.log(`已發送搜尋請求到 ${pane} 面板 (延遲)`);
+                    } catch (error) {
+                        console.error(`發送搜尋請求失敗 (${pane}):`, error);
+                    }
+                });
             }
         } else {
             console.warn(`找不到 ${pane} 面板的 iframe`);
-            // 如果找不到 iframe，仍然要處理結果
+            // 如果找不到 iframe，發送空結果避免卡住
             window.postMessage({
                 type: 'search-results',
                 keyword: options.keyword,
                 results: [],
                 count: 0,
-                pane: pane  // 確保傳遞 pane 資訊
+                pane: pane
             }, '*');
         }
     }
